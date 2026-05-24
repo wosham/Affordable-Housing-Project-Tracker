@@ -48,6 +48,42 @@
   }
 
   /* ========================================================
+     1. Custom Cursor — dot follows instantly, ring lerps behind
+     ======================================================== */
+  function initCursor() {
+    const dot  = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    if (!dot || !ring) return;
+    if (!window.matchMedia('(hover: hover)').matches) return;
+
+    let mouseX = 0, mouseY = 0;
+    let ringX  = 0, ringY  = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      dot.style.left = mouseX + 'px';
+      dot.style.top  = mouseY + 'px';
+    });
+
+    (function lerpRing() {
+      ringX += (mouseX - ringX) * 0.12;
+      ringY += (mouseY - ringY) * 0.12;
+      ring.style.left = ringX + 'px';
+      ring.style.top  = ringY + 'px';
+      requestAnimationFrame(lerpRing);
+    })();
+
+    const hoverSel = 'a, button, [role="button"], input, select, textarea, label, .map-constituency, .ptc, .news-card, .proj-card, .pfb-chip, .ppg-btn';
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
+    });
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
+    });
+  }
+
+  /* ========================================================
      2. Mobile Navigation
      ======================================================== */
   function initMobileNav() {
@@ -393,6 +429,7 @@
      11. Initialize Everything on DOM Ready
      ======================================================== */
   function init() {
+    initCursor();
     initMobileNav();
     initStickyHeader();
     highlightActiveNav();

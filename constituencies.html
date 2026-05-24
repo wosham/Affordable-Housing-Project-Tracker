@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore affordable housing coverage across all 5 constituencies in Trans-Nzoia County — Saboti, Cherangany, Endebess, Kiminini and Kwanza.">
+  <meta name="keywords" content="Trans-Nzoia constituencies, Saboti housing, Cherangany AHP, Endebess housing, Kiminini housing, Kwanza housing">
+  <meta name="author" content="Trans-Nzoia County Government — Department of Land, Housing &amp; Physical Planning">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#163300">
+  <title>Constituencies | Trans-Nzoia County Affordable Housing Tracker</title>
+  <link rel="canonical" href="https://housing.transnzoia.go.ke/constituencies.html">
+
+  <link rel="icon" type="image/png" href="uploads/logos/afforadablehousinglogo.png">
+  <link rel="shortcut icon" href="uploads/logos/afforadablehousinglogo.png">
+  <link rel="apple-touch-icon" href="uploads/logos/afforadablehousinglogo.png">
+
+  <meta property="og:title" content="Constituencies — Trans-Nzoia AHP Tracker">
+  <meta property="og:description" content="Housing coverage map and statistics for all 5 Trans-Nzoia constituencies under the national Affordable Housing Programme.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://housing.transnzoia.go.ke/constituencies.html">
+  <meta property="og:image" content="uploads/gallery/maili-tatu-1.jpg">
+  <meta property="og:locale" content="en_KE">
+  <meta property="og:site_name" content="Trans-Nzoia AHP Tracker">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Constituencies — Trans-Nzoia AHP Tracker">
+  <meta name="twitter:description" content="Interactive constituency map with housing project data for Trans-Nzoia County, Kenya.">
+  <meta name="twitter:image" content="uploads/gallery/maili-tatu-1.jpg">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="assets/css/global.css">
+  <link rel="stylesheet" href="assets/css/pages/constituencies.css">
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div class="site-topbar" id="siteTopbar">
+  <header class="navbar" id="navbar" role="banner">
+    <div class="container">
+      <a href="index.html" class="navbar-brand" aria-label="Trans-Nzoia AHP Tracker — Home">
+        <img src="uploads/logos/afforadablehousinglogo.png" alt="Trans-Nzoia County" loading="eager" onerror="this.style.display='none'">
+        <div class="navbar-brand-text">AHP Tracker<br><small>Trans-Nzoia County</small></div>
+      </a>
+      <nav class="navbar-menu" aria-label="Main navigation">
+        <a href="index.html" class="navbar-link">Home</a>
+        <a href="projects.html" class="navbar-link">Projects</a>
+        <a href="constituencies.html" class="navbar-link is-active">Constituencies</a>
+        <a href="news.html" class="navbar-link">News</a>
+        <a href="about.html" class="navbar-link">About</a>
+        <a href="contact.html" class="navbar-link">Contact</a>
+        <div class="navbar-cta">
+          <a href="auth/login.html" class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i> Staff Portal
+          </a>
+        </div>
+      </nav>
+      <button class="navbar-toggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Live Update Ticker -->
+  <div class="ticker-bar" aria-label="Live programme field updates" role="region">
+    <div class="ticker-label" aria-hidden="true"><i class="fa-solid fa-signal-stream"></i> LIVE</div>
+    <div class="ticker-track-wrap">
+      <div class="ticker-track" id="tickerTrack">
+        <span class="ticker-item"><i class="fa-solid fa-hard-hat"></i> Maili Tatu Estate &mdash; Block F slab pour certified, 60% complete</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-hard-hat"></i> Matunda AHP &mdash; Ground-floor columns cast, 35% complete</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-file-contract"></i> Kitale Ex-Prison Site &mdash; Tender bids close 30 Jun 2026</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-circle-check"></i> Suam Border Post Estate &mdash; NEMA environmental approval granted</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-hard-hat"></i> Maili Tatu Estate &mdash; Block F slab pour certified, 60% complete</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-hard-hat"></i> Matunda AHP &mdash; Ground-floor columns cast, 35% complete</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-file-contract"></i> Kitale Ex-Prison Site &mdash; Tender bids close 30 Jun 2026</span>
+        <span class="ticker-sep" aria-hidden="true">&bull;</span>
+        <span class="ticker-item"><i class="fa-solid fa-circle-check"></i> Suam Border Post Estate &mdash; NEMA environmental approval granted</span>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /.site-topbar -->
+
+  <main id="main-content">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="page-hero page-hero--constituencies" aria-label="Constituencies overview">
+      <div class="page-hero-bg" aria-hidden="true">
+        <img src="uploads/gallery/maili-tatu-3.jpg" alt="" loading="eager" onerror="this.style.display='none'">
+        <div class="page-hero-overlay"></div>
+      </div>
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="index.html" class="breadcrumb-link">Home</a>
+          <i class="fa-solid fa-chevron-right breadcrumb-sep" aria-hidden="true"></i>
+          <span class="breadcrumb-current">Constituencies</span>
+        </nav>
+        <div class="page-hero-body">
+          <div class="page-hero-eyebrow">
+            <span class="page-hero-tag"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Coverage Map</span>
+          </div>
+          <h1 class="page-hero-title">All <span class="text-lime">5 Constituencies</span></h1>
+          <p class="page-hero-sub">Explore how the Affordable Housing Programme reaches every corner of Trans-Nzoia County — from Endebess on the Uganda border to Kwanza in the south.</p>
+        </div>
+        <div class="projects-hero-stats" role="region" aria-label="County-wide statistics">
+          <div class="phs-item">
+            <span class="phs-val">5</span>
+            <span class="phs-lbl">Constituencies</span>
+          </div>
+          <div class="phs-divider" aria-hidden="true"></div>
+          <div class="phs-item">
+            <span class="phs-val">8</span>
+            <span class="phs-lbl">Projects</span>
+          </div>
+          <div class="phs-divider" aria-hidden="true"></div>
+          <div class="phs-item">
+            <span class="phs-val">1,730</span>
+            <span class="phs-lbl">Units Planned</span>
+          </div>
+          <div class="phs-divider" aria-hidden="true"></div>
+          <div class="phs-item">
+            <span class="phs-val">671K</span>
+            <span class="phs-lbl">Residents Served</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MAP + CARDS SPLIT ===== -->
+    <section class="constituencies-split" aria-label="Constituency map and listings">
+      <div class="constituencies-split-inner">
+
+        <!-- LEFT: SVG Map panel -->
+        <div class="con-map-panel" aria-label="Interactive constituency map">
+          <div class="con-map-sticky">
+            <div class="con-map-header">
+              <h2 class="con-map-title">Trans-Nzoia County</h2>
+              <p class="con-map-hint">Click a constituency to explore its housing projects</p>
+            </div>
+            <div class="con-map-wrap">
+              <svg id="countyMap" viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Trans-Nzoia County map showing 5 constituencies">
+                <defs>
+                  <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(10,31,5,0.25)"/>
+                  </filter>
+                </defs>
+
+                <!-- Endebess (northwest) -->
+                <g class="con-path-group" data-id="endebess" tabindex="0" role="button" aria-label="Endebess — 2 projects, 10% average completion">
+                  <path d="M 20,20 L 220,20 L 220,185 L 120,205 L 20,165 Z" class="con-path"/>
+                  <text class="con-path-label" x="112" y="100">Endebess</text>
+                  <text class="con-path-sub" x="112" y="116">2 projects</text>
+                </g>
+
+                <!-- Cherangany (centre-east, largest) -->
+                <g class="con-path-group" data-id="cherangany" tabindex="0" role="button" aria-label="Cherangany — 1 project, 35% completion">
+                  <path d="M 220,20 L 460,20 L 460,235 L 265,235 L 220,185 Z" class="con-path"/>
+                  <text class="con-path-label" x="352" y="115">Cherangany</text>
+                  <text class="con-path-sub" x="352" y="131">1 project</text>
+                </g>
+
+                <!-- Kiminini (west) -->
+                <g class="con-path-group" data-id="kiminini" tabindex="0" role="button" aria-label="Kiminini — 2 projects in planning">
+                  <path d="M 20,165 L 120,205 L 120,385 L 20,385 Z" class="con-path"/>
+                  <text class="con-path-label" x="62" y="295">Kiminini</text>
+                  <text class="con-path-sub" x="62" y="311">2 projects</text>
+                </g>
+
+                <!-- Saboti (south-centre) -->
+                <g class="con-path-group" data-id="saboti" tabindex="0" role="button" aria-label="Saboti — 2 projects, 58% average completion">
+                  <path d="M 120,205 L 220,185 L 265,235 L 265,385 L 120,385 Z" class="con-path"/>
+                  <text class="con-path-label" x="190" y="308">Saboti</text>
+                  <text class="con-path-sub" x="190" y="324">2 projects</text>
+                </g>
+
+                <!-- Kwanza (southeast) -->
+                <g class="con-path-group" data-id="kwanza" tabindex="0" role="button" aria-label="Kwanza — 1 project in planning">
+                  <path d="M 265,235 L 460,235 L 460,385 L 265,385 Z" class="con-path"/>
+                  <text class="con-path-label" x="365" y="313">Kwanza</text>
+                  <text class="con-path-sub" x="365" y="329">1 project</text>
+                </g>
+              </svg>
+            </div>
+            <!-- Map legend -->
+            <div class="con-map-legend" aria-label="Map legend">
+              <div class="con-legend-item">
+                <span class="con-legend-dot con-legend-dot--active"></span>
+                <span>Active construction</span>
+              </div>
+              <div class="con-legend-item">
+                <span class="con-legend-dot con-legend-dot--planning"></span>
+                <span>Planning stage</span>
+              </div>
+              <div class="con-legend-item">
+                <span class="con-legend-dot con-legend-dot--selected"></span>
+                <span>Selected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Constituency cards list -->
+        <div class="con-cards-panel" id="conCardsPanel" aria-label="Constituency listings">
+          <!-- Injected by JS -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== COUNTY TOTAL BAR ===== -->
+    <section class="county-total-section" aria-label="County-wide programme totals">
+      <div class="container">
+        <div class="county-total-inner">
+          <div class="county-total-left">
+            <h2 class="county-total-title">County-Wide Programme Progress</h2>
+            <p class="county-total-sub">Across all 5 constituencies, the programme is delivering <strong>1,730 affordable housing units</strong> — targeting Kenyans registered on the national Boma Yangu portal.</p>
+            <a href="projects.html" class="btn btn-primary">
+              <i class="fa-solid fa-building-columns" aria-hidden="true"></i> Browse All Projects
+            </a>
+          </div>
+          <div class="county-total-right" id="countyTotalsChart" aria-label="Constituency progress comparison">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONSTITUENCY CARDS GRID ===== -->
+    <section class="con-grid-section" aria-label="All constituencies overview">
+      <div class="container">
+        <div class="con-grid-header">
+          <div class="con-grid-header-left">
+            <p class="con-grid-eyebrow">Browse by Constituency</p>
+            <h2 class="con-grid-title">All <span class="text-lime">5 Constituencies</span></h2>
+          </div>
+          <div class="con-grid-sort" id="conGridSort">
+            <span class="con-sort-label">Sort:</span>
+            <button class="con-sort-btn is-active" data-sort="default">Default</button>
+            <button class="con-sort-btn" data-sort="progress">Highest Progress</button>
+            <button class="con-sort-btn" data-sort="units">Most Units</button>
+            <button class="con-sort-btn" data-sort="alpha">A – Z</button>
+          </div>
+        </div>
+        <div class="con-grid" id="conBrowseGrid">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== APPLY CTA BANNER ===== -->
+  <div class="con-apply-banner" role="complementary" aria-label="Apply for housing">
+    <div class="container">
+      <div class="con-apply-inner">
+        <div class="con-apply-icon"><i class="fa-solid fa-house-circle-check" aria-hidden="true"></i></div>
+        <div class="con-apply-copy">
+          <h3 class="con-apply-title">Ready to Apply for Affordable Housing?</h3>
+          <p class="con-apply-sub">Register on the national Boma Yangu portal to join the Trans-Nzoia County AHP allocation list.</p>
+        </div>
+        <div class="con-apply-ctas">
+          <a href="https://bomayangu.go.ke" target="_blank" rel="noopener noreferrer" class="btn btn-lime">
+            <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Apply on Boma Yangu
+          </a>
+          <a href="projects.html" class="btn btn-outline-light">
+            View All Projects <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="uploads/logos/afforadablehousinglogo.png" alt="Trans-Nzoia County AHP" onerror="this.style.display='none'">
+        <p>The Trans-Nzoia County Affordable Housing Project Tracker provides transparent, real-time monitoring of construction delivery under the national AHP programme.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Follow us on X / Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a href="#" aria-label="Follow us on Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer-title">Public Pages</h3>
+        <ul class="footer-links">
+          <li><a href="projects.html">All Projects</a></li>
+          <li><a href="constituencies.html">Constituencies</a></li>
+          <li><a href="news.html">News &amp; Announcements</a></li>
+          <li><a href="gallery.html">Photo Gallery</a></li>
+          <li><a href="publications.html">Publications &amp; Reports</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="footer-title">Programme</h3>
+        <ul class="footer-links">
+          <li><a href="about.html">About the Programme</a></li>
+          <li><a href="leadership.html">County Leadership</a></li>
+          <li><a href="stakeholders.html">Stakeholders</a></li>
+          <li><a href="faq.html">Frequently Asked Questions</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="footer-title">Contact</h3>
+        <ul class="footer-contact">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span>County Headquarters, Kitale<br>Trans-Nzoia County, Kenya</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>+254 53 000 0000</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>housing@transnzoia.go.ke</span></li>
+        </ul>
+      </div>
+      </div><!-- /.footer-grid -->
+      <div class="footer-bottom">
+        <p>&copy; 2026 Trans-Nzoia County Government &mdash; Dept. of Land, Housing &amp; Physical Planning. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="legal/privacy.html">Privacy Policy</a>
+          <a href="legal/terms.html">Terms of Use</a>
+          <a href="legal/disclaimer.html">Disclaimer</a>
+        </div>
+      </div>
+    </div><!-- /.container -->
+  </footer>
+
+  <button class="back-to-top" id="backToTop" aria-label="Scroll back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
+
+  <div class="navbar-mobile" id="mobile-menu" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mob-menu-inner">
+      <div class="mob-menu-top">
+        <a href="index.html" class="mob-brand">
+          <img src="uploads/logos/afforadablehousinglogo.png" alt="Trans-Nzoia AHP" height="36" onerror="this.style.display='none'">
+          <span>AHP Tracker</span>
+        </a>
+        <button class="mob-close" id="mob-close-btn" aria-label="Close navigation menu">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <nav class="mob-nav" aria-label="Mobile navigation">
+        <span class="mob-nav-label">Pages</span>
+        <a href="index.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-house-chimney" aria-hidden="true"></i></span>Home</a>
+        <a href="projects.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></span>Projects</a>
+        <a href="constituencies.html" class="mob-nav-link is-active"><span class="mob-nav-icon"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i></span>Constituencies</a>
+        <a href="news.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span>News &amp; Updates</a>
+        <a href="gallery.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-images" aria-hidden="true"></i></span>Photo Gallery</a>
+        <a href="about.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>About the Programme</a>
+        <a href="contact.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>Contact Us</a>
+        <span class="mob-nav-label" style="margin-top:var(--space-4)">Legal</span>
+        <a href="legal/privacy.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>Privacy Policy</a>
+        <a href="legal/terms.html" class="mob-nav-link"><span class="mob-nav-icon"><i class="fa-solid fa-file-contract" aria-hidden="true"></i></span>Terms of Use</a>
+      </nav>
+      <div class="mob-menu-ctas">
+        <a href="auth/login.html" class="mob-cta-staff"><i class="fa-solid fa-lock" aria-hidden="true"></i> Staff Portal Login</a>
+        <a href="https://ecitizen.go.ke" target="_blank" rel="noopener noreferrer" class="mob-cta-ecitizen"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Apply via eCitizen</a>
+      </div>
+      <div class="mob-contact-strip">
+        <a href="tel:+254530000000" class="mob-contact-item"><i class="fa-solid fa-phone" aria-hidden="true"></i><span>+254 53 000 0000</span></a>
+        <a href="mailto:housing@transnzoia.go.ke" class="mob-contact-item"><i class="fa-solid fa-envelope" aria-hidden="true"></i><span>housing@transnzoia.go.ke</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="navbar-mobile-backdrop" id="mob-backdrop" aria-hidden="true"></div>
+
+  <script src="assets/js/global.js"></script>
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/pages/constituencies.js"></script>
+</body>
+</html>
