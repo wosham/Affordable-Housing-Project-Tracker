@@ -1,5 +1,5 @@
-/* =========================================================
-   TRANS-NZOIA AHP — Constituency Detail Page JS
+﻿/* =========================================================
+   TRANS-NZOIA AHP â€” Constituency Detail Page JS
    Loads constituency data from URL ?id= and renders page
    ========================================================= */
 (function () {
@@ -151,7 +151,7 @@
     if (projTitle) projTitle.textContent = `${con.name} Projects`;
 
     const viewAll = document.getElementById('cdViewAll');
-    if (viewAll) viewAll.href = `projects.html?constituency=${con.id}`;
+    if (viewAll) viewAll.href = `projects.php?constituency=${con.id}`;
 
     const projGrid = document.getElementById('cdProjectsGrid');
     if (projGrid) {
@@ -180,7 +180,7 @@
         </div>`).join('');
     }
 
-    /* Mini map — highlight selected constituency */
+    /* Mini map â€” highlight selected constituency */
     document.querySelectorAll('.cdm-path-group').forEach(g => {
       g.classList.toggle('is-selected', g.dataset.id === con.id);
     });
@@ -256,7 +256,7 @@
         const statusCls   = c.status === 'active' ? 'con-browse-status--active' : 'con-browse-status--planning';
         const statusLbl   = c.status === 'active' ? 'Active' : 'Planning';
         return `
-          <a href="constituency-detail.html?id=${c.id}" class="cd-related-card">
+          <a href="constituency-detail.php?id=${c.id}" class="cd-related-card">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
               <div>
                 <div class="cd-related-name">${c.name}</div>

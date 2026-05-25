@@ -64,7 +64,7 @@
       updateRing();
       if (remaining <= 0) {
         clearInterval(tick);
-        window.location.href = '../index.html';
+        window.location.href = '../index.php';
       }
     }, 1000);
   }

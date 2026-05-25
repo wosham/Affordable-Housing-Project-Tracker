@@ -124,7 +124,7 @@
         /* ----- DEMO: always shows invalid (flip `success` to true when backend is wired up) ----- */
         var success = false;
         if (success) {
-          window.location.href = '../dashboard/index.html';
+          window.location.href = 'dashboard.php';
         } else {
           if (errorAlert) errorAlert.hidden = false;
           if (errorMsg) errorMsg.textContent = 'Invalid email or password. Please check your credentials and try again.';

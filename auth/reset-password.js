@@ -122,7 +122,7 @@
       if (countdownEl) countdownEl.textContent = remaining;
       if (remaining <= 0) {
         clearInterval(tick);
-        window.location.href = 'login.html?reason=password_reset';
+        window.location.href = 'login.php?reason=password_reset';
       }
     }, 1000);
   }

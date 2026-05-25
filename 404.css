@@ -1,0 +1,9 @@
+/* TRANS-NZOIA AHP — 404 Page */
+@import url("error-base.css");
+
+/* Float animation for icon */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+.err-icon { animation: float 3.2s ease-in-out infinite; }

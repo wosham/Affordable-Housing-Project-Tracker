@@ -1,5 +1,5 @@
-/* =========================================================
-   TRANS-NZOIA AHP — Project Detail Page JS
+﻿/* =========================================================
+   TRANS-NZOIA AHP â€” Project Detail Page JS
    Loads a single project from URL ?id= and renders page
    ========================================================= */
 (function () {
@@ -92,9 +92,9 @@
       { icon: 'fa-house-chimney',   lbl: 'Units Planned',  val: p.units.toLocaleString() },
       { icon: 'fa-map-pin',         lbl: 'Ward',           val: p.ward },
       { icon: 'fa-person-digging',  lbl: 'Contractor',     val: p.contractor },
-      { icon: 'fa-coins',           lbl: 'Funding Source', val: p.funding || '—' },
-      { icon: 'fa-calendar-plus',   lbl: 'Start Date',     val: p.startDate || '—' },
-      { icon: 'fa-flag-checkered',  lbl: 'Est. Delivery',  val: p.estDelivery || '—' },
+      { icon: 'fa-coins',           lbl: 'Funding Source', val: p.funding || 'â€”' },
+      { icon: 'fa-calendar-plus',   lbl: 'Start Date',     val: p.startDate || 'â€”' },
+      { icon: 'fa-flag-checkered',  lbl: 'Est. Delivery',  val: p.estDelivery || 'â€”' },
     ];
     const el = document.getElementById('pdFactsStrip');
     if (el) {
@@ -160,7 +160,7 @@
           <span class="pd-mini-stat-lbl">Units In Progress</span>
         </div>
         <div class="pd-mini-stat">
-          <span class="pd-mini-stat-val">${p.estDelivery || '—'}</span>
+          <span class="pd-mini-stat-val">${p.estDelivery || 'â€”'}</span>
           <span class="pd-mini-stat-lbl">Target Delivery</span>
         </div>
       </div>`;
@@ -251,7 +251,7 @@
       <div class="pd-gallery-grid">
         ${rest.map((src, i) => `
           <button class="pd-gallery-item" data-index="${i + 1}" aria-label="View photo ${i + 2}">
-            <img src="${src}" alt="${p.name} — site photo ${i + 2}" loading="lazy"
+            <img src="${src}" alt="${p.name} â€” site photo ${i + 2}" loading="lazy"
                  onerror="this.closest('.pd-gallery-item').style.display='none'">
             <div class="pd-gallery-item-overlay">
               <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
@@ -264,7 +264,7 @@
       <h2 class="pd-section-title">Photo Gallery</h2>
       <div class="pd-gallery">
         <button class="pd-gallery-featured" data-index="0" aria-label="View featured photo">
-          <img src="${featured}" alt="${p.name} — featured site photo" loading="lazy"
+          <img src="${featured}" alt="${p.name} â€” featured site photo" loading="lazy"
                onerror="this.closest('.pd-gallery-featured').style.display='none'">
           <div class="pd-gallery-item-overlay">
             <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
@@ -303,7 +303,7 @@
     function show(idx) {
       current = (idx + images.length) % images.length;
       lbImg.src         = images[current];
-      lbImg.alt         = `${name} — photo ${current + 1}`;
+      lbImg.alt         = `${name} â€” photo ${current + 1}`;
       lbCaption.textContent = `Photo ${current + 1} of ${images.length}`;
       lb.classList.add('is-open');
       document.body.style.overflow = 'hidden';
@@ -339,8 +339,8 @@
     const el = document.getElementById('pdSidebar');
     if (!el) return;
 
-    const conLink  = `constituency-detail.html?id=${p.constituency}`;
-    const projLink = `projects.html?constituency=${p.constituency}`;
+    const conLink  = `constituency-detail.php?id=${p.constituency}`;
+    const projLink = `projects.php?constituency=${p.constituency}`;
     const statusBadge = p.status === 'active'
       ? '<span class="pd-sb-status pd-sb-status--active">Active Construction</span>'
       : '<span class="pd-sb-status pd-sb-status--planning">Planning Stage</span>';
@@ -350,8 +350,8 @@
       { lbl: 'Ward',         val: p.ward },
       { lbl: 'Status',       val: statusBadge, raw: true },
       { lbl: 'Target Units', val: p.units.toLocaleString() },
-      { lbl: 'Start Date',   val: p.startDate || '—' },
-      { lbl: 'Est. Delivery', val: p.estDelivery || '—' },
+      { lbl: 'Start Date',   val: p.startDate || 'â€”' },
+      { lbl: 'Est. Delivery', val: p.estDelivery || 'â€”' },
       {
         lbl: 'Completion', val: `
           <span class="pd-sb-pct">${p.pct}%</span>
@@ -410,7 +410,7 @@
             <span>All ${p.constituencyName} Projects</span>
             <i class="fa-solid fa-chevron-right pd-related-arrow" aria-hidden="true"></i>
           </a>
-          <a href="projects.html" class="pd-related-link">
+          <a href="projects.php" class="pd-related-link">
             <div class="pd-related-icon"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></div>
             <span>Back to All Projects</span>
             <i class="fa-solid fa-chevron-right pd-related-arrow" aria-hidden="true"></i>
@@ -435,7 +435,7 @@
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) metaDesc.setAttribute('content', p.description);
     const ogTitle  = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.setAttribute('content', `${p.name} — Trans-Nzoia AHP`);
+    if (ogTitle) ogTitle.setAttribute('content', `${p.name} â€” Trans-Nzoia AHP`);
     if (p.images && p.images.length) {
       const ogImg = document.querySelector('meta[property="og:image"]');
       if (ogImg) ogImg.setAttribute('content', p.images[0]);

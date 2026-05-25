@@ -1,6 +1,6 @@
-/**
+﻿/**
  * TRANS-NZOIA AFFORDABLE HOUSING TRACKER
- * Global JavaScript — Phase 1
+ * Global JavaScript â€” Phase 1
  */
 
 (function () {
@@ -48,7 +48,7 @@
   }
 
   /* ========================================================
-     1. Custom Cursor — dot follows instantly, ring lerps behind
+     1. Custom Cursor â€” dot follows instantly, ring lerps behind
      ======================================================== */
   function initCursor() {
     const dot  = document.getElementById('cursorDot');
@@ -155,7 +155,7 @@
   }
 
   /* ========================================================
-     3. Sticky Header — scrolled style + hide-on-scroll-down
+     3. Sticky Header â€” scrolled style + hide-on-scroll-down
      ======================================================== */
   function initStickyHeader() {
     const navbar  = document.querySelector('.navbar');
@@ -199,7 +199,7 @@
      ======================================================== */
   function highlightActiveNav() {
     const currentPath = window.location.pathname;
-    const pageName = currentPath.split('/').pop() || 'index.html';
+    const pageName = currentPath.split('/').pop() || 'index.php';
 
     document.querySelectorAll('.navbar-link').forEach((link) => {
       const href = link.getAttribute('href');
@@ -209,8 +209,8 @@
       // Exact match or index default
       if (
         linkPage === pageName ||
-        (pageName === '' && linkPage === 'index.html') ||
-        (pageName === 'index.html' && linkPage === 'index.html')
+        (pageName === '' && linkPage === 'index.php') ||
+        (pageName === 'index.php' && linkPage === 'index.php')
       ) {
         link.classList.add('is-active');
       } else {

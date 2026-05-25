@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /Trans-Nzoia-Affordable-Housing/app/
+Disallow: /Trans-Nzoia-Affordable-Housing/frontend/
+Disallow: /Trans-Nzoia-Affordable-Housing/auth/
+
+Allow: /Trans-Nzoia-Affordable-Housing/auth/login.php
+
+Sitemap: https://housing.transnzoia.go.ke/sitemap.xml

@@ -1,5 +1,5 @@
-/**
- * TRANS-NZOIA AHP TRACKER — Homepage JavaScript
+﻿/**
+ * TRANS-NZOIA AHP TRACKER â€” Homepage JavaScript
  * Phase 2 Rebuild: Modern Project Tracker UI
  */
 
@@ -24,8 +24,8 @@
 
   /* ========================================================
      1. CUSTOM CURSOR
-        — dot follows mouse instantly
-        — ring lerps behind with a smooth lag
+        â€” dot follows mouse instantly
+        â€” ring lerps behind with a smooth lag
      ======================================================== */
   function initCursor() {
     const dot  = document.getElementById('cursorDot');
@@ -137,9 +137,9 @@
 
   /* ========================================================
      6. INTERACTIVE SVG MAP
-        — click / keyboard Enter|Space on .map-constituency
-        — renders a detail panel with progress bar animation
-        — back button returns to overview panel
+        â€” click / keyboard Enter|Space on .map-constituency
+        â€” renders a detail panel with progress bar animation
+        â€” back button returns to overview panel
      ======================================================== */
   function initMap() {
     const constituencies = document.querySelectorAll('.map-constituency');
@@ -171,7 +171,7 @@
             siteEngineer: 'Eng. S. K. Kariuki',
             startDate: 'Mar 2024',
             estDelivery: 'Q4 2026',
-            milestone: 'Roofing works — Q3 2026',
+            milestone: 'Roofing works â€” Q3 2026',
           },
           {
             name: 'Kitale Town Infill Units',
@@ -247,11 +247,11 @@
             units: 80,
             pct: 5,
             status: 'planning',
-            contractor: 'TBD — Tender in Preparation',
+            contractor: 'TBD â€” Tender in Preparation',
             funding: 'National AHP Fund',
             leadAgency: 'State Dept. of Housing',
             siteEngineer: 'TBD',
-            startDate: 'TBD — Q3 2026 target',
+            startDate: 'TBD â€” Q3 2026 target',
             estDelivery: 'Q2 2028',
             milestone: 'Environmental Assessment underway',
           },
@@ -279,11 +279,11 @@
             units: 80,
             pct: 8,
             status: 'planning',
-            contractor: 'TBD — Procurement stage',
+            contractor: 'TBD â€” Procurement stage',
             funding: 'National AHP Fund',
             leadAgency: 'State Dept. of Housing',
             siteEngineer: 'TBD',
-            startDate: 'TBD — Q4 2026 target',
+            startDate: 'TBD â€” Q4 2026 target',
             estDelivery: 'Q1 2028',
             milestone: 'Design review in progress',
           },
@@ -323,7 +323,7 @@
     function showDetail(g) {
       const id   = g.getAttribute('data-id')   || '';
       const name = g.getAttribute('data-name') || '';
-      const link = g.getAttribute('data-link') || 'constituencies.html';
+      const link = g.getAttribute('data-link') || 'constituencies.php';
       const data = CONSTITUENCY_DATA[id];
       const projects = data ? data.projects : [];
 
@@ -339,7 +339,7 @@
            </div>`
         : '';
 
-      /* Build tab panels — each project is a panel */
+      /* Build tab panels â€” each project is a panel */
       const tabPanels = projects.map((p, i) => `
         <div class="mpd-tab-panel${i === 0 ? ' is-active' : ''}" id="mpd-tab-panel-${i}" role="tabpanel">
           ${buildProjectCard(p)}
@@ -424,7 +424,7 @@
 
   /* ========================================================
      7. SECTION FADE-UP (generic .fade-up elements)
-        Skips anything inside .tracker-hero — handled by initHeroEntrance
+        Skips anything inside .tracker-hero â€” handled by initHeroEntrance
      ======================================================== */
   function initFadeUp() {
     const els = document.querySelectorAll('.fade-up');
