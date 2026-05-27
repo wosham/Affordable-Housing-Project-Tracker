@@ -1,0 +1,12 @@
+/* Admin Modals Component — modal base styles live in admin-global.css */
+
+/* Wide dialog variant */
+.modal__dialog--wide { width: min(900px, 100%); }
+
+/* Approval modal detail body */
+.sa-approval-modal .modal__dialog { max-height: 80vh; overflow: auto; }
+.sa-approval-detail-grid { display: grid; gap: var(--admin-space-md); }
+.sa-approval-detail-row { display: flex; justify-content: space-between; align-items: center; gap: var(--admin-space-md); padding: .6rem 0; border-bottom: 1px solid var(--admin-border); font-size: .875rem; }
+.sa-approval-detail-row:last-child { border-bottom: 0; }
+.sa-approval-detail-row dt { color: var(--admin-text-muted); font-weight: 700; }
+.sa-approval-detail-row dd { margin: 0; font-weight: 600; text-align: right; }

@@ -1,0 +1,13 @@
+/* Messages Centre Component — Gmail-style layout — TODO: Phase 5 */
+.messages-layout { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - var(--admin-header-height)); }
+.messages-sidebar { border-right: 1px solid var(--admin-border); overflow-y: auto; }
+.messages-thread  { overflow-y: auto; display: flex; flex-direction: column; }
+.thread-item { padding: .85rem 1rem; cursor: pointer; border-bottom: 1px solid var(--admin-border); }
+.thread-item.unread { background: #f0f9f0; font-weight: 600; }
+.thread-item:hover  { background: #f7fafc; }
+.thread-item__subject { font-size: .875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thread-item__preview { font-size: .75rem; color: var(--admin-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.message-bubble { max-width: 70%; padding: .75rem 1rem; border-radius: 12px; margin-bottom: .5rem; }
+.message-bubble--sent     { background: var(--admin-primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.message-bubble--received { background: var(--admin-bg); color: var(--admin-text); align-self: flex-start; border-bottom-left-radius: 4px; }
+.message-compose { padding: 1rem; border-top: 1px solid var(--admin-border); }

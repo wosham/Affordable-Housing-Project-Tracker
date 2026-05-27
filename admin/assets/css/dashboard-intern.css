@@ -1,0 +1,32 @@
+/* Intern Dashboard — Role-specific styles
+   Sign-in UI is the hero feature; must be visually prominent
+   TODO: Phase 4 — Full implementation */
+.intern-sidebar { background: #2a2a2a; color: #fff; }
+.intern-sidebar .nav-link { color: rgba(255,255,255,.8); }
+.intern-sidebar .nav-link.active,
+.intern-sidebar .nav-link:hover { color: var(--admin-lime); background: rgba(255,255,255,.1); }
+
+/* Geo-lock sign-in card */
+.signin-card {
+    border-radius: 16px; text-align: center; padding: 2.5rem 2rem;
+    border: 3px solid var(--admin-border);
+    background: linear-gradient(135deg, #f0f4f8 0%, #e8f5e9 100%);
+}
+.signin-card.gateway-open   { border-color: var(--admin-success); }
+.signin-card.gateway-closed { border-color: var(--admin-danger); }
+
+.signin-btn {
+    display: block; width: 100%; padding: 1.25rem; margin-top: 1.5rem;
+    border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    border: none; background: var(--admin-success); color: #fff; transition: all .3s;
+}
+.signin-btn:disabled { background: #a0aec0; cursor: not-allowed; }
+.signin-btn:not(:disabled):hover { background: #2f855a; }
+
+/* GPS indicator */
+.gps-status { display: flex; align-items: center; gap: .5rem; font-size: .875rem; }
+.gps-dot { width: 10px; height: 10px; border-radius: 50%; animation: pulse 1.5s infinite; }
+.gps-dot--acquiring { background: var(--admin-warning); }
+.gps-dot--locked    { background: var(--admin-success); }
+.gps-dot--error     { background: var(--admin-danger); animation: none; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }

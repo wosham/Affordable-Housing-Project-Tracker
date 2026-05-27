@@ -1,0 +1,6 @@
+/* Programme Manager Dashboard — Role-specific styles
+   TODO: Phase 3 — Full implementation */
+.manager-sidebar { background: #1a4a00; color: #fff; }
+.manager-sidebar .nav-link { color: rgba(255,255,255,.8); }
+.manager-sidebar .nav-link.active,
+.manager-sidebar .nav-link:hover { color: var(--admin-lime); background: rgba(255,255,255,.1); }

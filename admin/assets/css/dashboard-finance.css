@@ -1,0 +1,10 @@
+/* Finance Officer Dashboard — Role-specific styles
+   TODO: Phase 3 — Full implementation */
+.finance-sidebar { background: #1a3a4a; color: #fff; }
+.finance-sidebar .nav-link { color: rgba(255,255,255,.8); }
+.finance-sidebar .nav-link.active,
+.finance-sidebar .nav-link:hover { color: #81ecec; background: rgba(255,255,255,.1); }
+
+/* Financial summary bar */
+.finance-summary-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+.finance-summary-bar .amount { font-size: 1.4rem; font-weight: 700; }

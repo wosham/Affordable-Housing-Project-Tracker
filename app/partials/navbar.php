@@ -22,7 +22,7 @@ if (!function_exists('nav_active_class')) {
         <a href="<?= $basePath ?>about.php" class="navbar-link<?= nav_active_class('about', $activePage) ?>">About</a>
         <a href="<?= $basePath ?>contact.php" class="navbar-link<?= nav_active_class('contact', $activePage) ?>">Contact</a>
         <div class="navbar-cta">
-          <a href="<?= $basePath ?>auth/login.php" class="btn btn-sm btn-primary">
+          <a href="<?= $basePath ?>admin/login.php" class="btn btn-sm btn-primary">
             <i class="fa-solid fa-lock" aria-hidden="true"></i> Staff Portal
           </a>
         </div>

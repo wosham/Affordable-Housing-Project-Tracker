@@ -19,7 +19,14 @@ class Response
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        if ($json === false) {
+            http_response_code(500);
+            $json = '{"success":false,"message":"Unable to encode JSON response."}';
+        }
+
+        echo $json;
         exit;
     }
 
@@ -29,5 +36,11 @@ class Response
         $message = $message !== '' ? $message : 'Request could not be completed.';
         echo Security::e($message);
         exit;
+    }
+
+    public static function back(?string $fallback = null, int $status = 302): never
+    {
+        $target = $_SERVER['HTTP_REFERER'] ?? $fallback ?? Url::to('admin/index.php');
+        self::redirect($target, $status);
     }
 }

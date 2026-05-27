@@ -1,0 +1,6 @@
+/* Consultant / Supervising Engineer Dashboard — Role-specific styles
+   TODO: Phase 3 — Full implementation */
+.consultant-sidebar { background: #0a3d62; color: #fff; }
+.consultant-sidebar .nav-link { color: rgba(255,255,255,.8); }
+.consultant-sidebar .nav-link.active,
+.consultant-sidebar .nav-link:hover { color: #74b9ff; background: rgba(255,255,255,.1); }

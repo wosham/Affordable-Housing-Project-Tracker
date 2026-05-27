@@ -1,0 +1,16 @@
+/* Clerk of Works Dashboard — Role-specific styles
+   TODO: Phase 3 — Full implementation */
+.clerk-sidebar { background: #4a3500; color: #fff; }
+.clerk-sidebar .nav-link { color: rgba(255,255,255,.8); }
+.clerk-sidebar .nav-link.active,
+.clerk-sidebar .nav-link:hover { color: #fdcb6e; background: rgba(255,255,255,.1); }
+
+/* Attendance gateway big button */
+.gateway-btn {
+    width: 100%; padding: 2rem; border-radius: 12px; font-size: 1.5rem; font-weight: 700;
+    cursor: pointer; transition: all .3s ease; border: none;
+}
+.gateway-btn--open   { background: #c6f6d5; color: #22543d; border: 3px solid var(--admin-success); }
+.gateway-btn--closed { background: #fed7d7; color: #742a2a; border: 3px solid var(--admin-danger); }
+.gateway-btn--open:hover   { background: var(--admin-success); color: #fff; }
+.gateway-btn--closed:hover { background: var(--admin-danger);  color: #fff; }

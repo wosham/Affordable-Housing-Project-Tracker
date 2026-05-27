@@ -1,0 +1,10 @@
+/* Gantt Chart Component — TODO: Phase 5 */
+.gantt-wrap { overflow-x: auto; }
+.gantt-table { min-width: 900px; border-collapse: collapse; font-size: .8rem; }
+.gantt-table th { padding: .5rem .75rem; background: var(--admin-bg); border-bottom: 2px solid var(--admin-border); }
+.gantt-table td { padding: .4rem .75rem; border-bottom: 1px solid var(--admin-border); }
+.gantt-bar-cell { position: relative; height: 32px; }
+.gantt-bar { position: absolute; height: 20px; top: 6px; border-radius: 4px; background: var(--admin-primary); opacity: .85; }
+.gantt-bar--actual  { background: var(--admin-lime); opacity: 1; }
+.gantt-bar--delayed { background: var(--admin-danger); }
+.gantt-bar--done    { background: var(--admin-success); }

@@ -1,0 +1,12 @@
+/* Attendance Component — TODO: Phase 4 */
+.attendance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.intern-card { background: var(--admin-surface); border-radius: var(--admin-radius); padding: 1rem; box-shadow: var(--admin-shadow); display: flex; align-items: center; gap: .75rem; }
+.intern-card.present   { border-left: 4px solid var(--admin-success); }
+.intern-card.absent    { border-left: 4px solid var(--admin-danger); }
+.intern-card.geo-fail  { border-left: 4px solid var(--admin-warning); }
+.attendance-calendar   { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.attendance-day { aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 600; }
+.attendance-day.present  { background: #c6f6d5; color: #22543d; }
+.attendance-day.absent   { background: #fed7d7; color: #742a2a; }
+.attendance-day.geo-fail { background: #fefcbf; color: #744210; }
+.attendance-day.off      { background: var(--admin-bg); color: var(--admin-text-muted); }

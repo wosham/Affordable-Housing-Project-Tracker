@@ -1,0 +1,25 @@
+/* Admin Forms Component — base styles live in admin-global.css */
+
+/* Legacy aliases so older partial markup still works */
+.form-group  { display: grid; gap: .35rem; margin-bottom: var(--admin-space-md); }
+.form-control { width: 100%; min-height: 42px; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); color: var(--admin-text); padding: .6rem .75rem; }
+.form-control:focus { outline: none; border-color: var(--admin-lime); box-shadow: var(--admin-focus-ring); }
+.form-control.is-error { border-color: var(--admin-danger); }
+
+/* Form section divider */
+.form-section { border-top: 1px solid var(--admin-border); padding-top: var(--admin-space-lg); margin-top: var(--admin-space-lg); }
+.form-section__title { margin: 0 0 var(--admin-space-md); font-size: 1rem; font-weight: 800; }
+
+/* Inline form row */
+.form-row { display: flex; align-items: flex-end; gap: var(--admin-space-sm); flex-wrap: wrap; }
+.form-row .form-field { flex: 1; min-width: 160px; }
+
+/* File input */
+.form-file { display: block; width: 100%; padding: .6rem .75rem; border: 1px dashed var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface-muted); cursor: pointer; }
+.form-file:hover { border-color: var(--admin-primary); background: var(--admin-primary-soft); }
+
+/* Required indicator */
+.form-required { color: var(--admin-danger); margin-left: .15rem; }
+
+/* Character counter */
+.form-counter { font-size: .78rem; color: var(--admin-text-muted); text-align: right; margin-top: .15rem; }

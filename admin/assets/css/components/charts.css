@@ -1,0 +1,175 @@
+/* Admin Charts Component */
+
+/* Generic chart container (Canvas.js / chart.js targets) */
+.chart-card {
+    background: var(--admin-surface);
+    border-radius: var(--admin-radius);
+    box-shadow: var(--admin-shadow);
+    padding: var(--admin-space-lg);
+    display: grid;
+    gap: var(--admin-space-md);
+}
+
+.chart-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--admin-space-md);
+}
+
+.chart-card__title {
+    font-size: .875rem;
+    font-weight: 800;
+    color: var(--admin-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 0;
+}
+
+.chart-card__subtitle {
+    font-size: .82rem;
+    color: var(--admin-text-muted);
+    margin: .2rem 0 0;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+}
+
+.chart-container canvas {
+    display: block;
+    max-width: 100%;
+}
+
+/* Empty chart state */
+.sa-chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    gap: var(--admin-space-sm);
+    color: var(--admin-text-muted);
+    font-size: .875rem;
+    text-align: center;
+}
+
+.sa-chart-empty i {
+    font-size: 2rem;
+    opacity: .45;
+}
+
+/* Donut / ring placeholder (CSS-only) */
+.chart-donut {
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    border: 14px solid var(--admin-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 850;
+    color: var(--admin-primary);
+}
+
+/* Legend row */
+.chart-legend {
+    display: flex;
+    gap: var(--admin-space-md);
+    flex-wrap: wrap;
+    font-size: .78rem;
+}
+
+.chart-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    color: var(--admin-text-muted);
+}
+
+.chart-legend__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Bar chart wrapper (CSS bar charts used in dashboard) */
+.sa-bar-list {
+    display: grid;
+    gap: var(--admin-space-sm);
+}
+
+.sa-bar-item {
+    display: grid;
+    grid-template-columns: minmax(100px, .4fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--admin-space-sm);
+    font-size: .82rem;
+}
+
+.sa-bar-item__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.sa-bar-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--admin-border);
+    overflow: hidden;
+}
+
+.sa-bar-track > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--admin-primary), var(--admin-lime));
+    transition: width .6s ease;
+}
+
+.sa-bar-item__value {
+    font-weight: 750;
+    color: var(--admin-text-muted);
+    font-size: .78rem;
+    white-space: nowrap;
+}
+
+/* Column chart (vertical bars, monthly-payment style) */
+.sa-col-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--admin-space-xs);
+    height: 160px;
+    padding-top: var(--admin-space-md);
+}
+
+.sa-col-bar {
+    flex: 1;
+    display: grid;
+    gap: .1rem;
+    align-content: end;
+    text-align: center;
+}
+
+.sa-col-bar > span {
+    display: block;
+    height: var(--bar-height, 20%);
+    min-height: 6px;
+    border-radius: var(--admin-radius-sm) var(--admin-radius-sm) 0 0;
+    background: var(--admin-lime);
+    transition: height .5s ease;
+}
+
+.sa-col-bar > small {
+    font-size: .65rem;
+    color: var(--admin-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

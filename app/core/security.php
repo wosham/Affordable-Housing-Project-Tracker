@@ -12,9 +12,55 @@ class Security
         return trim(strip_tags($value));
     }
 
+    public static function cleanEmail(string $value): string
+    {
+        return filter_var(trim($value), FILTER_SANITIZE_EMAIL) ?: '';
+    }
+
+    public static function cleanInt(mixed $value, int $default = 0): int
+    {
+        $filtered = filter_var($value, FILTER_VALIDATE_INT);
+        return $filtered === false ? $default : (int)$filtered;
+    }
+
+    public static function cleanFloat(mixed $value, float $default = 0.0): float
+    {
+        $filtered = filter_var($value, FILTER_VALIDATE_FLOAT);
+        return $filtered === false ? $default : (float)$filtered;
+    }
+
     public static function methodIs(string $method): bool
     {
         return strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') === strtoupper($method);
+    }
+
+    public static function isPost(): bool
+    {
+        return self::methodIs('POST');
+    }
+
+    public static function isGet(): bool
+    {
+        return self::methodIs('GET');
+    }
+
+    public static function jsonInput(): array
+    {
+        static $input = null;
+
+        if (is_array($input)) {
+            return $input;
+        }
+
+        $raw = file_get_contents('php://input');
+        if (!is_string($raw) || trim($raw) === '') {
+            $input = [];
+            return $input;
+        }
+
+        $decoded = json_decode($raw, true);
+        $input = is_array($decoded) ? $decoded : [];
+        return $input;
     }
 
     public static function sendHeaders(): void

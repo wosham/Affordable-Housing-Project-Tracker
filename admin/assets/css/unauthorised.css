@@ -1,0 +1,173 @@
+/* =========================================================
+   TRANS-NZOIA AHP — Unauthorised / 403 Page
+   ========================================================= */
+
+.unauth-page {
+  min-height: 100vh; background: var(--primary-800, #0f2d07);
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+
+/* ----- Background ----- */
+.unauth-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.unauth-bg-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(159,232,112,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(159,232,112,.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.unauth-bg-glow {
+  position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+  width: 700px; height: 500px;
+  background: radial-gradient(ellipse, rgba(159,232,112,.08) 0%, transparent 65%);
+}
+
+/* ----- Top bar ----- */
+.unauth-topbar {
+  position: relative; z-index: 10;
+  display: flex; align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.unauth-logo {
+  display: flex; align-items: center; gap: .6rem;
+  text-decoration: none;
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-weight: 700; font-size: .85rem;
+  color: rgba(255,255,255,.6);
+  transition: color .2s;
+}
+.unauth-logo:hover { color: var(--lime, #9fe870); }
+.unauth-logo img { height: 36px; width: auto; }
+
+/* ----- Reason banners ----- */
+.unauth-reason-banner {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .75rem 1.25rem;
+  font-size: .82rem; font-weight: 500;
+  position: relative; z-index: 5;
+}
+.unauth-reason--timeout { background: #92400e22; color: #fbbf24; border-bottom: 1px solid #92400e44; }
+.unauth-reason--role    { background: #7f1d1d22; color: #f87171; border-bottom: 1px solid #7f1d1d44; }
+.unauth-reason--noauth  { background: rgba(0,0,0,.18); color: rgba(255,255,255,.55); border-bottom: 1px solid rgba(255,255,255,.07); }
+
+/* ----- Main content ----- */
+.unauth-inner {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 3rem 1.5rem; position: relative; z-index: 2;
+  text-align: center;
+}
+
+/* ----- 403 Code ----- */
+.unauth-code {
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: clamp(6rem, 18vw, 11rem);
+  font-weight: 900; line-height: .9;
+  color: transparent;
+  background: linear-gradient(135deg, rgba(159,232,112,.18) 0%, rgba(159,232,112,.04) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  letter-spacing: -.05em;
+  margin-bottom: 1rem; user-select: none;
+}
+
+/* ----- Headings ----- */
+.unauth-title {
+  font-family: var(--font-display, 'Syne', sans-serif) !important;
+  font-size: clamp(1.8rem, 4vw, 2.5rem) !important;
+  font-weight: 900 !important; color: #fff !important;
+  letter-spacing: -.03em; margin-bottom: .75rem;
+}
+.unauth-sub {
+  font-size: .9rem; color: rgba(255,255,255,.45);
+  line-height: 1.75; max-width: 460px;
+  margin: 0 auto 2.5rem;
+}
+
+/* ----- Action buttons ----- */
+.unauth-actions {
+  display: flex; flex-wrap: wrap; gap: .75rem;
+  justify-content: center; margin-bottom: 2.5rem;
+}
+.unauth-btn {
+  display: inline-flex; align-items: center; gap: .5em;
+  padding: .7rem 1.5rem; border-radius: 12px;
+  font-size: .88rem; font-weight: 700;
+  text-decoration: none; transition: all .2s;
+  border: 2px solid transparent;
+}
+.unauth-btn--primary {
+  background: var(--lime, #9fe870); color: var(--primary-800, #0f2d07);
+  border-color: var(--lime, #9fe870);
+}
+.unauth-btn--primary:hover { background: #b8f083; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(159,232,112,.25); }
+.unauth-btn--outline {
+  background: transparent; color: rgba(255,255,255,.7);
+  border-color: rgba(255,255,255,.2);
+}
+.unauth-btn--outline:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+.unauth-btn--ghost {
+  background: transparent; color: rgba(255,255,255,.4);
+  border-color: transparent;
+}
+.unauth-btn--ghost:hover { color: rgba(255,255,255,.7); background: rgba(255,255,255,.06); }
+
+/* ----- Countdown ring ----- */
+.unauth-countdown-wrap {
+  display: flex; align-items: center; gap: 1.25rem;
+  background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 16px; padding: 1.1rem 1.5rem;
+  max-width: 380px; width: 100%;
+}
+.unauth-countdown-ring { position: relative; flex-shrink: 0; }
+.unauth-countdown-svg { width: 44px; height: 44px; transform: rotate(-90deg); }
+.unauth-countdown-track {
+  fill: none; stroke: rgba(255,255,255,.08); stroke-width: 3;
+}
+.unauth-countdown-progress {
+  fill: none; stroke: var(--lime, #9fe870); stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 113.1; stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+.unauth-countdown-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 700; color: var(--lime, #9fe870);
+}
+.unauth-countdown-text { text-align: left; }
+.unauth-countdown-text p {
+  font-size: .82rem; color: rgba(255,255,255,.5);
+  margin: 0 0 .4rem; line-height: 1.5;
+}
+.unauth-stay-btn {
+  background: none; border: none; padding: 0;
+  font-size: .78rem; color: rgba(255,255,255,.35);
+  text-decoration: underline; text-underline-offset: 2px;
+  cursor: pointer; transition: color .2s;
+}
+.unauth-stay-btn:hover { color: var(--lime, #9fe870); }
+
+/* ----- Footer ----- */
+.unauth-footer {
+  position: relative; z-index: 2;
+  display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: center; gap: 1rem 2rem;
+  padding: 1.25rem 2rem;
+  border-top: 1px solid rgba(255,255,255,.05);
+  font-size: .72rem; color: rgba(255,255,255,.2);
+}
+.unauth-footer a {
+  color: rgba(255,255,255,.35); text-decoration: none; transition: color .2s;
+}
+.unauth-footer a:hover { color: var(--lime, #9fe870); }
+
+/* ----- Responsive ----- */
+@media (max-width: 540px) {
+  .unauth-inner { padding: 2rem 1rem; }
+  .unauth-actions { flex-direction: column; align-items: stretch; }
+  .unauth-btn { justify-content: center; }
+  .unauth-countdown-wrap { flex-direction: column; text-align: center; gap: .75rem; }
+  .unauth-countdown-text { text-align: center; }
+}

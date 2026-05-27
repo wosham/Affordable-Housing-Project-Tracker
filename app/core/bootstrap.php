@@ -23,12 +23,28 @@ if (($app_config['debug'] ?? false) === true) {
 require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/Model.php';
+foreach (glob(dirname(__DIR__) . '/models/*.php') ?: [] as $modelFile) {
+    require_once $modelFile;
+}
 require_once __DIR__ . '/Csrf.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Url.php';
 require_once __DIR__ . '/Response.php';
 require_once __DIR__ . '/Guard.php';
+require_once __DIR__ . '/Logger.php';
+require_once __DIR__ . '/Validator.php';
+require_once __DIR__ . '/Uploader.php';
+require_once __DIR__ . '/Paginator.php';
+require_once __DIR__ . '/CmsLoader.php';
+require_once __DIR__ . '/Controller.php';
+require_once __DIR__ . '/GeoFence.php';
 require_once __DIR__ . '/helpers.php';
+
+require_once dirname(__DIR__) . '/middleware/CsrfMiddleware.php';
+require_once dirname(__DIR__) . '/middleware/ApiMiddleware.php';
+require_once dirname(__DIR__) . '/middleware/AuthMiddleware.php';
+require_once dirname(__DIR__) . '/middleware/RoleMiddleware.php';
 
 Security::sendHeaders();
 Session::start($app_config['session'] ?? []);

@@ -1,0 +1,53 @@
+/* Admin Cards Component — additive card variants. Base .card lives in admin-global.css */
+
+/* Colored accent border on left edge */
+.card--accent-success { border-left: 4px solid var(--admin-success); }
+.card--accent-warning { border-left: 4px solid var(--admin-warning); }
+.card--accent-danger  { border-left: 4px solid var(--admin-danger); }
+.card--accent-info    { border-left: 4px solid var(--admin-info); }
+.card--accent-lime    { border-left: 4px solid var(--admin-lime); }
+
+/* Hoverable card */
+.card--hoverable { transition: box-shadow .18s ease, transform .18s ease; cursor: pointer; }
+.card--hoverable:hover { box-shadow: var(--admin-shadow-md); transform: translateY(-2px); }
+
+/* Glass/frosted card */
+.card--glass { background: color-mix(in srgb, var(--admin-surface) 88%, transparent); backdrop-filter: blur(16px); }
+
+/* Stat widget icon color variants (used as modifier on .stat-widget__icon) */
+.stat-widget__icon--info    { background: var(--admin-info-bg);    color: var(--admin-info-text);    }
+.stat-widget__icon--success { background: var(--admin-success-bg); color: var(--admin-success-text); }
+.stat-widget__icon--warning { background: var(--admin-warning-bg); color: var(--admin-warning-text); }
+.stat-widget__icon--danger  { background: var(--admin-danger-bg);  color: var(--admin-danger-text);  }
+.stat-widget__icon--primary { background: var(--admin-primary-soft); color: var(--admin-primary);    }
+.stat-widget__icon--lime    { background: var(--admin-lime-soft);  color: var(--admin-primary);      }
+
+/* Generic section heading (flex title + optional action) */
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--admin-space-md);
+    margin-bottom: var(--admin-space-md);
+    padding-bottom: var(--admin-space-md);
+    border-bottom: 1px solid color-mix(in srgb, var(--admin-border) 72%, transparent);
+}
+.section-heading > div { min-width: 0; }
+.section-heading h3 { margin: 0 0 .2rem; font-size: 1rem; line-height: 1.25; }
+.section-heading p  { margin: 0; color: var(--admin-text-muted); font-size: .875rem; max-width: 56rem; line-height: 1.45; }
+
+/* Generic eyebrow chip (inline label above headings) */
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 26px;
+    padding: .15rem .6rem;
+    border-radius: 999px;
+    background: var(--admin-primary-soft);
+    color: var(--admin-primary);
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}

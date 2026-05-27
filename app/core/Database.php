@@ -48,6 +48,37 @@ class Database
         return self::query($sql, $bindings)->fetchAll();
     }
 
+    public static function lastInsertId(?string $name = null): string
+    {
+        return self::connection()->lastInsertId($name);
+    }
+
+    public static function beginTransaction(): bool
+    {
+        return self::connection()->beginTransaction();
+    }
+
+    public static function commit(): bool
+    {
+        return self::connection()->commit();
+    }
+
+    public static function rollBack(): bool
+    {
+        $connection = self::connection();
+
+        if (!$connection->inTransaction()) {
+            return false;
+        }
+
+        return $connection->rollBack();
+    }
+
+    public static function inTransaction(): bool
+    {
+        return self::connection()->inTransaction();
+    }
+
     public static function reset(): void
     {
         self::$connection = null;

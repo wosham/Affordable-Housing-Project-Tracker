@@ -14,7 +14,6 @@ $pageStyles = [
 ];
 $pageScripts = [
   'assets/js/global.js',
-  'assets/js/data.js',
   'assets/js/pages/sitemap.js'
 ];
 $headMeta = [
@@ -206,28 +205,28 @@ include __DIR__ . "/app/partials/" . 'head.php';
             </div>
             <ul class="sm-card-links">
               <li data-page="Staff Login" data-desc="Secure login for county staff">
-                <a href="auth/login.php" class="sm-link">
+                <a href="admin/login.php" class="sm-link">
                   <span class="sm-link-icon"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span>
                   <span class="sm-link-body"><span class="sm-link-name">Staff Login</span><span class="sm-link-desc">Secure login for county staff</span></span>
                   <span class="sm-badge sm-badge--restricted">Restricted</span>
                 </a>
               </li>
               <li data-page="Dashboard" data-desc="Staff dashboard and management tools">
-                <a href="auth/dashboard.php" class="sm-link">
+                <a href="admin/index.php" class="sm-link">
                   <span class="sm-link-icon"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i></span>
                   <span class="sm-link-body"><span class="sm-link-name">Dashboard</span><span class="sm-link-desc">Staff dashboard and management tools</span></span>
                   <span class="sm-badge sm-badge--restricted">Restricted</span>
                 </a>
               </li>
               <li data-page="Project Editor" data-desc="Add and update project records">
-                <a href="auth/project-editor.php" class="sm-link">
+                <a href="admin/index.php" class="sm-link">
                   <span class="sm-link-icon"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span>
                   <span class="sm-link-body"><span class="sm-link-name">Project Editor</span><span class="sm-link-desc">Add and update project records</span></span>
                   <span class="sm-badge sm-badge--restricted">Restricted</span>
                 </a>
               </li>
               <li data-page="Forgot Password" data-desc="Reset staff account password">
-                <a href="auth/forgot-password.php" class="sm-link">
+                <a href="admin/auth/forgot-password.php" class="sm-link">
                   <span class="sm-link-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></span>
                   <span class="sm-link-body"><span class="sm-link-name">Forgot Password</span><span class="sm-link-desc">Reset your staff account password</span></span>
                   <span class="sm-badge sm-badge--live">Live</span>
@@ -381,10 +380,10 @@ include __DIR__ . "/app/partials/" . 'head.php';
               <tr data-page="Stakeholders" data-section="Programme" data-status="live"><td>Stakeholders</td><td>Programme</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="stakeholders.php" class="sm-tbl-link">stakeholders.php</a></td></tr>
               <tr data-page="FAQ" data-section="Programme" data-status="live"><td>FAQ</td><td>Programme</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="faq.php" class="sm-tbl-link">faq.php</a></td></tr>
               <tr data-page="Contact" data-section="Programme" data-status="live"><td>Contact Us</td><td>Programme</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="contact.php" class="sm-tbl-link">contact.php</a></td></tr>
-              <tr data-page="Staff Login" data-section="Staff Portal" data-status="restricted"><td>Staff Login</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--restricted">Restricted</span></td><td><a href="auth/login.php" class="sm-tbl-link">auth/login.php</a></td></tr>
-              <tr data-page="Dashboard" data-section="Staff Portal" data-status="restricted"><td>Dashboard</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--restricted">Restricted</span></td><td><a href="auth/dashboard.php" class="sm-tbl-link">auth/dashboard.php</a></td></tr>
-              <tr data-page="Project Editor" data-section="Staff Portal" data-status="restricted"><td>Project Editor</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--restricted">Restricted</span></td><td><a href="auth/project-editor.php" class="sm-tbl-link">auth/project-editor.php</a></td></tr>
-              <tr data-page="Forgot Password" data-section="Staff Portal" data-status="live"><td>Forgot Password</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="auth/forgot-password.php" class="sm-tbl-link">auth/forgot-password.php</a></td></tr>
+              <tr data-page="Staff Login" data-section="Staff Portal" data-status="restricted"><td>Staff Login</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--restricted">Restricted</span></td><td><a href="admin/login.php" class="sm-tbl-link">admin/login.php</a></td></tr>
+              <tr data-page="Dashboard" data-section="Staff Portal" data-status="restricted"><td>Dashboard</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--restricted">Restricted</span></td><td><a href="admin/index.php" class="sm-tbl-link">admin/index.php</a></td></tr>
+              <tr data-page="Project Editor" data-section="Staff Portal" data-status="restricted"><td>Project Editor</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--restricted">Restricted</span></td><td><a href="admin/index.php" class="sm-tbl-link">admin/index.php</a></td></tr>
+              <tr data-page="Forgot Password" data-section="Staff Portal" data-status="live"><td>Forgot Password</td><td>Staff Portal</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="admin/auth/forgot-password.php" class="sm-tbl-link">admin/auth/forgot-password.php</a></td></tr>
               <tr data-page="Privacy Policy" data-section="Legal" data-status="live"><td>Privacy Policy</td><td>Legal</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="legal/privacy.php" class="sm-tbl-link">legal/privacy.php</a></td></tr>
               <tr data-page="Terms of Use" data-section="Legal" data-status="live"><td>Terms of Use</td><td>Legal</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="legal/terms.php" class="sm-tbl-link">legal/terms.php</a></td></tr>
               <tr data-page="Disclaimer" data-section="Legal" data-status="live"><td>Disclaimer</td><td>Legal</td><td><span class="sm-badge sm-badge--live">Live</span></td><td><a href="legal/disclaimer.php" class="sm-tbl-link">legal/disclaimer.php</a></td></tr>

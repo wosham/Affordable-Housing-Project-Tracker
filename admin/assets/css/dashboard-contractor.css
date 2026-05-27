@@ -1,0 +1,11 @@
+/* Contractor Dashboard — Role-specific styles
+   TODO: Phase 3 — Full implementation */
+.contractor-sidebar { background: #6a1a00; color: #fff; }
+.contractor-sidebar .nav-link { color: rgba(255,255,255,.8); }
+.contractor-sidebar .nav-link.active,
+.contractor-sidebar .nav-link:hover { color: #ffeaa7; background: rgba(255,255,255,.1); }
+
+/* IPC submission wizard steps */
+.ipc-wizard-steps { display: flex; gap: 0; counter-reset: step; }
+.ipc-wizard-steps .step { flex: 1; text-align: center; padding: .75rem; position: relative; }
+.ipc-wizard-steps .step.active { border-bottom: 3px solid var(--admin-lime); }

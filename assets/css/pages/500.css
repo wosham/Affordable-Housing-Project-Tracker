@@ -1,0 +1,84 @@
+/* TRANS-NZOIA AHP — 500 Page */
+@import url("../utilities/error-base.css");
+
+/* 500 gets an amber/red error code */
+.err-code {
+  background: linear-gradient(135deg, #fca5a5 0%, #f87171 50%, rgba(239,68,68,.35) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Icon styled red */
+.err-icon {
+  background: rgba(239,68,68,.1);
+  border-color: rgba(239,68,68,.25);
+  color: #fca5a5;
+}
+
+/* Pulse on error icon */
+@keyframes errPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,.25); }
+  50%       { box-shadow: 0 0 0 14px rgba(239,68,68,.0); }
+}
+.err-icon { animation: errPulse 2.2s ease-in-out infinite; }
+
+/* Retry countdown badge */
+.err-retry-count {
+  font-size: .75em;
+  color: rgba(22,51,0,.6);
+  font-weight: 400;
+}
+
+/* ── Technical Details Block ── */
+.err-tech-details {
+  text-align: left;
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+
+.err-tech-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .85rem 1.1rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.45);
+  font-size: .78rem;
+  font-family: 'Courier New', monospace;
+  width: 100%;
+  transition: color .2s;
+  gap: .5rem;
+}
+.err-tech-toggle:hover { color: rgba(255,255,255,.75); }
+.err-tech-toggle > span { display: flex; align-items: center; gap: .5em; }
+.err-tech-toggle > i { transition: transform .25s; flex-shrink: 0; }
+.err-tech-toggle.is-open > i { transform: rotate(180deg); }
+
+.err-tech-body {
+  padding: 0 1.1rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .35s ease, padding .3s ease;
+}
+.err-tech-body.is-open {
+  max-height: 220px;
+  padding: .25rem 1.1rem 1rem;
+}
+
+.err-tech-row {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: .5rem;
+  padding: .35rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: .74rem;
+  font-family: 'Courier New', monospace;
+}
+.err-tech-row:last-child { border-bottom: none; }
+.err-tech-label { color: rgba(255,255,255,.32); }
+.err-tech-value { color: rgba(255,255,255,.62); word-break: break-all; }

@@ -1,0 +1,4 @@
+# Admin directory — PHP files served normally; all other file types blocked
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf|docx|xlsx|txt|log)$">
+    Deny from all
+</FilesMatch>

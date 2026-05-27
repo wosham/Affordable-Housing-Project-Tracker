@@ -36,7 +36,7 @@ if (!function_exists('mob_active_class')) {
       <a href="<?= $legalPath ?>disclaimer.php" class="mob-nav-link<?= mob_active_class('disclaimer', $activePage) ?>"><span class="mob-nav-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span> Disclaimer</a>
     </nav>
     <div class="mob-menu-ctas">
-      <a href="<?= $basePath ?>auth/login.php" class="mob-cta-staff"><i class="fa-solid fa-lock" aria-hidden="true"></i> Staff Portal Login</a>
+      <a href="<?= $basePath ?>admin/login.php" class="mob-cta-staff"><i class="fa-solid fa-lock" aria-hidden="true"></i> Staff Portal Login</a>
       <a href="https://ecitizen.go.ke" target="_blank" rel="noopener noreferrer" class="mob-cta-ecitizen"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Apply via eCitizen</a>
     </div>
     <div class="mob-contact-strip">

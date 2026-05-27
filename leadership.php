@@ -14,7 +14,6 @@ $pageStyles = [
 ];
 $pageScripts = [
   'assets/js/global.js',
-  'assets/js/data.js',
   'assets/js/pages/leadership.js'
 ];
 $headMeta = [

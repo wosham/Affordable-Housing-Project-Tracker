@@ -23,4 +23,30 @@ class Url
     {
         return parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     }
+
+    public static function currentUrl(): string
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? self::basePath();
+        return $uri === '' ? self::basePath() : $uri;
+    }
+
+    public static function isActive(string $path): bool
+    {
+        return rtrim(self::currentPath(), '/') === rtrim(self::to($path), '/');
+    }
+
+    public static function query(array $params = [], ?string $path = null): string
+    {
+        $base = $path === null ? self::currentPath() : self::to($path);
+        $current = [];
+
+        if ($path === null) {
+            parse_str((string)parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY), $current);
+        }
+
+        $query = array_merge($current, $params);
+        $query = array_filter($query, static fn ($value): bool => $value !== null && $value !== '');
+
+        return $base . ($query === [] ? '' : '?' . http_build_query($query));
+    }
 }
