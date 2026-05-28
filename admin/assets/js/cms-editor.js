@@ -72,7 +72,9 @@
   function sectionPayload(section) {
     var content = {};
     section.querySelectorAll('[data-cms-field]').forEach(function (field) {
-      content[field.getAttribute('data-cms-field')] = field.value || '';
+      content[field.getAttribute('data-cms-field')] = field.type === 'checkbox'
+        ? (field.checked ? '1' : '0')
+        : (field.value || '');
     });
 
     var page = document.querySelector('[data-cms-page-id]');
@@ -112,6 +114,7 @@
 
       var save = section.querySelector('[data-cms-save-section]');
       if (save) {
+        var saveHtml = save.innerHTML;
         save.addEventListener('click', function () {
           save.disabled = true;
           save.textContent = 'Saving...';
@@ -120,11 +123,11 @@
             state('Section saved', true);
             setTimeout(function () {
               save.disabled = false;
-              save.innerHTML = '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Section';
+              save.innerHTML = saveHtml;
             }, 900);
           }).catch(function (error) {
             save.disabled = false;
-            save.innerHTML = '<i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Section';
+            save.innerHTML = saveHtml;
             state(error.message || 'Section save failed', false);
           });
         });
@@ -154,11 +157,71 @@
         new FormData(form).forEach(function (value, key) {
           payload[key] = value;
         });
+        if (!Object.prototype.hasOwnProperty.call(payload, 'value')) {
+          payload.value = '';
+        }
 
         request('api/cms/save-setting.php', payload).then(function () {
           state('Setting saved', true);
+          form.classList.add('is-saved');
+          setTimeout(function () { form.classList.remove('is-saved'); }, 900);
         }).catch(function (error) {
           state(error.message || 'Setting save failed', false);
+        });
+      });
+    });
+  }
+
+  function bindCmsDashboard() {
+    var tools = document.querySelector('[data-cms-registry-tools]');
+    if (tools) {
+      var search = tools.querySelector('[data-cms-page-search]');
+      var template = tools.querySelector('[data-cms-page-template]');
+      var status = tools.querySelector('[data-cms-page-status]');
+      var attention = tools.querySelector('[data-cms-page-attention]');
+      var cards = Array.prototype.slice.call(document.querySelectorAll('[data-cms-page-card]'));
+      var empty = document.querySelector('[data-cms-empty-filter]');
+
+      var filterCards = function () {
+        var query = (search && search.value || '').trim().toLowerCase();
+        var templateValue = template && template.value || '';
+        var statusValue = status && status.value || '';
+        var attentionOnly = attention && attention.checked;
+        var visible = 0;
+
+        cards.forEach(function (card) {
+          var matches = true;
+          if (query && (card.getAttribute('data-search') || '').indexOf(query) === -1) matches = false;
+          if (templateValue && card.getAttribute('data-template') !== templateValue) matches = false;
+          if (statusValue && card.getAttribute('data-status') !== statusValue) matches = false;
+          if (attentionOnly && card.getAttribute('data-attention') !== '1') matches = false;
+
+          card.hidden = !matches;
+          if (matches) visible += 1;
+        });
+
+        if (empty) empty.hidden = visible > 0;
+      };
+
+      [search, template, status, attention].forEach(function (control) {
+        if (!control) return;
+        control.addEventListener('input', filterCards);
+        control.addEventListener('change', filterCards);
+      });
+    }
+
+    document.querySelectorAll('[data-cms-settings-tabs]').forEach(function (tabs) {
+      tabs.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-cms-settings-tab]');
+        if (!button) return;
+        var target = button.getAttribute('data-cms-settings-tab');
+
+        tabs.querySelectorAll('[data-cms-settings-tab]').forEach(function (tabButton) {
+          tabButton.classList.toggle('is-active', tabButton === button);
+        });
+
+        document.querySelectorAll('[data-cms-settings-panel]').forEach(function (panel) {
+          panel.classList.toggle('is-active', panel.getAttribute('data-cms-settings-panel') === target);
         });
       });
     });
@@ -204,5 +267,6 @@
     bindSections();
     bindSettings();
     bindUploads();
+    bindCmsDashboard();
   });
 })();

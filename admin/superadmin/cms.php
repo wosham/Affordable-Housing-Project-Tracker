@@ -20,12 +20,13 @@ cms_ensure_page_registry();
 
 $pages = CmsPage::allWithSectionCounts();
 $settings = CmsSetting::grouped();
+$cmsStats = cms_dashboard_stats($pages, $settings);
 $groups = [
-    'main' => ['label' => 'Main Pages', 'templates' => ['landing', 'content', 'contact']],
-    'programme' => ['label' => 'Programme Pages', 'templates' => ['listing', 'template']],
-    'content' => ['label' => 'Content Libraries', 'templates' => ['media']],
-    'legal' => ['label' => 'Legal Pages', 'templates' => ['legal']],
-    'system' => ['label' => 'System Pages', 'templates' => ['system']],
+    'main' => ['label' => 'Main Pages', 'description' => 'Primary public information pages controlled by structured editors.', 'templates' => ['landing', 'content', 'contact']],
+    'programme' => ['label' => 'Programme Pages', 'description' => 'Live programme views backed by projects, constituencies, reports and templates.', 'templates' => ['listing', 'template']],
+    'content' => ['label' => 'Content Libraries', 'description' => 'Media-driven public libraries and gallery surfaces.', 'templates' => ['media']],
+    'legal' => ['label' => 'Legal Pages', 'description' => 'Single-document pages managed with the rich text editor.', 'templates' => ['legal']],
+    'system' => ['label' => 'System Pages', 'description' => 'Operational fallback pages for errors, maintenance and navigation.', 'templates' => ['system']],
 ];
 
 include __DIR__ . '/../../app/partials/admin/shell-start.php';
@@ -35,12 +36,29 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i> Structured CMS</span>
     <h2>Public Website Control Centre</h2>
-    <p>Edit page metadata, hero copy, legal text, calls-to-action and section visibility without breaking the designed layouts.</p>
+    <p>Control page metadata, hero copy, legal text, calls-to-action, section visibility and shared website settings from one protected workspace.</p>
   </div>
   <div class="sa-cms-hero__stats">
-    <span><strong><?= Security::e(format_number(count($pages))) ?></strong><small>Registered pages</small></span>
-    <span><strong><?= Security::e(format_number(array_sum(array_map(static fn ($p) => (int)$p['section_count'], $pages)))) ?></strong><small>Editable sections</small></span>
-    <span><strong><?= Security::e(format_number(count($settings, COUNT_RECURSIVE) - count($settings))) ?></strong><small>Global settings</small></span>
+    <span><strong><?= Security::e(format_number($cmsStats['published_pages'])) ?></strong><small>Published pages</small></span>
+    <span><strong><?= Security::e(format_number($cmsStats['needs_attention'])) ?></strong><small>Need attention</small></span>
+    <span><strong><?= Security::e(format_number($cmsStats['editable_sections'])) ?></strong><small>Editable sections</small></span>
+    <span><strong><?= Security::e(format_number($cmsStats['global_settings'])) ?></strong><small>Global settings</small></span>
+  </div>
+</section>
+
+<section class="card sa-cms-health">
+  <div class="section-heading">
+    <div>
+      <h3>CMS Health Briefing</h3>
+      <p>System-generated checks for page readiness, SEO coverage and content governance.</p>
+    </div>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=home')) ?>"><i class="fa-solid fa-house-chimney" aria-hidden="true"></i> Edit Homepage</a>
+  </div>
+  <div class="sa-cms-health-grid">
+    <?php cms_health_tile('SEO gaps', $cmsStats['seo_gaps'], 'Pages missing SEO titles or descriptions', 'fa-magnifying-glass-chart', $cmsStats['seo_gaps'] > 0 ? 'warning' : 'success'); ?>
+    <?php cms_health_tile('Hidden pages', $cmsStats['hidden_pages'], 'Pages currently not published', 'fa-eye-slash', $cmsStats['hidden_pages'] > 0 ? 'info' : 'success'); ?>
+    <?php cms_health_tile('Hidden sections', $cmsStats['hidden_sections'], 'Sections disabled across pages', 'fa-toggle-off', $cmsStats['hidden_sections'] > 0 ? 'warning' : 'success'); ?>
+    <?php cms_health_tile('Image gaps', $cmsStats['missing_hero_images'], 'Pages without a hero image path', 'fa-image', $cmsStats['missing_hero_images'] > 0 ? 'warning' : 'success'); ?>
   </div>
 </section>
 
@@ -48,34 +66,96 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div class="section-heading">
     <div>
       <h3>Page Registry</h3>
-      <p>Each page keeps its layout, while editors control the content blocks and publishing state.</p>
+      <p>Find, inspect and edit every controlled page without breaking its designed layout.</p>
     </div>
     <a class="btn btn--outline" href="<?= Security::e(Url::to('index.php')) ?>" target="_blank" rel="noopener noreferrer">
       <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open Site
     </a>
   </div>
 
+  <div class="sa-cms-registry-tools" data-cms-registry-tools>
+    <label class="form-field">
+      <span class="form-label">Search pages</span>
+      <input class="form-input" type="search" data-cms-page-search placeholder="Search title, route or template">
+    </label>
+    <label class="form-field">
+      <span class="form-label">Template</span>
+      <select class="form-select" data-cms-page-template>
+        <option value="">All templates</option>
+        <?php foreach (['landing', 'content', 'contact', 'listing', 'template', 'media', 'legal', 'system'] as $template): ?>
+          <option value="<?= Security::e($template) ?>"><?= Security::e(status_label($template)) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <label class="form-field">
+      <span class="form-label">Status</span>
+      <select class="form-select" data-cms-page-status>
+        <option value="">All statuses</option>
+        <?php foreach (['published', 'draft', 'maintenance', 'hidden'] as $status): ?>
+          <option value="<?= Security::e($status) ?>"><?= Security::e(status_label($status)) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <label class="sa-cms-filter-check">
+      <input type="checkbox" data-cms-page-attention>
+      <span>Needs attention only</span>
+    </label>
+  </div>
+
 <?php foreach ($groups as $group): ?>
   <?php $groupPages = array_values(array_filter($pages, static fn ($page): bool => in_array((string)($page['template'] ?? ''), $group['templates'], true))); ?>
   <?php if (!$groupPages) { continue; } ?>
   <div class="sa-cms-group">
-    <h4><?= Security::e($group['label']) ?></h4>
+    <div class="sa-cms-group-heading">
+      <div>
+        <h4><?= Security::e($group['label']) ?></h4>
+        <p><?= Security::e($group['description']) ?></p>
+      </div>
+      <span><?= Security::e(format_number(count($groupPages))) ?> pages</span>
+    </div>
     <div class="sa-cms-page-grid">
 <?php foreach ($groupPages as $cmsPage): ?>
-      <article class="sa-cms-page-card">
+      <?php $health = cms_page_health($cmsPage); ?>
+      <article class="sa-cms-page-card" data-cms-page-card data-search="<?= Security::e(strtolower(cms_page_label((string)$cmsPage['slug']) . ' ' . ($cmsPage['route_path'] ?? '') . ' ' . ($cmsPage['template'] ?? ''))) ?>" data-template="<?= Security::e((string)($cmsPage['template'] ?? '')) ?>" data-status="<?= Security::e((string)($cmsPage['status'] ?? '')) ?>" data-attention="<?= $health['needs_attention'] ? '1' : '0' ?>">
         <div class="sa-cms-page-card__top">
           <span class="sa-cms-page-icon"><i class="fa-solid <?= Security::e(cms_page_icon((string)$cmsPage['template'])) ?>" aria-hidden="true"></i></span>
           <div>
             <strong><?= Security::e(cms_page_label((string)$cmsPage['slug'])) ?></strong>
             <small><?= Security::e($cmsPage['route_path'] ?: $cmsPage['slug']) ?></small>
           </div>
-          <span class="badge <?= Security::e(status_badge_class($cmsPage['status'])) ?>"><?= Security::e(status_label($cmsPage['status'])) ?></span>
+          <div class="sa-cms-page-card__badges">
+            <span class="badge <?= Security::e(status_badge_class($cmsPage['status'])) ?>"><?= Security::e(status_label($cmsPage['status'])) ?></span>
+            <span class="badge badge--info"><?= Security::e(status_label($cmsPage['template'] ?? 'page')) ?></span>
+          </div>
+        </div>
+        <div class="sa-cms-page-progress">
+          <div>
+            <span>Section visibility</span>
+            <strong><?= Security::e(format_number($cmsPage['visible_section_count'] ?? 0)) ?> / <?= Security::e(format_number($cmsPage['section_count'] ?? 0)) ?></strong>
+          </div>
+          <meter min="0" max="<?= max(1, (int)($cmsPage['section_count'] ?? 0)) ?>" value="<?= (int)($cmsPage['visible_section_count'] ?? 0) ?>"></meter>
         </div>
         <dl class="sa-cms-page-meta">
-          <div><dt>Sections</dt><dd><?= Security::e(format_number($cmsPage['visible_section_count'] ?? 0)) ?> / <?= Security::e(format_number($cmsPage['section_count'] ?? 0)) ?></dd></div>
-          <div><dt>Updated</dt><dd><?= Security::e(time_ago($cmsPage['updated_at'] ?? null)) ?></dd></div>
-          <div><dt>SEO</dt><dd><?= Security::e(($cmsPage['seo_title'] ?? '') !== '' ? 'Configured' : 'Needs title') ?></dd></div>
+          <div>
+            <dt><i class="fa-regular fa-clock" aria-hidden="true"></i> Updated</dt>
+            <dd><?= Security::e(time_ago($cmsPage['updated_at'] ?? null)) ?></dd>
+          </div>
+          <div>
+            <dt><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> SEO</dt>
+            <dd class="<?= $health['seo_gap'] ? 'is-warning' : 'is-ready' ?>"><?= Security::e($health['seo_label']) ?></dd>
+          </div>
+          <div>
+            <dt><i class="fa-regular fa-image" aria-hidden="true"></i> Hero</dt>
+            <dd class="<?= $health['missing_hero'] ? 'is-warning' : 'is-ready' ?>"><?= Security::e($health['hero_label']) ?></dd>
+          </div>
         </dl>
+        <?php if ($health['messages']): ?>
+          <ul class="sa-cms-page-alerts">
+          <?php foreach ($health['messages'] as $message): ?>
+            <li><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span><?= Security::e($message) ?></span></li>
+          <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
         <div class="sa-cms-page-card__actions">
           <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=' . urlencode((string)$cmsPage['slug']))) ?>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Edit</a>
           <?php if (($cmsPage['route_path'] ?? '') !== ''): ?>
@@ -87,6 +167,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </div>
   </div>
 <?php endforeach; ?>
+  <div class="sa-cms-empty-filter" data-cms-empty-filter hidden>
+    <i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i>
+    <strong>No pages match this view</strong>
+    <span>Adjust the search or filters to show more CMS pages.</span>
+  </div>
 </section>
 
 <section class="card sa-cms-settings">
@@ -96,26 +181,38 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <p>Shared contact, ticker, social, asset and statistic values used across the website.</p>
     </div>
   </div>
-  <div class="sa-cms-settings-grid">
+  <div class="sa-cms-settings-tabs" data-cms-settings-tabs>
+<?php $firstSettingGroup = true; ?>
 <?php foreach ($settings as $groupName => $items): ?>
-    <article class="sa-cms-setting-card">
-      <h4><?= Security::e(status_label((string)$groupName)) ?></h4>
+    <button class="<?= $firstSettingGroup ? 'is-active' : '' ?>" type="button" data-cms-settings-tab="<?= Security::e((string)$groupName) ?>"><?= Security::e(status_label((string)$groupName)) ?><span><?= Security::e(format_number(count($items))) ?></span></button>
+    <?php $firstSettingGroup = false; ?>
+<?php endforeach; ?>
+  </div>
+  <div class="sa-cms-settings-grid">
+<?php $firstSettingPanel = true; ?>
+<?php foreach ($settings as $groupName => $items): ?>
+    <article class="sa-cms-setting-card <?= $firstSettingPanel ? 'is-active' : '' ?>" data-cms-settings-panel="<?= Security::e((string)$groupName) ?>">
+      <div class="sa-cms-setting-card__head">
+        <h4><?= Security::e(status_label((string)$groupName)) ?></h4>
+        <span><?= Security::e(format_number(count($items))) ?> settings</span>
+      </div>
       <ul>
-<?php foreach (array_slice($items, 0, 6) as $item): ?>
+<?php foreach ($items as $item): ?>
         <li>
-          <span><?= Security::e($item['label']) ?></span>
+          <span class="sa-cms-setting-label"><?= Security::e($item['label']) ?></span>
           <form data-cms-setting-form>
             <input type="hidden" name="key" value="<?= Security::e($item['key']) ?>">
             <input type="hidden" name="type" value="<?= Security::e($item['type']) ?>">
             <input type="hidden" name="label" value="<?= Security::e($item['label']) ?>">
             <input type="hidden" name="group" value="<?= Security::e($item['group']) ?>">
-            <input class="form-input" name="value" value="<?= Security::e($item['value']) ?>">
-            <button class="btn btn--sm btn--outline" type="submit">Save</button>
+            <?= cms_setting_control($item) ?>
+            <button class="btn btn--sm btn--outline" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save</button>
           </form>
         </li>
 <?php endforeach; ?>
       </ul>
     </article>
+    <?php $firstSettingPanel = false; ?>
 <?php endforeach; ?>
   </div>
 </section>
@@ -245,4 +342,124 @@ function cms_page_icon(string $template): string
         'system' => 'fa-triangle-exclamation',
         default => 'fa-file-lines',
     };
+}
+
+function cms_dashboard_stats(array $pages, array $settings): array
+{
+    $stats = [
+        'published_pages' => 0,
+        'hidden_pages' => 0,
+        'seo_gaps' => 0,
+        'missing_hero_images' => 0,
+        'hidden_sections' => 0,
+        'editable_sections' => 0,
+        'global_settings' => count($settings, COUNT_RECURSIVE) - count($settings),
+        'needs_attention' => 0,
+    ];
+
+    foreach ($pages as $page) {
+        if (($page['status'] ?? '') === 'published') {
+            $stats['published_pages']++;
+        } else {
+            $stats['hidden_pages']++;
+        }
+
+        $sectionCount = (int)($page['section_count'] ?? 0);
+        $visibleCount = (int)($page['visible_section_count'] ?? 0);
+        $stats['editable_sections'] += $sectionCount;
+        $stats['hidden_sections'] += max(0, $sectionCount - $visibleCount);
+
+        $health = cms_page_health($page);
+        if ($health['seo_gap']) {
+            $stats['seo_gaps']++;
+        }
+        if ($health['missing_hero']) {
+            $stats['missing_hero_images']++;
+        }
+        if ($health['needs_attention']) {
+            $stats['needs_attention']++;
+        }
+    }
+
+    return $stats;
+}
+
+function cms_page_health(array $page): array
+{
+    $seoGap = trim((string)($page['seo_title'] ?? '')) === '' || trim((string)($page['seo_description'] ?? '')) === '';
+    $missingHero = in_array((string)($page['template'] ?? ''), ['landing', 'content', 'contact', 'listing', 'media'], true)
+        && trim((string)($page['hero_image'] ?? '')) === '';
+    $hiddenSections = max(0, (int)($page['section_count'] ?? 0) - (int)($page['visible_section_count'] ?? 0));
+    $messages = [];
+
+    if ($seoGap) {
+        $messages[] = 'SEO metadata incomplete';
+    }
+    if ($missingHero) {
+        $messages[] = 'Hero image missing';
+    }
+    if ($hiddenSections > 0) {
+        $messages[] = $hiddenSections . ' hidden section' . ($hiddenSections === 1 ? '' : 's');
+    }
+    if (($page['status'] ?? '') !== 'published') {
+        $messages[] = 'Not published';
+    }
+
+    return [
+        'seo_gap' => $seoGap,
+        'missing_hero' => $missingHero,
+        'needs_attention' => $seoGap || $missingHero || ($page['status'] ?? '') !== 'published',
+        'seo_label' => $seoGap ? 'Needs work' : 'Configured',
+        'hero_label' => $missingHero ? 'Missing' : 'Ready',
+        'messages' => $messages,
+    ];
+}
+
+function cms_health_tile(string $label, int $value, string $description, string $icon, string $tone): void
+{
+    ?>
+    <article class="sa-cms-health-tile sa-cms-health-tile--<?= Security::e($tone) ?>">
+      <span><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span>
+      <div>
+        <strong><?= Security::e(format_number($value)) ?></strong>
+        <h4><?= Security::e($label) ?></h4>
+        <p><?= Security::e($description) ?></p>
+      </div>
+    </article>
+    <?php
+}
+
+function cms_setting_control(array $item): string
+{
+    $key = (string)($item['key'] ?? '');
+    $type = (string)($item['type'] ?? 'text');
+    $value = Security::e($item['value'] ?? '');
+    $lowerKey = strtolower($key);
+
+    if ($type === 'boolean' || str_contains($lowerKey, 'mode')) {
+        $checked = in_array(strtolower((string)($item['value'] ?? '')), ['1', 'true', 'yes', 'on'], true) ? ' checked' : '';
+        return '<label class="sa-cms-setting-toggle"><input type="checkbox" name="value" value="1"' . $checked . '><span></span><strong>Enabled</strong></label>';
+    }
+
+    if ($type === 'number' || str_contains($lowerKey, 'hour') || str_contains($lowerKey, 'radius') || str_contains($lowerKey, 'total')) {
+        return '<input class="form-input" type="number" name="value" value="' . $value . '">';
+    }
+
+    if (str_contains($lowerKey, 'time') || str_contains($lowerKey, 'window_')) {
+        return '<input class="form-input" type="time" name="value" value="' . $value . '">';
+    }
+
+    if ($type === 'json' || str_contains($lowerKey, 'metadata') || str_contains($lowerKey, 'items') || str_contains($lowerKey, 'stats')) {
+        return '<textarea class="form-textarea sa-cms-json-input" name="value" rows="4">' . $value . '</textarea>';
+    }
+
+    if (str_contains($lowerKey, 'url')) {
+        return '<input class="form-input" type="url" name="value" value="' . $value . '">';
+    }
+
+    if (str_contains($lowerKey, 'logo') || str_contains($lowerKey, 'image') || str_contains($lowerKey, 'favicon')) {
+        return '<input class="form-input" name="value" value="' . $value . '" placeholder="uploads/...">';
+    }
+
+    return '<input class="form-input" name="value" value="' . $value . '">';
 }
