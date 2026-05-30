@@ -110,24 +110,43 @@ INSERT IGNORE INTO `news_categories` (`name`, `slug`, `color`) VALUES
 ('Press Releases',    'press-releases',    '#1a3a4a');
 
 -- ============================================================
--- FAQ ITEMS
+-- FAQ CATEGORIES + ITEMS
 -- ============================================================
-INSERT IGNORE INTO `faq_items` (`sort_order`, `question`, `answer`, `category`, `is_visible`) VALUES
-(1, 'What is the Trans-Nzoia Affordable Housing Programme?',
- 'The programme is a county government initiative under the national Affordable Housing Programme (AHP) to provide decent, affordable housing to residents of Trans-Nzoia County.',
- 'General', 1),
-(2, 'Who is eligible to apply for affordable housing units?',
- 'Kenyan citizens residing in Trans-Nzoia County who meet the income threshold set by the national government. Priority is given to civil servants, low-income earners, and persons with disabilities.',
- 'Eligibility', 1),
-(3, 'How can I track the progress of a project near me?',
- 'Visit the Projects section on this website and select your constituency to see all projects, their current status, and completion percentage.',
- 'General', 1),
-(4, 'Who are the key stakeholders in this programme?',
- 'The programme involves Trans-Nzoia County Government, the State Department for Housing and Urban Development (SDHUD), contractors, and supervising consultants.',
- 'General', 1),
-(5, 'How are contractors selected for projects?',
- 'Contractors are selected through competitive tendering processes in accordance with the Public Procurement and Asset Disposal Act.',
- 'Procurement', 1);
+INSERT IGNORE INTO `faq_categories` (`name`, `slug`, `icon`, `description`, `sort_order`, `status`) VALUES
+('Eligibility',              'eligibility',  'fa-user-check',     'Who qualifies for the programme and what conditions apply.', 10, 'published'),
+('Application Process',      'application',  'fa-file-pen',       'Step-by-step guidance on registration and applications.', 20, 'published'),
+('Payments & Housing Levy',  'payments',     'fa-coins',          'Housing levy, savings, refunds and repayment questions.', 30, 'published'),
+('Unit Allocation',          'allocation',   'fa-house-circle-check', 'How units are assigned, balloted and handed over.', 40, 'published'),
+('Construction & Timeline',  'construction', 'fa-helmet-safety',  'Progress updates, timelines and site quality controls.', 50, 'published'),
+('Legal & Documents',        'legal',        'fa-scale-balanced', 'Ownership titles, tenancy agreements and legal protections.', 60, 'published'),
+('Beneficiary Rights',       'rights',       'fa-shield-halved',  'Applicant rights, complaints and malpractice reporting.', 70, 'published'),
+('Contact & Support',        'contact',      'fa-phone',          'How to reach the AHP field office and housing desk.', 80, 'published');
+
+INSERT IGNORE INTO `faq_items` (`category_id`, `slug`, `sort_order`, `question`, `answer`, `category`, `is_popular`, `status`, `search_keywords`, `is_visible`) VALUES
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'eligibility' LIMIT 1), 'who-is-eligible-to-apply-for-affordable-housing-units', 1, 'Who is eligible to apply for an affordable housing unit?',
+ '<p>Kenyan citizens who meet the national Affordable Housing Programme requirements may apply through the approved government application portal. County-specific project allocation follows the official beneficiary and unit allocation process.</p>',
+ 'Eligibility', 1, 'published', 'eligibility applicants requirements', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'application' LIMIT 1), 'how-do-i-apply-for-an-affordable-housing-unit', 1, 'How do I apply for an affordable housing unit?',
+ '<p>Applications are submitted through the approved government portal. Create or sign in to your account, complete your housing profile, choose Trans-Nzoia as your preferred allocation area and follow the portal instructions.</p>',
+ 'Application Process', 1, 'published', 'apply application portal boma yangu ecitizen', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'payments' LIMIT 1), 'what-is-the-affordable-housing-levy-and-how-much-is-it', 1, 'What is the Affordable Housing Levy and how much is it?',
+ '<p>The levy and savings requirements are administered under the national programme. Applicants should confirm current contribution rules through official government channels before making payments.</p>',
+ 'Payments & Housing Levy', 1, 'published', 'levy payments savings refund', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'allocation' LIMIT 1), 'how-are-housing-units-allocated-to-applicants', 1, 'How are housing units allocated to applicants?',
+ '<p>Units are allocated through the official national programme process using verified applicant records, project availability and the published allocation rules.</p>',
+ 'Unit Allocation', 1, 'published', 'allocation ballot units applicants', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'construction' LIMIT 1), 'when-will-construction-be-completed-and-units-handed-over', 1, 'When will construction be completed and units handed over?',
+ '<p>Completion timelines depend on each project programme of works, site progress, contractor performance and statutory approvals. The project pages publish the latest expected delivery dates.</p>',
+ 'Construction & Timeline', 1, 'published', 'construction completion handover delivery', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'legal' LIMIT 1), 'will-i-receive-a-title-deed-for-my-unit', 1, 'Will I receive legal ownership documents for my unit?',
+ '<p>Ownership and occupation documents are processed under the applicable housing, land and conveyancing rules for the selected unit type.</p>',
+ 'Legal & Documents', 0, 'published', 'documents title ownership legal', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'rights' LIMIT 1), 'what-rights-do-i-have-as-an-ahp-applicant', 1, 'What rights do I have as an AHP applicant?',
+ '<p>Applicants have the right to transparent information, secure application handling, fair allocation processes and clear channels for complaints or suspected malpractice.</p>',
+ 'Beneficiary Rights', 0, 'published', 'rights complaints transparency', 1),
+((SELECT `id` FROM `faq_categories` WHERE `slug` = 'contact' LIMIT 1), 'where-is-the-ahp-field-office-in-trans-nzoia', 1, 'Where is the AHP field office in Trans-Nzoia?',
+ '<p>Use the contact page for the current county housing desk location, telephone, email and working hours.</p>',
+ 'Contact & Support', 0, 'published', 'contact office support housing desk', 1);
 
 -- ============================================================
 -- LEADERSHIP PROFILES

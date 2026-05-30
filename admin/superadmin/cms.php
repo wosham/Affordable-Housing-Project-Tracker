@@ -1,10 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
+
 Guard::role('superadmin');
 
 $pageTitle = 'CMS Pages';
-$pageDescription = 'Manage editable public pages, templates, SEO and section visibility.';
+$pageDescription = 'Manage editable public pages, templates, SEO and publishing state.';
 $adminRole = 'superadmin';
 $contentClass = 'sa-cms-page';
 $componentCss = ['cms-editor'];
@@ -36,7 +37,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i> Structured CMS</span>
     <h2>Public Website Control Centre</h2>
-    <p>Control page metadata, hero copy, legal text, calls-to-action, section visibility and shared website settings from one protected workspace.</p>
+    <p>Control page metadata, hero copy, legal text, calls-to-action and shared website settings from one protected workspace.</p>
   </div>
   <div class="sa-cms-hero__stats">
     <span><strong><?= Security::e(format_number($cmsStats['published_pages'])) ?></strong><small>Published pages</small></span>
@@ -56,8 +57,8 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </div>
   <div class="sa-cms-health-grid">
     <?php cms_health_tile('SEO gaps', $cmsStats['seo_gaps'], 'Pages missing SEO titles or descriptions', 'fa-magnifying-glass-chart', $cmsStats['seo_gaps'] > 0 ? 'warning' : 'success'); ?>
-    <?php cms_health_tile('Hidden pages', $cmsStats['hidden_pages'], 'Pages currently not published', 'fa-eye-slash', $cmsStats['hidden_pages'] > 0 ? 'info' : 'success'); ?>
-    <?php cms_health_tile('Hidden sections', $cmsStats['hidden_sections'], 'Sections disabled across pages', 'fa-toggle-off', $cmsStats['hidden_sections'] > 0 ? 'warning' : 'success'); ?>
+    <?php cms_health_tile('Draft pages', $cmsStats['draft_pages'], 'Pages still awaiting publication', 'fa-file-pen', $cmsStats['draft_pages'] > 0 ? 'info' : 'success'); ?>
+    <?php cms_health_tile('Routes tracked', $cmsStats['route_ready'], 'Pages with configured route paths', 'fa-route', 'success'); ?>
     <?php cms_health_tile('Image gaps', $cmsStats['missing_hero_images'], 'Pages without a hero image path', 'fa-image', $cmsStats['missing_hero_images'] > 0 ? 'warning' : 'success'); ?>
   </div>
 </section>
@@ -91,7 +92,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <span class="form-label">Status</span>
       <select class="form-select" data-cms-page-status>
         <option value="">All statuses</option>
-        <?php foreach (['published', 'draft', 'maintenance', 'hidden'] as $status): ?>
+        <?php foreach (['published', 'draft'] as $status): ?>
           <option value="<?= Security::e($status) ?>"><?= Security::e(status_label($status)) ?></option>
         <?php endforeach; ?>
       </select>
@@ -115,8 +116,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </div>
     <div class="sa-cms-page-grid">
 <?php foreach ($groupPages as $cmsPage): ?>
-      <?php $health = cms_page_health($cmsPage); ?>
-      <article class="sa-cms-page-card" data-cms-page-card data-search="<?= Security::e(strtolower(cms_page_label((string)$cmsPage['slug']) . ' ' . ($cmsPage['route_path'] ?? '') . ' ' . ($cmsPage['template'] ?? ''))) ?>" data-template="<?= Security::e((string)($cmsPage['template'] ?? '')) ?>" data-status="<?= Security::e((string)($cmsPage['status'] ?? '')) ?>" data-attention="<?= $health['needs_attention'] ? '1' : '0' ?>">
+      <?php
+      $health = cms_page_health($cmsPage);
+      $publicationStatus = cms_publication_status((string)($cmsPage['status'] ?? 'draft'));
+      ?>
+      <article class="sa-cms-page-card" data-cms-page-card data-search="<?= Security::e(strtolower(cms_page_label((string)$cmsPage['slug']) . ' ' . ($cmsPage['route_path'] ?? '') . ' ' . ($cmsPage['template'] ?? ''))) ?>" data-template="<?= Security::e((string)($cmsPage['template'] ?? '')) ?>" data-status="<?= Security::e($publicationStatus) ?>" data-attention="<?= $health['needs_attention'] ? '1' : '0' ?>">
         <div class="sa-cms-page-card__top">
           <span class="sa-cms-page-icon"><i class="fa-solid <?= Security::e(cms_page_icon((string)$cmsPage['template'])) ?>" aria-hidden="true"></i></span>
           <div>
@@ -124,16 +128,16 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
             <small><?= Security::e($cmsPage['route_path'] ?: $cmsPage['slug']) ?></small>
           </div>
           <div class="sa-cms-page-card__badges">
-            <span class="badge <?= Security::e(status_badge_class($cmsPage['status'])) ?>"><?= Security::e(status_label($cmsPage['status'])) ?></span>
+            <span class="badge <?= Security::e(status_badge_class($publicationStatus)) ?>"><?= Security::e(status_label($publicationStatus)) ?></span>
             <span class="badge badge--info"><?= Security::e(status_label($cmsPage['template'] ?? 'page')) ?></span>
           </div>
         </div>
         <div class="sa-cms-page-progress">
           <div>
-            <span>Section visibility</span>
-            <strong><?= Security::e(format_number($cmsPage['visible_section_count'] ?? 0)) ?> / <?= Security::e(format_number($cmsPage['section_count'] ?? 0)) ?></strong>
+            <span>Editable sections</span>
+            <strong><?= Security::e(format_number($cmsPage['section_count'] ?? 0)) ?></strong>
           </div>
-          <meter min="0" max="<?= max(1, (int)($cmsPage['section_count'] ?? 0)) ?>" value="<?= (int)($cmsPage['visible_section_count'] ?? 0) ?>"></meter>
+          <meter min="0" max="<?= max(1, (int)($cmsStats['max_sections'] ?? 1)) ?>" value="<?= (int)($cmsPage['section_count'] ?? 0) ?>"></meter>
         </div>
         <dl class="sa-cms-page-meta">
           <div>
@@ -264,7 +268,7 @@ function cms_page_blueprints(): array
         'news-article' => ['template' => 'template', 'route_path' => 'news-article.php', 'sections' => cms_sections(['template_labels', 'sidebar_facts', 'related_intro'])],
         'gallery' => ['template' => 'media', 'route_path' => 'gallery.php', 'sections' => cms_sections(['hero', 'highlights_intro', 'gallery_grid_intro', 'site_progress_intro', 'video_intro'])],
         'faq' => ['template' => 'content', 'route_path' => 'faq.php', 'sections' => cms_sections(['hero', 'popular_intro', 'faq_listing_intro', 'contact_cta'])],
-        'leadership' => ['template' => 'content', 'route_path' => 'leadership.php', 'sections' => cms_sections(['hero', 'org_chain', 'national_intro', 'director_spotlight', 'contractors_intro', 'quotes_intro', 'partners_intro', 'contact_cta'])],
+        'leadership' => ['template' => 'content', 'route_path' => 'leadership.php', 'sections' => cms_sections(['leadership_hero', 'leadership_org_chart', 'leadership_national', 'leadership_spotlight', 'leadership_contractors', 'leadership_quotes', 'leadership_partners', 'leadership_contact_cta'])],
         'stakeholders' => ['template' => 'content', 'route_path' => 'stakeholders.php', 'sections' => cms_sections(['hero', 'ecosystem', 'categories', 'roles', 'timeline', 'voices', 'partners', 'engagement_cta'])],
         'contact' => ['template' => 'contact', 'route_path' => 'contact.php', 'sections' => cms_sections(['hero', 'quick_contact', 'form_intro', 'office_info', 'departments_intro', 'faq_banner'])],
         'privacy' => ['template' => 'legal', 'route_path' => 'legal/privacy.php', 'sections' => cms_legal_sections('Privacy Policy')],
@@ -348,11 +352,12 @@ function cms_dashboard_stats(array $pages, array $settings): array
 {
     $stats = [
         'published_pages' => 0,
-        'hidden_pages' => 0,
+        'draft_pages' => 0,
         'seo_gaps' => 0,
         'missing_hero_images' => 0,
-        'hidden_sections' => 0,
         'editable_sections' => 0,
+        'route_ready' => 0,
+        'max_sections' => 1,
         'global_settings' => count($settings, COUNT_RECURSIVE) - count($settings),
         'needs_attention' => 0,
     ];
@@ -361,13 +366,15 @@ function cms_dashboard_stats(array $pages, array $settings): array
         if (($page['status'] ?? '') === 'published') {
             $stats['published_pages']++;
         } else {
-            $stats['hidden_pages']++;
+            $stats['draft_pages']++;
         }
 
         $sectionCount = (int)($page['section_count'] ?? 0);
-        $visibleCount = (int)($page['visible_section_count'] ?? 0);
         $stats['editable_sections'] += $sectionCount;
-        $stats['hidden_sections'] += max(0, $sectionCount - $visibleCount);
+        $stats['max_sections'] = max($stats['max_sections'], $sectionCount);
+        if (trim((string)($page['route_path'] ?? '')) !== '') {
+            $stats['route_ready']++;
+        }
 
         $health = cms_page_health($page);
         if ($health['seo_gap']) {
@@ -389,7 +396,6 @@ function cms_page_health(array $page): array
     $seoGap = trim((string)($page['seo_title'] ?? '')) === '' || trim((string)($page['seo_description'] ?? '')) === '';
     $missingHero = in_array((string)($page['template'] ?? ''), ['landing', 'content', 'contact', 'listing', 'media'], true)
         && trim((string)($page['hero_image'] ?? '')) === '';
-    $hiddenSections = max(0, (int)($page['section_count'] ?? 0) - (int)($page['visible_section_count'] ?? 0));
     $messages = [];
 
     if ($seoGap) {
@@ -398,21 +404,23 @@ function cms_page_health(array $page): array
     if ($missingHero) {
         $messages[] = 'Hero image missing';
     }
-    if ($hiddenSections > 0) {
-        $messages[] = $hiddenSections . ' hidden section' . ($hiddenSections === 1 ? '' : 's');
-    }
-    if (($page['status'] ?? '') !== 'published') {
-        $messages[] = 'Not published';
+    if (cms_publication_status((string)($page['status'] ?? 'draft')) !== 'published') {
+        $messages[] = 'Draft page';
     }
 
     return [
         'seo_gap' => $seoGap,
         'missing_hero' => $missingHero,
-        'needs_attention' => $seoGap || $missingHero || ($page['status'] ?? '') !== 'published',
+        'needs_attention' => $seoGap || $missingHero || cms_publication_status((string)($page['status'] ?? 'draft')) !== 'published',
         'seo_label' => $seoGap ? 'Needs work' : 'Configured',
         'hero_label' => $missingHero ? 'Missing' : 'Ready',
         'messages' => $messages,
     ];
+}
+
+function cms_publication_status(string $status): string
+{
+    return strtolower(trim($status)) === 'published' ? 'published' : 'draft';
 }
 
 function cms_health_tile(string $label, int $value, string $description, string $icon, string $tone): void

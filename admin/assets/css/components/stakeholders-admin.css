@@ -1,0 +1,361 @@
+.sa-stakeholders-admin-page {
+    display: grid;
+    gap: var(--admin-space-md);
+}
+
+.sa-stakeholders-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--admin-space-lg);
+    padding: clamp(var(--admin-space-lg), 2vw, var(--admin-space-xl));
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--admin-lime-soft) 44%, transparent), transparent 48%),
+        var(--admin-surface);
+    box-shadow: var(--admin-shadow-md);
+}
+
+.sa-stakeholders-hero h2 {
+    margin: var(--admin-space-sm) 0 var(--admin-space-xs);
+    color: var(--admin-text);
+    font-size: clamp(1.85rem, 2.7vw, 3.15rem);
+    line-height: 1.04;
+    letter-spacing: 0;
+}
+
+.sa-stakeholders-hero p {
+    max-width: 72rem;
+    margin: 0;
+    color: var(--admin-text-muted);
+    font-size: .98rem;
+    line-height: 1.65;
+}
+
+.sa-stakeholders-stats .stat-widget {
+    min-height: 126px;
+}
+
+.sa-stakeholders-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--admin-space-xs);
+    padding: var(--admin-space-sm);
+    position: sticky;
+    top: calc(var(--admin-header-height) + var(--admin-space-sm));
+    z-index: 8;
+}
+
+.sa-stakeholders-tabs a {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 42px;
+    padding: .55rem .8rem;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface-muted);
+    color: var(--admin-primary);
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.sa-stakeholders-tabs a:hover {
+    background: var(--admin-lime-soft);
+    border-color: color-mix(in srgb, var(--admin-lime) 48%, var(--admin-border));
+}
+
+.sa-stakeholders-layout,
+.sa-stakeholders-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(360px, .85fr);
+    gap: var(--admin-space-md);
+    align-items: start;
+}
+
+.sa-stakeholders-card,
+.sa-stakeholders-form-card {
+    padding: var(--admin-space-lg);
+}
+
+.sa-stakeholders-card .card__header,
+.sa-stakeholders-form-card > h3 {
+    margin-bottom: var(--admin-space-md);
+}
+
+.sa-stakeholders-form-card > h3 {
+    color: var(--admin-text);
+    font-size: 1.18rem;
+    line-height: 1.2;
+}
+
+.sa-stakeholders-form-card > p {
+    margin: calc(var(--admin-space-sm) * -1) 0 var(--admin-space-md);
+    color: var(--admin-text-muted);
+    line-height: 1.55;
+}
+
+.sa-stakeholder-table td {
+    vertical-align: middle;
+}
+
+.sa-stakeholder-table th:first-child,
+.sa-stakeholder-table td:first-child {
+    width: 52px;
+    text-align: center;
+}
+
+.sa-stakeholder-cell {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: var(--admin-space-sm);
+    align-items: center;
+    min-width: 0;
+}
+
+.sa-stakeholder-icon,
+.sa-row-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--admin-radius);
+    background: var(--admin-lime-soft);
+    color: var(--admin-primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--admin-lime) 30%, transparent);
+    font-weight: 950;
+}
+
+.sa-row-number {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--admin-radius-pill);
+    font-size: .78rem;
+}
+
+.sa-stakeholder-cell strong,
+.sa-compact-row strong,
+.sa-quote-list strong {
+    display: block;
+    color: var(--admin-text);
+    font-weight: 920;
+    line-height: 1.25;
+}
+
+.sa-stakeholder-cell small,
+.sa-compact-row small,
+.sa-quote-list small {
+    display: block;
+    margin-top: .2rem;
+    color: var(--admin-text-muted);
+    font-size: .82rem;
+    line-height: 1.35;
+}
+
+.sa-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.sa-chip-row em {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: .25rem .5rem;
+    border-radius: var(--admin-radius-pill);
+    background: color-mix(in srgb, var(--admin-info) 12%, var(--admin-surface));
+    color: var(--admin-info);
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.sa-record-form {
+    display: grid;
+    gap: var(--admin-space-md);
+}
+
+.sa-record-form .form-field > span,
+.sa-stakeholders-form-card .form-field > span {
+    display: inline-block;
+    margin-bottom: .38rem;
+    color: var(--admin-text);
+    font-size: .82rem;
+    font-weight: 900;
+}
+
+.sa-record-form .form-textarea {
+    min-height: 106px;
+    resize: vertical;
+}
+
+.sa-record-form .form-field--full {
+    grid-column: 1 / -1;
+}
+
+.sa-placement-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--admin-space-sm);
+    padding: var(--admin-space-sm);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface-muted);
+}
+
+.sa-placement-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 42px;
+    padding: .45rem .7rem;
+    border: 1px solid color-mix(in srgb, var(--admin-border) 78%, transparent);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    font-weight: 850;
+}
+
+.sa-placement-row input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--admin-primary);
+}
+
+.sa-compact-list,
+.sa-quote-list {
+    display: grid;
+    gap: var(--admin-space-sm);
+}
+
+.sa-compact-row {
+    display: grid;
+    grid-template-columns: 34px 44px minmax(0, 1fr) auto auto;
+    gap: var(--admin-space-sm);
+    align-items: center;
+    padding: var(--admin-space-sm);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface-muted);
+}
+
+.sa-quote-list blockquote {
+    margin: 0;
+    padding: var(--admin-space-md);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface-muted);
+}
+
+.sa-quote-list header {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: .35rem var(--admin-space-sm);
+    align-items: center;
+}
+
+.sa-quote-list header small {
+    grid-column: 2;
+    margin: 0;
+}
+
+.sa-quote-list p {
+    margin: var(--admin-space-sm) 0;
+    color: var(--admin-text);
+    line-height: 1.58;
+}
+
+.sa-quote-list footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--admin-space-sm);
+    align-items: center;
+    color: var(--admin-text-muted);
+    font-size: .85rem;
+}
+
+.sa-stakeholders-admin-page .table-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: .4rem;
+    white-space: nowrap;
+}
+
+.sa-stakeholders-admin-page .table-actions form {
+    margin: 0;
+}
+
+.sa-stakeholders-admin-page .sa-cms-asset-control {
+    min-height: 176px;
+}
+
+.sa-stakeholder-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--admin-space-sm);
+    margin-top: var(--admin-space-md);
+    padding-top: var(--admin-space-sm);
+    border-top: 1px solid var(--admin-border);
+}
+
+.sa-stakeholder-pagination__buttons {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.sa-stakeholder-pagination button {
+    min-width: 36px;
+    min-height: 36px;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    font-weight: 900;
+}
+
+.sa-stakeholder-pagination button.is-active {
+    border-color: var(--admin-primary);
+    background: var(--admin-primary);
+    color: var(--admin-text-inverse);
+}
+
+.sa-stakeholder-pagination span {
+    color: var(--admin-text-muted);
+    font-size: .85rem;
+    font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+    .sa-stakeholders-hero,
+    .sa-stakeholders-layout,
+    .sa-stakeholders-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .sa-stakeholders-card,
+    .sa-stakeholders-form-card,
+    .sa-stakeholders-hero {
+        padding: var(--admin-space-md);
+    }
+
+    .sa-stakeholders-tabs {
+        position: static;
+    }
+
+    .sa-compact-row {
+        grid-template-columns: 34px 44px minmax(0, 1fr);
+    }
+
+    .sa-compact-row > a,
+    .sa-compact-row > form {
+        grid-column: span 1;
+    }
+}

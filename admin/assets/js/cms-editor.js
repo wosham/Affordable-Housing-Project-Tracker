@@ -232,7 +232,40 @@
       var input = wrap.querySelector('[data-cms-upload-input]');
       var target = wrap.querySelector('[data-cms-upload-target]');
       var folder = wrap.getAttribute('data-upload-folder') || 'cms';
-      if (!input || !target) return;
+      if (!target) return;
+
+      function updateAsset(path) {
+        var value = path || target.value || '';
+        var preview = wrap.querySelector('[data-cms-asset-preview]');
+        var name = wrap.querySelector('[data-cms-asset-name]');
+
+        wrap.classList.toggle('has-asset', value !== '');
+        if (name) {
+          name.textContent = value ? value.split('/').pop() : 'No asset selected';
+        }
+        if (preview) {
+          preview.innerHTML = value
+            ? '<img src="' + window.AHPTC.baseUrl() + '/' + value.replace(/^\/+/, '') + '" alt="">'
+            : '<span><i class="fa-solid fa-image" aria-hidden="true"></i></span>';
+        }
+      }
+
+      updateAsset(target.value || '');
+
+      target.addEventListener('input', function () {
+        updateAsset(target.value || '');
+      });
+
+      var clear = wrap.querySelector('[data-cms-asset-clear]');
+      if (clear) {
+        clear.addEventListener('click', function () {
+          target.value = '';
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+          state('Unsaved changes');
+        });
+      }
+
+      if (!input) return;
 
       input.addEventListener('change', function () {
         if (!input.files || !input.files[0]) return;

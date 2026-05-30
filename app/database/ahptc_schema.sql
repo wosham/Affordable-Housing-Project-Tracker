@@ -38,8 +38,11 @@ CREATE TABLE IF NOT EXISTS `users` (
     `phone`                  VARCHAR(30)  NULL,
     `password_hash`          VARCHAR(255) NOT NULL,
     `avatar`                 VARCHAR(255) NULL,
+    `job_title`              VARCHAR(100) NULL,
+    `department`             VARCHAR(100) NULL,
     `role_id`                INT UNSIGNED NOT NULL,
     `status`                 ENUM('active','inactive','suspended') DEFAULT 'active',
+    `is_public`              TINYINT(1)   DEFAULT 0,
     `assigned_projects_json` TEXT         NULL,
     `last_login`             DATETIME     NULL,
     `created_at`             TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
@@ -201,6 +204,10 @@ CREATE TABLE IF NOT EXISTS `geo_fences` (
     `latitude`      DECIMAL(10,8) NOT NULL,
     `longitude`     DECIMAL(11,8) NOT NULL,
     `radius_meters` INT UNSIGNED DEFAULT 200,
+    `status`        VARCHAR(40)  DEFAULT 'configured',
+    `verified_by`   INT UNSIGNED NULL,
+    `verified_at`   DATETIME     NULL,
+    `notes`         TEXT         NULL,
     `created_by`    INT UNSIGNED NOT NULL,
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
@@ -888,13 +895,19 @@ CREATE TABLE IF NOT EXISTS `media_library` (
     `id`            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `filename`      VARCHAR(255) NOT NULL,
     `original_name` VARCHAR(255) NOT NULL,
+    `title`         VARCHAR(255) NULL,
     `path`          VARCHAR(255) NOT NULL,
     `url`           VARCHAR(500) NOT NULL,
     `type`          VARCHAR(100) NOT NULL,
     `size`          INT UNSIGNED NOT NULL,
+    `width`         INT UNSIGNED NULL,
+    `height`        INT UNSIGNED NULL,
+    `extension`     VARCHAR(20)  NULL,
     `alt_text`      VARCHAR(255) NULL,
+    `caption`       VARCHAR(500) NULL,
     `uploaded_by`   INT UNSIGNED NOT NULL,
     `folder`        VARCHAR(100) DEFAULT 'general',
+    `source`        VARCHAR(60)  DEFAULT 'upload',
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -906,11 +919,14 @@ CREATE TABLE IF NOT EXISTS `cms_pages` (
     `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `slug`            VARCHAR(100) NOT NULL UNIQUE,
     `status`          ENUM('published','draft','maintenance','hidden') DEFAULT 'published',
+    `template`        VARCHAR(60)  NULL,
+    `route_path`      VARCHAR(200) NULL,
     `seo_title`       VARCHAR(255) NULL,
     `seo_description` TEXT NULL,
     `seo_keywords`    TEXT NULL,
     `og_image_id`     INT UNSIGNED NULL,
     `canonical_url`   VARCHAR(500) NULL,
+    `hero_image`      VARCHAR(255) NULL,
     `updated_by`      INT UNSIGNED NULL,
     `updated_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -923,7 +939,11 @@ CREATE TABLE IF NOT EXISTS `cms_sections` (
     `page_id`      INT UNSIGNED NOT NULL,
     `section_key`  VARCHAR(80)  NOT NULL,
     `label`        VARCHAR(150) NOT NULL,
+    `section_type` VARCHAR(40)  NOT NULL DEFAULT 'rich_text',
+    `sort_order`   SMALLINT UNSIGNED DEFAULT 0,
     `is_visible`   TINYINT(1)   DEFAULT 1,
+    `editor_mode`  VARCHAR(40)  NOT NULL DEFAULT 'structured',
+    `is_locked`    TINYINT(1)   DEFAULT 0,
     `content_json` LONGTEXT NULL,
     `updated_by`   INT UNSIGNED NULL,
     FOREIGN KEY (`page_id`) REFERENCES `cms_pages`(`id`) ON DELETE CASCADE,
@@ -1030,15 +1050,41 @@ CREATE TABLE IF NOT EXISTS `gallery_images` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 61. FAQ ITEMS
+-- 61. FAQ CATEGORIES + ITEMS
 -- ============================================================
+CREATE TABLE IF NOT EXISTS `faq_categories` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `name`        VARCHAR(120) NOT NULL,
+    `slug`        VARCHAR(140) NOT NULL UNIQUE,
+    `icon`        VARCHAR(80) NULL,
+    `description` TEXT NULL,
+    `sort_order`  SMALLINT UNSIGNED DEFAULT 0,
+    `status`      ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `created_at`  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `faq_items` (
-    `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `question`   TEXT         NOT NULL,
-    `answer`     LONGTEXT     NOT NULL,
-    `category`   VARCHAR(100) NULL,
-    `sort_order` SMALLINT UNSIGNED DEFAULT 0,
-    `is_visible` TINYINT(1)   DEFAULT 1
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `category_id`     INT UNSIGNED NULL,
+    `slug`            VARCHAR(180) NULL,
+    `question`        TEXT NOT NULL,
+    `answer`          LONGTEXT NOT NULL,
+    `category`        VARCHAR(100) NULL,
+    `sort_order`      SMALLINT UNSIGNED DEFAULT 0,
+    `is_popular`      TINYINT(1) NOT NULL DEFAULT 0,
+    `status`          ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `search_keywords` TEXT NULL,
+    `created_by`      INT UNSIGNED NULL,
+    `updated_by`      INT UNSIGNED NULL,
+    `created_at`      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `is_visible`      TINYINT(1) DEFAULT 1,
+    KEY `idx_faq_items_category` (`category_id`),
+    KEY `idx_faq_items_status` (`status`),
+    FOREIGN KEY (`category_id`) REFERENCES `faq_categories`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1115,7 +1161,39 @@ CREATE TABLE IF NOT EXISTS `notifications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 67. MIGRATIONS TRACKER
+-- 67. CMS REVISIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `cms_revisions` (
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `page_id`         INT UNSIGNED NULL,
+    `section_id`      INT UNSIGNED NULL,
+    `revision_type`   VARCHAR(40)  NOT NULL DEFAULT 'page',
+    `target_key`      VARCHAR(100) NOT NULL,
+    `snapshot_json`   LONGTEXT     NULL,
+    `created_by`      INT UNSIGNED NULL,
+    `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_page`    (`page_id`),
+    INDEX `idx_section` (`section_id`),
+    INDEX `idx_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 68. MEDIA USAGE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `media_usage` (
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `media_id`        INT UNSIGNED NOT NULL,
+    `usage_table`     VARCHAR(80)  NOT NULL,
+    `usage_id`        INT UNSIGNED NOT NULL DEFAULT 0,
+    `usage_column`    VARCHAR(80)  NULL,
+    `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_media`  (`media_id`),
+    INDEX `idx_usage`  (`usage_table`, `usage_id`),
+    FOREIGN KEY (`media_id`) REFERENCES `media_library`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 69. MIGRATIONS TRACKER
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `_migrations` (
     `id`        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -1126,6 +1204,6 @@ CREATE TABLE IF NOT EXISTS `_migrations` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
--- END OF SCHEMA — 66 tables + _migrations tracker created
+-- END OF SCHEMA — 68 tables + _migrations tracker created
 -- Next: Import ahptc_seeds.sql, then run admin/setup.php
 -- ============================================================

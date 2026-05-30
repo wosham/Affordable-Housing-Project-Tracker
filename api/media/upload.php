@@ -24,21 +24,14 @@ if ((int)$file['size'] > $maxBytes) {
 }
 
 $original = (string)($file['name'] ?? '');
-$allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+$allowed = MediaLibrary::allowedExtensions();
 if (!Security::extensionAllowed($original, $allowed)) {
-    Response::json(['success' => false, 'message' => 'Only JPG, PNG, WebP and GIF images are allowed here.'], 422);
+    Response::json(['success' => false, 'message' => 'This file type is not allowed in the media library.'], 422);
 }
 
 $tmpPath = (string)($file['tmp_name'] ?? '');
 $imageInfo = @getimagesize($tmpPath);
-if ($imageInfo === false) {
-    Response::json(['success' => false, 'message' => 'Uploaded file is not a valid image.'], 422);
-}
-
-$folder = preg_replace('/[^a-z0-9_-]+/', '', strtolower((string)($_POST['folder'] ?? 'cms'))) ?: 'cms';
-$folder = in_array($folder, ['cms', 'heroes', 'gallery', 'news', 'projects', 'site-photos', 'logos', 'leadership', 'partners'], true)
-    ? $folder
-    : 'cms';
+$folder = MediaLibrary::normaliseFolder((string)($_POST['folder'] ?? 'cms'));
 
 $root = dirname(__DIR__, 2);
 $uploadDir = $root . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $folder;
@@ -57,22 +50,31 @@ if (!move_uploaded_file($tmpPath, $destination)) {
 }
 
 $relativePath = 'uploads/' . $folder . '/' . $filename;
-$mime = (string)($imageInfo['mime'] ?? mime_content_type($destination) ?: 'image/' . $ext);
+$mime = (string)($imageInfo['mime'] ?? mime_content_type($destination) ?: 'application/octet-stream');
 $altText = Security::cleanString((string)($_POST['alt_text'] ?? pathinfo($original, PATHINFO_FILENAME)));
+$title = Security::cleanString((string)($_POST['title'] ?? MediaLibrary::titleFromFilename(pathinfo($original, PATHINFO_FILENAME))));
+$caption = Security::cleanString((string)($_POST['caption'] ?? ''));
 
 Database::query(
-    'INSERT INTO media_library (filename, original_name, path, url, type, size, alt_text, uploaded_by, folder)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO media_library
+        (filename, original_name, title, path, url, type, size, width, height, extension, alt_text, caption, uploaded_by, folder, source)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
         $filename,
         $original,
+        $title,
         $relativePath,
         Url::asset($relativePath),
         $mime,
         (int)filesize($destination),
+        $imageInfo ? (int)$imageInfo[0] : null,
+        $imageInfo ? (int)$imageInfo[1] : null,
+        $ext,
         $altText,
+        $caption,
         (int)Auth::id(),
         $folder,
+        'upload',
     ]
 );
 
@@ -88,8 +90,14 @@ Response::json([
         'url' => Url::asset($relativePath),
         'filename' => $filename,
         'original_name' => $original,
+        'title' => $title,
         'type' => $mime,
+        'type_group' => MediaLibrary::typeGroup($mime, $ext),
         'size' => (int)filesize($destination),
+        'width' => $imageInfo ? (int)$imageInfo[0] : null,
+        'height' => $imageInfo ? (int)$imageInfo[1] : null,
+        'alt_text' => $altText,
+        'folder' => $folder,
     ],
 ]);
 

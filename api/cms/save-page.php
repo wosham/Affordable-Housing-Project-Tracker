@@ -17,7 +17,7 @@ if (!$page) {
 }
 
 $status = (string)($data['status'] ?? 'draft');
-if (!in_array($status, ['published', 'draft', 'maintenance', 'hidden'], true)) {
+if (!in_array($status, ['published', 'draft'], true)) {
     Response::json(['success' => false, 'message' => 'Invalid page status.'], 422);
 }
 

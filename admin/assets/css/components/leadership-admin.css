@@ -1,0 +1,281 @@
+.sa-leadership-admin-page {
+    display: grid;
+    gap: var(--admin-space-md);
+}
+
+.sa-leadership-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--admin-space-lg);
+    padding: clamp(var(--admin-space-lg), 2vw, var(--admin-space-xl));
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--admin-lime-soft) 48%, transparent), transparent 48%),
+        var(--admin-surface);
+    box-shadow: var(--admin-shadow-md);
+}
+
+.sa-leadership-hero h2 {
+    margin: var(--admin-space-sm) 0 var(--admin-space-xs);
+    color: var(--admin-text);
+    font-size: clamp(1.75rem, 2.6vw, 3rem);
+    line-height: 1.05;
+}
+
+.sa-leadership-hero p {
+    max-width: 68rem;
+    margin: 0;
+    color: var(--admin-text-muted);
+    line-height: 1.6;
+}
+
+.sa-leadership-stats .stat-widget {
+    min-height: 126px;
+}
+
+.sa-leadership-layout,
+.sa-leadership-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(330px, .8fr);
+    gap: var(--admin-space-md);
+    align-items: start;
+}
+
+.sa-leadership-card,
+.sa-leadership-form-card,
+.sa-spotlight-card,
+.sa-partner-card {
+    padding: var(--admin-space-lg);
+}
+
+.sa-leadership-filter {
+    margin-bottom: var(--admin-space-md);
+}
+
+.sa-leader-cell {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: var(--admin-space-sm);
+    align-items: center;
+}
+
+.sa-leader-cell--large {
+    grid-template-columns: 58px minmax(0, 1fr);
+    margin: var(--admin-space-md) 0;
+}
+
+.sa-leader-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--admin-radius);
+    background: var(--admin-lime-soft);
+    color: var(--admin-primary);
+    font-size: .82rem;
+    font-weight: 950;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--admin-lime) 28%, transparent);
+}
+
+.sa-leader-cell--large .sa-leader-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: var(--admin-radius-lg);
+    font-size: 1rem;
+}
+
+.sa-leader-cell strong,
+.sa-compact-row strong {
+    display: block;
+    color: var(--admin-text);
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.sa-leader-cell small,
+.sa-compact-row small,
+.sa-quote-list footer span {
+    display: block;
+    margin-top: .18rem;
+    color: var(--admin-text-muted);
+    font-size: .82rem;
+    line-height: 1.35;
+}
+
+.sa-mini-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.sa-mini-tags em {
+    padding: .28rem .48rem;
+    border-radius: var(--admin-radius-pill);
+    background: color-mix(in srgb, var(--admin-info) 12%, var(--admin-surface));
+    color: var(--admin-info);
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+}
+
+.sa-leadership-table td {
+    vertical-align: middle;
+}
+
+.sa-leadership-table .table-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: .4rem;
+}
+
+.sa-leadership-side {
+    display: grid;
+    gap: var(--admin-space-md);
+}
+
+.sa-spotlight-card h3,
+.sa-partner-card h3 {
+    margin: 0 0 var(--admin-space-sm);
+    color: var(--admin-text);
+}
+
+.sa-spotlight-card p,
+.sa-partner-card p {
+    color: var(--admin-text-muted);
+    line-height: 1.55;
+}
+
+.sa-partner-list {
+    display: grid;
+    gap: .5rem;
+    margin: var(--admin-space-md) 0;
+}
+
+.sa-partner-list span {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .65rem .75rem;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface-muted);
+    color: var(--admin-text);
+    font-weight: 850;
+}
+
+.sa-partner-list i {
+    color: var(--admin-primary);
+}
+
+.sa-record-form {
+    display: grid;
+    gap: var(--admin-space-md);
+}
+
+.sa-record-form .form-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.form-field--span-2 {
+    grid-column: span 2;
+}
+
+.sa-placement-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--admin-space-sm);
+    padding: var(--admin-space-sm);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface-muted);
+}
+
+.sa-placement-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 42px;
+    padding: .45rem .7rem;
+    border: 1px solid color-mix(in srgb, var(--admin-border) 78%, transparent);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    font-weight: 850;
+}
+
+.sa-placement-row input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--admin-primary);
+}
+
+.sa-compact-list,
+.sa-quote-list {
+    display: grid;
+    gap: var(--admin-space-sm);
+}
+
+.sa-compact-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    gap: var(--admin-space-sm);
+    align-items: center;
+    padding: var(--admin-space-sm);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface-muted);
+}
+
+.sa-quote-list blockquote {
+    margin: 0;
+    padding: var(--admin-space-md);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-surface-muted);
+}
+
+.sa-quote-list p {
+    margin: 0 0 var(--admin-space-sm);
+    color: var(--admin-text);
+    font-weight: 760;
+    line-height: 1.55;
+}
+
+.sa-quote-list footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--admin-space-sm);
+    align-items: center;
+}
+
+.sa-cms-asset-control {
+    min-height: 170px;
+}
+
+@media (max-width: 1180px) {
+    .sa-leadership-hero,
+    .sa-leadership-layout,
+    .sa-leadership-split {
+        grid-template-columns: 1fr;
+    }
+
+    .sa-record-form .form-grid--4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .sa-record-form .form-grid--4,
+    .sa-record-form .form-grid--2 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-field--span-2 {
+        grid-column: auto;
+    }
+
+    .sa-compact-row {
+        grid-template-columns: 44px minmax(0, 1fr);
+    }
+}
