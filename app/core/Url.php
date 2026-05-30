@@ -10,6 +10,10 @@ class Url
 
     public static function to(string $path = ''): string
     {
+        if (preg_match('#^(?:[a-z][a-z0-9+.-]*:)?//#i', $path) || preg_match('#^[a-z][a-z0-9+.-]*:#i', $path)) {
+            return $path;
+        }
+
         $path = ltrim($path, '/');
         return self::basePath() . ($path === '' ? '' : '/' . $path);
     }

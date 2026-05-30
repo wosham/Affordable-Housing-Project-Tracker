@@ -444,21 +444,22 @@ class FrontendContentSeeder
     private function seedContactDepartments(\PDO $pdo): void
     {
         $departments = [
-            ['Field Operations', 'Construction progress, site visits, contractor oversight', 'fieldops@transnzoia.go.ke', '+254530000001'],
-            ['Legal & Allocation', 'Applications, balloting, title deeds, legal enquiries', 'legal@transnzoia.go.ke', '+254530000002'],
-            ['Finance & Levy', 'Housing Levy, mortgage, refunds, payment queries', 'finance@transnzoia.go.ke', '+254530000003'],
-            ['Communications', 'Media, press, events, public announcements', 'comms@transnzoia.go.ke', '+254530000004'],
+            ['Field Operations', 'field_operations', 'Construction progress, site visits, contractor oversight', 'fieldops@transnzoia.go.ke', '+254 53 000 0001', 'fa-hard-hat', 'a'],
+            ['Legal & Allocation', 'legal_allocation', 'Applications, balloting, title deeds, legal enquiries', 'legal@transnzoia.go.ke', '+254 53 000 0002', 'fa-scale-balanced', 'b'],
+            ['Finance & Levy', 'finance_levy', 'Housing Levy, mortgage, refunds, payment queries', 'finance@transnzoia.go.ke', '+254 53 000 0003', 'fa-coins', 'c'],
+            ['Communications', 'communications', 'Media, press, events, public announcements', 'comms@transnzoia.go.ke', '+254 53 000 0004', 'fa-bullhorn', 'd'],
         ];
 
         $stmt = $pdo->prepare("
-            INSERT INTO contact_departments (name, role, email, phone, sort_order, is_visible)
-            VALUES (?, ?, ?, ?, ?, 1)
-            ON DUPLICATE KEY UPDATE role = VALUES(role), email = VALUES(email), phone = VALUES(phone),
+            INSERT INTO contact_departments (name, subject_key, role, email, phone, icon, accent, sort_order, is_visible)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+            ON DUPLICATE KEY UPDATE subject_key = VALUES(subject_key), role = VALUES(role), email = VALUES(email),
+                                    phone = VALUES(phone), icon = VALUES(icon), accent = VALUES(accent),
                                     sort_order = VALUES(sort_order), is_visible = 1
         ");
 
         foreach ($departments as $i => $department) {
-            $stmt->execute([$department[0], $department[1], $department[2], $department[3], $i + 1]);
+            $stmt->execute([$department[0], $department[1], $department[2], $department[3], $department[4], $department[5], $department[6], $i + 1]);
         }
     }
 
@@ -609,7 +610,6 @@ class FrontendContentSeeder
         }
 
         $slug = $this->slug($name);
-        $pdo->prepare("INSERT IGNORE INTO wards (constituency_id, name, slug) VALUES (?, ?, ?)")->execute([$constituencyId, $name, $slug]);
         $stmt = $pdo->prepare("SELECT id FROM wards WHERE constituency_id = ? AND slug = ? LIMIT 1");
         $stmt->execute([$constituencyId, $slug]);
 

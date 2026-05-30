@@ -26,6 +26,28 @@ if ($isStakeholdersEditor) {
     cms_editor_ensure_stakeholders_sections((int)$page['id']);
 }
 
+$isContactEditor = (string)$page['slug'] === 'contact';
+if ($isContactEditor) {
+    cms_editor_ensure_contact_sections((int)$page['id']);
+}
+$isProjectsEditor = (string)$page['slug'] === 'projects';
+if ($isProjectsEditor) {
+    cms_editor_ensure_projects_sections((int)$page['id']);
+}
+$isConstituenciesEditor = (string)$page['slug'] === 'constituencies';
+if ($isConstituenciesEditor) {
+    cms_editor_ensure_constituencies_sections((int)$page['id']);
+}
+$isConstituencyDetailEditor = (string)$page['slug'] === 'constituency-detail';
+if ($isConstituencyDetailEditor) {
+    cms_editor_ensure_constituency_detail_sections((int)$page['id']);
+}
+
+$isNewsEditor = (string)$page['slug'] === 'news';
+if ($isNewsEditor) {
+    cms_editor_ensure_news_sections((int)$page['id']);
+}
+
 $sections = CmsSection::forPage((int)$page['id']);
 if (!$sections) {
     CmsSection::upsert((int)$page['id'], [
@@ -61,6 +83,11 @@ $isHomeEditor = (string)$page['slug'] === 'home';
 $isAboutEditor = (string)$page['slug'] === 'about';
 $isLeadershipEditor = (string)$page['slug'] === 'leadership';
 $isStakeholdersEditor = (string)$page['slug'] === 'stakeholders';
+$isContactEditor = (string)$page['slug'] === 'contact';
+$isProjectsEditor = (string)$page['slug'] === 'projects';
+$isConstituenciesEditor = (string)$page['slug'] === 'constituencies';
+$isConstituencyDetailEditor = (string)$page['slug'] === 'constituency-detail';
+$isNewsEditor = (string)$page['slug'] === 'news';
 $publicationStatus = cms_editor_publication_status((string)($page['status'] ?? 'draft'));
 $missingImageCount = trim((string)($page['hero_image'] ?? '')) === '' ? 1 : 0;
 $emptyFieldCount = 0;
@@ -613,6 +640,383 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['empty_text', 'Empty state message', 'textarea'],
       ]); ?>
     </section>
+<?php elseif ($isProjectsEditor): ?>
+    <section class="sa-projects-cms sa-home-cms" aria-label="Projects page editor">
+      <nav class="card sa-home-cms-nav" aria-label="Projects page editor sections">
+        <a href="#projects-hero"><i class="fa-solid fa-building-columns" aria-hidden="true"></i> Hero</a>
+        <a href="#projects-filters"><i class="fa-solid fa-filter" aria-hidden="true"></i> Filters</a>
+        <a href="#projects-listing"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> Listing</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
+        <div>
+          <h3>Project records power this page</h3>
+          <p>This editor controls the public Projects page wording, hero image, filters, labels and empty states. The cards, units, progress and contractors come from the project registry.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Project Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('projects-hero', $sectionsByKey['projects_hero'] ?? null, 'Hero', 'Controls the first screen: background image, badge, headline, support copy and statistic labels. Statistic values are calculated from live projects.', [
+          ['background_image', 'Hero background image', 'upload', 'gallery'],
+          ['background_alt', 'Hero image description', 'text'],
+          ['eyebrow', 'Hero badge', 'text'],
+          ['title_plain', 'Title plain text', 'text'],
+          ['title_highlight', 'Title highlighted text', 'text'],
+          ['subtitle', 'Supporting copy', 'textarea'],
+          ['total_projects_label', 'Total projects label', 'text'],
+          ['units_label', 'Units label', 'text'],
+          ['active_label', 'Active projects label', 'text'],
+          ['constituencies_label', 'Constituencies label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('projects-filters', $sectionsByKey['projects_filters'] ?? null, 'Filters & Sorting', 'Controls the search placeholder, filter labels and sort option wording.', [
+          ['search_placeholder', 'Search placeholder', 'text'],
+          ['status_label', 'Status label', 'text'],
+          ['all_label', 'All label', 'text'],
+          ['active_label', 'Active status label', 'text'],
+          ['planning_label', 'Planning status label', 'text'],
+          ['constituency_label', 'Constituency label', 'text'],
+          ['sort_label', 'Sort label', 'text'],
+          ['sort_completion_desc', 'Completion high-to-low label', 'text'],
+          ['sort_completion_asc', 'Completion low-to-high label', 'text'],
+          ['sort_units_desc', 'Most units label', 'text'],
+          ['sort_name_asc', 'Name sort label', 'text'],
+          ['reset_label', 'Clear filters label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('projects-listing', $sectionsByKey['projects_listing'] ?? null, 'Project Listing', 'Controls card labels, pagination wording and the no-results message. Project cards come from live project records.', [
+          ['results_prefix', 'Results prefix', 'text'],
+          ['project_single', 'Single project word', 'text'],
+          ['project_plural', 'Plural project word', 'text'],
+          ['units_label', 'Card units label', 'text'],
+          ['complete_label', 'Card completion label', 'text'],
+          ['view_label', 'Card button label', 'text'],
+          ['pagination_showing_label', 'Pagination showing label', 'text'],
+          ['pagination_of_label', 'Pagination of label', 'text'],
+          ['empty_title', 'No-results title', 'text'],
+          ['empty_text', 'No-results message', 'textarea'],
+          ['empty_reset_label', 'No-results reset button', 'text'],
+      ]); ?>
+    </section>
+<?php elseif ($isConstituencyDetailEditor): ?>
+    <section class="sa-constituency-detail-cms sa-home-cms" aria-label="Constituency detail template editor">
+      <nav class="card sa-home-cms-nav" aria-label="Constituency detail editor sections">
+        <a href="#constituency-detail-labels"><i class="fa-solid fa-tags" aria-hidden="true"></i> Labels</a>
+        <a href="#constituency-detail-facts"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Facts</a>
+        <a href="#constituency-detail-related"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Related</a>
+        <a href="#constituency-detail-cta"><i class="fa-solid fa-house-circle-check" aria-hidden="true"></i> Apply CTA</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-database" aria-hidden="true"></i></div>
+        <div>
+          <h3>One template for every constituency</h3>
+          <p>This editor controls labels and calls to action. Constituency names, wards, hero images, project cards, unit totals and completion values come from constituency and project records.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Project Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('constituency-detail-labels', $sectionsByKey['constituency_detail_labels'] ?? null, 'Template Labels', 'Controls hero, project section and progress wording used by every constituency detail page.', [
+          ['active_status_label', 'Active status label', 'text'],
+          ['planning_status_label', 'Planning status label', 'text'],
+          ['projects_label', 'Projects stat label', 'text'],
+          ['units_label', 'Units stat label', 'text'],
+          ['population_label', 'Population stat label', 'text'],
+          ['completion_label', 'Completion stat label', 'text'],
+          ['wards_label', 'Wards label', 'text'],
+          ['projects_title_suffix', 'Projects heading suffix', 'text'],
+          ['projects_subtitle', 'Projects section subtitle', 'textarea'],
+          ['view_all_projects_label', 'View-all projects label', 'text'],
+          ['unit_card_label', 'Card units label', 'text'],
+          ['complete_card_label', 'Card completion label', 'text'],
+          ['view_project_label', 'Project card button label', 'text'],
+          ['empty_projects_text', 'No projects message', 'textarea'],
+          ['progress_eyebrow', 'Progress eyebrow', 'text'],
+          ['progress_title_suffix', 'Progress title suffix', 'text'],
+          ['progress_subtitle', 'Progress summary pattern', 'textarea'],
+          ['total_units_label', 'Progress total units label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituency-detail-facts', $sectionsByKey['constituency_detail_facts'] ?? null, 'Facts & Location', 'Controls the labels in the facts and map sections. The values are pulled from live records.', [
+          ['facts_title', 'Facts heading', 'text'],
+          ['county_label', 'County label', 'text'],
+          ['population_label', 'Population label', 'text'],
+          ['wards_label', 'Wards label', 'text'],
+          ['lead_agency_label', 'Lead agency label', 'text'],
+          ['lead_agency_value', 'Lead agency value', 'text'],
+          ['funding_label', 'Funding label', 'text'],
+          ['funding_value', 'Funding value', 'text'],
+          ['programme_label', 'Programme label', 'text'],
+          ['programme_value', 'Programme value', 'text'],
+          ['location_title', 'Location heading', 'text'],
+          ['all_constituencies_label', 'All constituencies button', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituency-detail-related', $sectionsByKey['constituency_detail_related'] ?? null, 'Other Constituencies', 'Controls the related constituency card section and not-found state.', [
+          ['title', 'Section heading', 'text'],
+          ['subtitle', 'Section subtitle', 'textarea'],
+          ['view_all_label', 'View all label', 'text'],
+          ['explore_label', 'Explore label', 'text'],
+          ['not_found_title', 'Not-found title', 'text'],
+          ['not_found_text', 'Not-found message', 'textarea'],
+          ['not_found_button', 'Not-found button label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituency-detail-cta', $sectionsByKey['constituency_detail_apply_cta'] ?? null, 'Application CTA', 'Controls the bottom application banner.', [
+          ['title', 'CTA heading', 'textarea'],
+          ['subtitle', 'CTA supporting copy', 'textarea'],
+          ['primary_label', 'Primary button label', 'text'],
+          ['primary_url', 'Primary button URL', 'text'],
+          ['secondary_label', 'Secondary button label', 'text'],
+          ['secondary_url', 'Secondary button URL', 'text'],
+      ]); ?>
+    </section>
+<?php elseif ($isConstituenciesEditor): ?>
+    <section class="sa-constituencies-cms sa-home-cms" aria-label="Constituencies page editor">
+      <nav class="card sa-home-cms-nav" aria-label="Constituencies page editor sections">
+        <a href="#constituencies-hero"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Hero</a>
+        <a href="#constituencies-map"><i class="fa-solid fa-draw-polygon" aria-hidden="true"></i> Map</a>
+        <a href="#constituencies-progress"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Progress</a>
+        <a href="#constituencies-grid"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> Browse Grid</a>
+        <a href="#constituencies-cta"><i class="fa-solid fa-house-circle-check" aria-hidden="true"></i> Apply CTA</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-database" aria-hidden="true"></i></div>
+        <div>
+          <h3>Live constituency data stays in the project registry</h3>
+          <p>This editor controls page wording, labels and calls to action. Constituency names, wards, project counts, unit totals and progress bars come from constituencies, wards and projects.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Project Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('constituencies-hero', $sectionsByKey['constituencies_hero'] ?? null, 'Hero', 'Controls the first screen: image, badge, headline, support text and stat labels. Stat values are calculated from live data.', [
+          ['background_image', 'Hero background image', 'upload', 'gallery'],
+          ['background_alt', 'Hero image description', 'text'],
+          ['eyebrow', 'Hero badge', 'text'],
+          ['title_prefix', 'Title prefix', 'text'],
+          ['title_highlight', 'Title highlighted text', 'text'],
+          ['subtitle', 'Supporting copy', 'textarea'],
+          ['constituencies_label', 'Constituencies stat label', 'text'],
+          ['projects_label', 'Projects stat label', 'text'],
+          ['units_label', 'Units stat label', 'text'],
+          ['residents_label', 'Residents stat label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituencies-map', $sectionsByKey['constituencies_map'] ?? null, 'Map & Side List', 'Controls the interactive map panel wording, legend labels and empty state. The side cards are populated from live constituency data.', [
+          ['title', 'Map heading', 'text'],
+          ['subtitle', 'Map hint', 'textarea'],
+          ['active_label', 'Active legend label', 'text'],
+          ['planning_label', 'Planning legend label', 'text'],
+          ['selected_label', 'Selected legend label', 'text'],
+          ['empty_text', 'Empty state message', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituencies-progress', $sectionsByKey['constituencies_progress'] ?? null, 'County-Wide Progress', 'Controls the dark progress section copy and project CTA. Progress bars come from live constituency completion values.', [
+          ['title', 'Section heading', 'textarea'],
+          ['subtitle', 'Section copy', 'textarea'],
+          ['button_label', 'Button label', 'text'],
+          ['button_url', 'Button URL', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituencies-grid', $sectionsByKey['constituencies_grid'] ?? null, 'Browse Grid', 'Controls the card-grid section labels, sorting text and pagination wording. Cards come from live constituency data.', [
+          ['eyebrow', 'Section eyebrow', 'text'],
+          ['title_prefix', 'Title prefix', 'text'],
+          ['title_highlight', 'Title highlighted text', 'text'],
+          ['sort_label', 'Sort label', 'text'],
+          ['default_label', 'Default sort label', 'text'],
+          ['progress_label', 'Progress sort label', 'text'],
+          ['units_label', 'Units sort label', 'text'],
+          ['alpha_label', 'Alphabetical sort label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('constituencies-cta', $sectionsByKey['constituencies_apply_cta'] ?? null, 'Application CTA', 'Controls the bottom application banner.', [
+          ['title', 'CTA heading', 'textarea'],
+          ['subtitle', 'CTA supporting copy', 'textarea'],
+          ['primary_label', 'Primary button label', 'text'],
+          ['primary_url', 'Primary button URL', 'text'],
+          ['secondary_label', 'Secondary button label', 'text'],
+          ['secondary_url', 'Secondary button URL', 'text'],
+      ]); ?>
+    </section>
+<?php elseif ($isNewsEditor): ?>
+    <section class="sa-news-cms sa-home-cms" aria-label="News page editor">
+      <nav class="card sa-home-cms-nav" aria-label="News page editor sections">
+        <a href="#news-hero"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> Hero</a>
+        <a href="#news-mosaic"><i class="fa-solid fa-table-cells" aria-hidden="true"></i> Mosaic</a>
+        <a href="#news-featured"><i class="fa-solid fa-star" aria-hidden="true"></i> Featured</a>
+        <a href="#news-filters"><i class="fa-solid fa-filter" aria-hidden="true"></i> Filters</a>
+        <a href="#news-listing"><i class="fa-solid fa-list" aria-hidden="true"></i> Listing</a>
+        <a href="#news-cta"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> CTA</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-database" aria-hidden="true"></i></div>
+        <div>
+          <h3>News posts stay in the article registry</h3>
+          <p>This editor controls the public News page shell: hero, labels, filters, empty states and CTA copy. Published articles, reports, categories and featured story cards come from the news tables.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/news.php')) ?>"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> News Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('news-hero', $sectionsByKey['news_hero'] ?? null, 'Hero', 'Controls the dark grid hero copy, search placeholder and stat labels. Stat numbers come from published posts.', [
+          ['eyebrow', 'Hero badge', 'text'],
+          ['title_plain_1', 'Title first plain text', 'text'],
+          ['title_accent', 'Title highlighted text', 'text'],
+          ['title_plain_2', 'Title second plain text', 'text'],
+          ['subtitle', 'Supporting copy', 'textarea'],
+          ['search_placeholder', 'Search placeholder', 'text'],
+          ['articles_label', 'Articles stat label', 'text'],
+          ['categories_label', 'Categories stat label', 'text'],
+          ['last_updated_label', 'Last updated stat label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-mosaic', $sectionsByKey['news_mosaic'] ?? null, 'Category Mosaic', 'Controls category tile labels and whether the hero mosaic is visible. Category counts come from published posts.', [
+          ['show_mosaic', 'Show mosaic', 'checkbox'],
+          ['programme_label', 'Programme tile label', 'text'],
+          ['groundbreaking_label', 'Groundbreaking tile label', 'text'],
+          ['construction_label', 'Construction tile label', 'text'],
+          ['policy_label', 'Policy tile label', 'text'],
+          ['community_label', 'Community tile label', 'text'],
+          ['official_label', 'Official tile label', 'text'],
+          ['field_reports_label', 'Field reports tile label', 'text'],
+          ['total_label', 'Total articles label', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-featured', $sectionsByKey['news_featured'] ?? null, 'Featured Story', 'Controls labels around the featured article. The selected story comes from the news article marked featured.', [
+          ['section_label', 'Section label', 'text'],
+          ['featured_badge', 'Featured badge label', 'text'],
+          ['read_button_label', 'Read button label', 'text'],
+          ['empty_title', 'Empty state title', 'text'],
+          ['empty_text', 'Empty state message', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-filters', $sectionsByKey['news_filters'] ?? null, 'Filters & Sorting', 'Controls filter bar labels and sort option text. Category pills come from news categories.', [
+          ['all_label', 'All filter label', 'text'],
+          ['results_suffix_single', 'Single result suffix', 'text'],
+          ['results_suffix_plural', 'Plural result suffix', 'text'],
+          ['latest_label', 'Latest sort label', 'text'],
+          ['oldest_label', 'Oldest sort label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-listing', $sectionsByKey['news_listing'] ?? null, 'Article Listing', 'Controls grid headings, card CTAs, load-more labels and empty-state copy.', [
+          ['title', 'Grid heading', 'text'],
+          ['subtitle', 'Grid subtitle', 'text'],
+          ['read_more_label', 'Card read-more label', 'text'],
+          ['load_more_label', 'Load-more button label', 'text'],
+          ['empty_title', 'No-results title', 'text'],
+          ['empty_text', 'No-results message', 'textarea'],
+          ['empty_reset_label', 'Clear filters label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-cta', $sectionsByKey['news_cta'] ?? null, 'Stay Updated CTA', 'Controls the bottom CTA strip and public social/application links.', [
+          ['title_prefix', 'CTA title prefix', 'text'],
+          ['title_highlight', 'CTA highlighted title text', 'text'],
+          ['subtitle', 'CTA supporting copy', 'textarea'],
+          ['x_url', 'X/Twitter URL', 'text'],
+          ['facebook_url', 'Facebook URL', 'text'],
+          ['youtube_url', 'YouTube URL', 'text'],
+          ['button_label', 'Button label', 'text'],
+          ['button_url', 'Button URL', 'text'],
+      ]); ?>
+    </section>
+<?php elseif ($isContactEditor): ?>
+    <section class="sa-contact-cms sa-home-cms" aria-label="Contact page editor">
+      <nav class="card sa-home-cms-nav" aria-label="Contact page editor sections">
+        <a href="#contact-hero"><i class="fa-solid fa-headset" aria-hidden="true"></i> Hero</a>
+        <a href="#contact-cards"><i class="fa-solid fa-address-card" aria-hidden="true"></i> Quick Cards</a>
+        <a href="#contact-form"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Form</a>
+        <a href="#contact-office"><i class="fa-solid fa-building" aria-hidden="true"></i> Office</a>
+        <a href="#contact-departments"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> Departments</a>
+        <a href="#contact-faq"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> FAQ Banner</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-address-book" aria-hidden="true"></i></div>
+        <div>
+          <h3>Shared contact data stays centralised</h3>
+          <p>This editor controls the Contact page wording. Phone numbers, email, office details and department cards are pulled from global contact settings and the contact departments table.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms.php')) ?>#settings"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Global Settings</a>
+      </section>
+
+      <?php cms_editor_home_block('contact-hero', $sectionsByKey['contact_hero'] ?? null, 'Hero', 'Controls the first screen: badge, headline, supporting copy and the three response summary labels.', [
+          ['background_image', 'Hero background image', 'upload', 'heroes'],
+          ['background_alt', 'Hero image description', 'text'],
+          ['eyebrow', 'Hero badge', 'text'],
+          ['title', 'Headline', 'textarea'],
+          ['subtitle', 'Supporting copy', 'textarea'],
+          ['response_value', 'Response value', 'text'],
+          ['response_label', 'Response label', 'text'],
+          ['hours_value', 'Hours value', 'text'],
+          ['hours_label', 'Hours label', 'text'],
+          ['departments_value', 'Departments value', 'text'],
+          ['departments_label', 'Departments label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('contact-cards', $sectionsByKey['contact_quick_cards'] ?? null, 'Quick Contact Cards', 'Controls labels and helper text. Actual phone, email, WhatsApp and address values come from shared contact settings.', [
+          ['phone_label', 'Phone card label', 'text'],
+          ['phone_hint', 'Phone card hint', 'text'],
+          ['email_label', 'Email card label', 'text'],
+          ['email_hint', 'Email card hint', 'text'],
+          ['whatsapp_label', 'WhatsApp card label', 'text'],
+          ['whatsapp_hint', 'WhatsApp card hint', 'text'],
+          ['visit_label', 'Visit card label', 'text'],
+          ['visit_hint', 'Visit card hint', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('contact-form', $sectionsByKey['contact_form'] ?? null, 'Message Form', 'Controls the form heading, helper text, placeholders, privacy note and success/error copy.', [
+          ['title', 'Form heading', 'text'],
+          ['subtitle', 'Form introduction', 'textarea'],
+          ['name_placeholder', 'Name placeholder', 'text'],
+          ['phone_placeholder', 'Phone placeholder', 'text'],
+          ['email_placeholder', 'Email placeholder', 'text'],
+          ['subject_placeholder', 'Subject placeholder', 'text'],
+          ['message_placeholder', 'Message placeholder', 'textarea'],
+          ['file_label', 'File upload label', 'text'],
+          ['privacy_note', 'Privacy note', 'textarea'],
+          ['submit_label', 'Submit button label', 'text'],
+          ['success_title', 'Success title', 'text'],
+          ['success_text', 'Success message', 'textarea'],
+          ['error_text', 'Error message', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('contact-office', $sectionsByKey['contact_office'] ?? null, 'Office & Map', 'Controls office card labels, hours text, map embed and national helpline presentation.', [
+          ['office_title', 'Office card title', 'text'],
+          ['weekday_label', 'Weekday label', 'text'],
+          ['weekday_hours', 'Weekday hours', 'text'],
+          ['saturday_label', 'Saturday label', 'text'],
+          ['saturday_hours', 'Saturday hours', 'text'],
+          ['holiday_label', 'Holiday label', 'text'],
+          ['holiday_hours', 'Holiday hours', 'text'],
+          ['map_embed_url', 'Google Maps embed URL', 'textarea'],
+          ['map_link_label', 'Map link label', 'text'],
+          ['helpline_title', 'Helpline title', 'text'],
+          ['helpline_number', 'Helpline number', 'text'],
+          ['helpline_note', 'Helpline note', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('contact-departments', $sectionsByKey['contact_departments'] ?? null, 'Departments Directory', 'Controls the directory heading and empty state. Department cards and form options come from contact_departments.', [
+          ['eyebrow', 'Section eyebrow', 'text'],
+          ['title', 'Section heading', 'text'],
+          ['subtitle', 'Section introduction', 'textarea'],
+          ['empty_text', 'Empty state message', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('contact-faq', $sectionsByKey['contact_faq_banner'] ?? null, 'FAQ Shortcut Banner', 'Controls the FAQ help strip at the bottom of the Contact page.', [
+          ['title', 'Banner heading', 'text'],
+          ['subtitle', 'Banner copy', 'textarea'],
+          ['pill_1_label', 'Pill 1 label', 'text'],
+          ['pill_1_url', 'Pill 1 URL', 'text'],
+          ['pill_2_label', 'Pill 2 label', 'text'],
+          ['pill_2_url', 'Pill 2 URL', 'text'],
+          ['pill_3_label', 'Pill 3 label', 'text'],
+          ['pill_3_url', 'Pill 3 URL', 'text'],
+          ['button_label', 'Button label', 'text'],
+          ['button_url', 'Button URL', 'text'],
+      ]); ?>
+    </section>
 <?php else: ?>
     <section class="sa-cms-section-list" aria-label="Editable sections">
 <?php foreach ($editableSections as $section): ?>
@@ -772,6 +1176,60 @@ function cms_editor_is_retired_section(string $pageSlug, string $template, array
                 'leadership_contact_cta',
             ];
             return !in_array((string)($section['section_key'] ?? ''), $activeLeadership, true);
+        }
+
+        if ($pageSlug === 'contact') {
+            $activeContact = [
+                'contact_hero',
+                'contact_quick_cards',
+                'contact_form',
+                'contact_office',
+                'contact_departments',
+                'contact_faq_banner',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeContact, true);
+        }
+
+        if ($pageSlug === 'projects') {
+            $activeProjects = [
+                'projects_hero',
+                'projects_filters',
+                'projects_listing',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeProjects, true);
+        }
+
+        if ($pageSlug === 'constituencies') {
+            $activeConstituencies = [
+                'constituencies_hero',
+                'constituencies_map',
+                'constituencies_progress',
+                'constituencies_grid',
+                'constituencies_apply_cta',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeConstituencies, true);
+        }
+
+        if ($pageSlug === 'constituency-detail') {
+            $activeConstituencyDetail = [
+                'constituency_detail_labels',
+                'constituency_detail_facts',
+                'constituency_detail_related',
+                'constituency_detail_apply_cta',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeConstituencyDetail, true);
+        }
+
+        if ($pageSlug === 'news') {
+            $activeNews = [
+                'news_hero',
+                'news_mosaic',
+                'news_featured',
+                'news_filters',
+                'news_listing',
+                'news_cta',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeNews, true);
         }
 
         return false;
@@ -1105,6 +1563,375 @@ function cms_editor_ensure_faq_sections(int $pageId): void
             'apply_subtitle' => "Applications are processed entirely through the Government's eCitizen portal - free, secure and available 24/7.",
             'apply_button_label' => 'Apply via eCitizen',
             'apply_button_url' => 'https://ecitizen.go.ke',
+        ]],
+    ];
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_ensure_projects_sections(int $pageId): void
+{
+    $defaults = [
+        ['projects_hero', 'Projects Hero', 'projects_hero', 10, [
+            'background_image' => 'uploads/gallery/maili-tatu-2.jpg',
+            'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
+            'eyebrow' => 'AHP Projects',
+            'title_plain' => 'Housing Projects',
+            'title_highlight' => 'Directory',
+            'subtitle' => 'Track every affordable housing project across Trans-Nzoia County - construction progress, contractor details, timelines and unit counts in real time.',
+            'total_projects_label' => 'Total Projects',
+            'units_label' => 'Units Planned',
+            'active_label' => 'Active',
+            'constituencies_label' => 'Constituencies',
+        ]],
+        ['projects_filters', 'Project Filters', 'projects_filters', 20, [
+            'search_placeholder' => 'Search projects...',
+            'status_label' => 'Status:',
+            'all_label' => 'All',
+            'active_label' => 'Active',
+            'planning_label' => 'Planning',
+            'constituency_label' => 'Constituency:',
+            'sort_label' => 'Sort:',
+            'sort_completion_desc' => 'Completion high to low',
+            'sort_completion_asc' => 'Completion low to high',
+            'sort_units_desc' => 'Most units',
+            'sort_name_asc' => 'Name A-Z',
+            'reset_label' => 'Clear filters',
+        ]],
+        ['projects_listing', 'Project Listing', 'projects_listing', 30, [
+            'results_prefix' => 'Showing',
+            'project_single' => 'project',
+            'project_plural' => 'projects',
+            'units_label' => 'Units',
+            'complete_label' => 'Complete',
+            'view_label' => 'View Project',
+            'pagination_showing_label' => 'Showing',
+            'pagination_of_label' => 'of',
+            'empty_title' => 'No projects found',
+            'empty_text' => 'Try adjusting your filters or search term.',
+            'empty_reset_label' => 'Clear all filters',
+        ]],
+    ];
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_ensure_constituencies_sections(int $pageId): void
+{
+    $defaults = [
+        ['constituencies_hero', 'Constituencies Hero', 'constituencies_hero', 10, [
+            'background_image' => 'uploads/gallery/maili-tatu-3.jpg',
+            'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
+            'eyebrow' => 'Coverage Map',
+            'title_prefix' => 'All',
+            'title_highlight' => '5 Constituencies',
+            'subtitle' => 'Explore how the Affordable Housing Programme reaches every corner of Trans-Nzoia County - from Endebess on the Uganda border to Kwanza in the south.',
+            'constituencies_label' => 'Constituencies',
+            'projects_label' => 'Projects',
+            'units_label' => 'Units Planned',
+            'residents_label' => 'Residents Served',
+        ]],
+        ['constituencies_map', 'Map & Side List', 'constituencies_map', 20, [
+            'title' => 'Trans-Nzoia County',
+            'subtitle' => 'Click a constituency to explore its housing projects',
+            'active_label' => 'Active construction',
+            'planning_label' => 'Planning stage',
+            'selected_label' => 'Selected',
+            'empty_text' => 'Constituency data will appear after projects and wards are added to the registry.',
+        ]],
+        ['constituencies_progress', 'County-Wide Progress', 'constituencies_progress', 30, [
+            'title' => "County-Wide\nProgramme\nProgress",
+            'subtitle' => 'Across all {constituencies} constituencies, the programme is delivering {units} affordable housing units - targeting Kenyans registered on the national Boma Yangu portal.',
+            'button_label' => 'Browse All Projects',
+            'button_url' => 'projects.php',
+        ]],
+        ['constituencies_grid', 'Browse Grid', 'constituencies_grid', 40, [
+            'eyebrow' => 'Browse by Constituency',
+            'title_prefix' => 'All',
+            'title_highlight' => '5 Constituencies',
+            'sort_label' => 'Sort:',
+            'default_label' => 'Default',
+            'progress_label' => 'Highest Progress',
+            'units_label' => 'Most Units',
+            'alpha_label' => 'A - Z',
+        ]],
+        ['constituencies_apply_cta', 'Application CTA', 'constituencies_apply_cta', 50, [
+            'title' => 'Ready to Apply for Affordable Housing?',
+            'subtitle' => 'Register on the national Boma Yangu portal to join the Trans-Nzoia County AHP allocation list.',
+            'primary_label' => 'Apply on Boma Yangu',
+            'primary_url' => 'https://bomayangu.go.ke',
+            'secondary_label' => 'View All Projects',
+            'secondary_url' => 'projects.php',
+        ]],
+    ];
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_ensure_constituency_detail_sections(int $pageId): void
+{
+    $defaults = cms_editor_constituency_detail_defaults();
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_constituency_detail_defaults(): array
+{
+    return [
+        ['constituency_detail_labels', 'Template Labels', 'constituency_detail_labels', 10, [
+            'active_status_label' => 'Active Construction',
+            'planning_status_label' => 'Planning Stage',
+            'projects_label' => 'Projects',
+            'units_label' => 'Units Planned',
+            'population_label' => 'Population',
+            'completion_label' => 'Avg. Completion',
+            'wards_label' => 'Wards',
+            'projects_title_suffix' => 'Projects',
+            'projects_subtitle' => 'All housing developments in this constituency under the national AHP programme.',
+            'view_all_projects_label' => 'View all projects',
+            'unit_card_label' => 'Units',
+            'complete_card_label' => 'Complete',
+            'view_project_label' => 'View Project',
+            'empty_projects_text' => 'No projects listed yet for this constituency.',
+            'progress_eyebrow' => 'Progress Overview',
+            'progress_title_suffix' => 'Construction Progress',
+            'progress_subtitle' => 'Across {projects} active {project_word}, {constituency} Constituency has delivered {units} units under the national AHP programme. Work is progressing across {wards} wards.',
+            'total_units_label' => 'Total Units',
+        ]],
+        ['constituency_detail_facts', 'Facts & Location', 'constituency_detail_facts', 20, [
+            'facts_title' => 'Constituency Facts',
+            'county_label' => 'County',
+            'population_label' => 'Population',
+            'wards_label' => 'Wards',
+            'lead_agency_label' => 'Lead Agency',
+            'lead_agency_value' => 'State Dept. of Housing',
+            'funding_label' => 'Funding',
+            'funding_value' => 'National AHP Fund + County Budget',
+            'programme_label' => 'Programme',
+            'programme_value' => 'National Affordable Housing Programme',
+            'location_title' => 'Location',
+            'all_constituencies_label' => 'All Constituencies',
+        ]],
+        ['constituency_detail_related', 'Other Constituencies', 'constituency_detail_related', 30, [
+            'title' => 'Other Constituencies',
+            'subtitle' => 'Explore housing developments across Trans-Nzoia County.',
+            'view_all_label' => 'View all',
+            'explore_label' => 'Explore',
+            'not_found_title' => 'Constituency Not Found',
+            'not_found_text' => "The constituency you're looking for doesn't exist or the URL is incorrect.",
+            'not_found_button' => 'Back to Constituencies',
+        ]],
+        ['constituency_detail_apply_cta', 'Application CTA', 'constituency_detail_apply_cta', 40, [
+            'title' => 'Ready to Apply for Affordable Housing?',
+            'subtitle' => 'Register on the national Boma Yangu portal to join the allocation list for this constituency.',
+            'primary_label' => 'Apply on Boma Yangu',
+            'primary_url' => 'https://bomayangu.go.ke',
+            'secondary_label' => 'View All Projects',
+            'secondary_url' => 'projects.php',
+        ]],
+    ];
+}
+
+function cms_editor_ensure_news_sections(int $pageId): void
+{
+    $defaults = [
+        ['news_hero', 'News Hero', 'news_hero', 10, [
+            'eyebrow' => 'News & Updates',
+            'title_plain_1' => 'Latest',
+            'title_accent' => 'News &',
+            'title_plain_2' => 'Announcements',
+            'subtitle' => 'Official updates, progress reports, and community news from the Trans-Nzoia County Affordable Housing Programme.',
+            'search_placeholder' => 'Search articles...',
+            'articles_label' => 'Articles',
+            'categories_label' => 'Categories',
+            'last_updated_label' => 'Last Updated',
+        ]],
+        ['news_mosaic', 'Category Mosaic', 'news_mosaic', 20, [
+            'show_mosaic' => '1',
+            'programme_label' => 'Programme',
+            'groundbreaking_label' => 'Groundbreaking',
+            'construction_label' => 'Construction',
+            'policy_label' => 'Policy',
+            'community_label' => 'Community',
+            'official_label' => 'Official',
+            'field_reports_label' => 'Field Reports',
+            'total_label' => "Total\nArticles",
+        ]],
+        ['news_featured', 'Featured Story', 'news_featured', 30, [
+            'section_label' => 'Featured Story',
+            'featured_badge' => 'Featured',
+            'read_button_label' => 'Read Full Article',
+            'empty_title' => 'No featured story selected',
+            'empty_text' => 'Mark a published article as featured to populate this section.',
+        ]],
+        ['news_filters', 'Filters & Sorting', 'news_filters', 40, [
+            'all_label' => 'All Articles',
+            'results_suffix_single' => 'article',
+            'results_suffix_plural' => 'articles',
+            'latest_label' => 'Latest First',
+            'oldest_label' => 'Oldest First',
+        ]],
+        ['news_listing', 'Article Listing', 'news_listing', 50, [
+            'title' => 'All Articles',
+            'subtitle' => 'Showing latest news & updates',
+            'read_more_label' => 'Read More',
+            'load_more_label' => 'Load More Articles',
+            'empty_title' => 'No Articles Found',
+            'empty_text' => 'No articles match your current search or filter. Try a different keyword or category.',
+            'empty_reset_label' => 'Clear Filters',
+        ]],
+        ['news_cta', 'Stay Updated CTA', 'news_cta', 60, [
+            'title_prefix' => 'Stay',
+            'title_highlight' => 'Up to Date',
+            'subtitle' => 'Follow the programme on social media or apply for housing directly through the eCitizen portal to receive official notifications about unit availability and beneficiary selection.',
+            'x_url' => '#',
+            'facebook_url' => '#',
+            'youtube_url' => '#',
+            'button_label' => 'Apply via eCitizen',
+            'button_url' => 'https://ecitizen.go.ke',
+        ]],
+    ];
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_ensure_contact_sections(int $pageId): void
+{
+    $defaults = [
+        ['contact_hero', 'Contact Hero', 'contact_hero', 10, [
+            'background_image' => 'uploads/heroes/hero-main.jpg',
+            'background_alt' => 'Trans-Nzoia Affordable Housing Programme contact desk',
+            'eyebrow' => 'Get in Touch',
+            'title' => "We're Here\nto Help.",
+            'subtitle' => 'Reach our county housing team for enquiries about the Affordable Housing Programme - applications, site progress, allocation status, or any other question.',
+            'response_value' => '24 hrs',
+            'response_label' => 'Response Time',
+            'hours_value' => 'Mon - Fri',
+            'hours_label' => '8am - 5pm EAT',
+            'departments_value' => '4',
+            'departments_label' => 'Departments',
+        ]],
+        ['contact_quick_cards', 'Quick Contact Cards', 'contact_quick_cards', 20, [
+            'phone_label' => 'Call Us',
+            'phone_hint' => 'Mon-Fri, 8am-5pm',
+            'email_label' => 'Email Us',
+            'email_hint' => 'Reply within 24 hours',
+            'whatsapp_label' => 'WhatsApp',
+            'whatsapp_hint' => 'Quick questions welcome',
+            'visit_label' => 'Visit Us',
+            'visit_hint' => 'Open in Google Maps',
+        ]],
+        ['contact_form', 'Message Form', 'contact_form', 30, [
+            'title' => 'Send Us a Message',
+            'subtitle' => 'Fill in the form below and a member of our team will get back to you within one business day.',
+            'name_placeholder' => 'e.g. John Wafula',
+            'phone_placeholder' => '07XX XXX XXX',
+            'email_placeholder' => 'you@example.com',
+            'subject_placeholder' => 'Select a subject...',
+            'message_placeholder' => 'Please describe your enquiry in detail...',
+            'file_label' => 'Choose file (PDF, JPG, PNG - max 5MB)',
+            'privacy_note' => 'Your information is protected under our Privacy Policy and will not be shared with third parties.',
+            'submit_label' => 'Send Message',
+            'success_title' => 'Message Sent!',
+            'success_text' => 'Thank you. We have received your message and will respond within one business day.',
+            'error_text' => 'Something went wrong. Please try again or email us directly.',
+        ]],
+        ['contact_office', 'Office & Map', 'contact_office', 40, [
+            'office_title' => 'AHP Field Office - Trans-Nzoia',
+            'weekday_label' => 'Monday - Friday',
+            'weekday_hours' => '8:00am - 5:00pm',
+            'saturday_label' => 'Saturday',
+            'saturday_hours' => '9:00am - 1:00pm',
+            'holiday_label' => 'Sunday & Public Holidays',
+            'holiday_hours' => 'Closed',
+            'map_embed_url' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3986.8!2d35.0062!3d1.0154!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sKitale%2C+Trans-Nzoia!5e0!3m2!1sen!2ske!4v1',
+            'map_link_label' => 'Open in Google Maps',
+            'helpline_title' => 'National AHB Helpline',
+            'helpline_number' => '0800 723 133',
+            'helpline_note' => 'Toll-free - Mon-Fri 8am-6pm',
+        ]],
+        ['contact_departments', 'Departments Directory', 'contact_departments', 50, [
+            'eyebrow' => 'Departments',
+            'title' => 'Who to Contact',
+            'subtitle' => 'Reach the right team directly for faster assistance.',
+            'empty_text' => 'Department contacts will appear after they are added to the contact directory.',
+        ]],
+        ['contact_faq_banner', 'FAQ Shortcut Banner', 'contact_faq_banner', 60, [
+            'title' => 'Have a quick question?',
+            'subtitle' => 'Browse our Frequently Asked Questions for instant answers.',
+            'pill_1_label' => 'How do I apply?',
+            'pill_1_url' => 'faq.php#q-how-apply',
+            'pill_2_label' => 'What is the levy?',
+            'pill_2_url' => 'faq.php#q-levy-amount',
+            'pill_3_label' => 'When do units complete?',
+            'pill_3_url' => 'faq.php#q-when-complete',
+            'button_label' => 'View All FAQs',
+            'button_url' => 'faq.php',
         ]],
     ];
 

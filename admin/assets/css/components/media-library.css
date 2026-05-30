@@ -506,15 +506,20 @@
 
 .sa-media-picker__panel {
     width: min(1120px, 96vw);
-    max-height: min(860px, 92vh);
+    max-height: min(820px, 92vh);
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.sa-media-picker .is-hidden,
+.sa-media-picker [data-picker-panel].is-hidden {
+    display: none !important;
 }
 
 .sa-media-picker__tabs {
     display: flex;
     gap: var(--admin-space-xs);
-    padding: var(--admin-space-sm) var(--admin-space-lg);
+    padding: var(--admin-space-sm) var(--admin-space-lg) 0;
     border-bottom: 1px solid var(--admin-border);
     background: var(--admin-surface-muted);
 }
@@ -523,7 +528,8 @@
     min-height: 40px;
     padding: 0 var(--admin-space-md);
     border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius-pill);
+    border-radius: var(--admin-radius-sm) var(--admin-radius-sm) 0 0;
+    border-bottom: 0;
     background: var(--admin-surface);
     color: var(--admin-text-muted);
     font-weight: 900;
@@ -539,6 +545,7 @@
 .sa-media-picker__body {
     min-height: 0;
     overflow: hidden;
+    background: var(--admin-surface);
 }
 
 .sa-media-picker__library {
@@ -599,15 +606,37 @@
 
 .sa-media-picker__workspace .sa-media-toolbar {
     grid-template-columns: minmax(0, 1fr) auto;
+    padding-bottom: var(--admin-space-sm);
 }
 
 .sa-media-picker__workspace .sa-media-grid {
-    min-height: 360px;
-    max-height: 52vh;
+    min-height: 350px;
+    max-height: 48vh;
+    padding: var(--admin-space-sm) .2rem var(--admin-space-sm) 0;
 }
 
 .sa-media-picker__panel > footer {
     background: color-mix(in srgb, var(--admin-surface-muted) 72%, var(--admin-surface));
+}
+
+.sa-media-picker[data-active-panel="upload"] .sa-media-picker__panel > footer {
+    display: none;
+}
+
+.sa-media-picker [data-picker-panel="upload"] {
+    align-content: start;
+    padding-bottom: var(--admin-space-lg);
+    overflow: auto;
+}
+
+.sa-media-picker [data-picker-panel="upload"] .sa-media-drop {
+    min-height: 220px;
+}
+
+.sa-media-picker [data-picker-panel="upload"] footer {
+    margin-top: var(--admin-space-md);
+    padding: var(--admin-space-md) var(--admin-space-lg) 0;
+    border-top: 0;
 }
 
 @media (max-width: 900px) {

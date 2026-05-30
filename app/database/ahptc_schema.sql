@@ -133,8 +133,11 @@ CREATE TABLE IF NOT EXISTS `constituencies` (
     `mp`             VARCHAR(120) NULL,
     `mp_photo`       VARCHAR(255) NULL,
     `description`    TEXT         NULL,
+    `population`     INT UNSIGNED NULL,
     `total_units`    INT UNSIGNED DEFAULT 0,
     `total_projects` INT UNSIGNED DEFAULT 0,
+    `avg_completion` TINYINT UNSIGNED DEFAULT 0,
+    `status`         ENUM('planning','active','completed') DEFAULT 'planning',
     `hero_image`     VARCHAR(255) NULL,
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -148,6 +151,7 @@ CREATE TABLE IF NOT EXISTS `wards` (
     `constituency_id`  INT UNSIGNED NOT NULL,
     `name`             VARCHAR(100) NOT NULL,
     `slug`             VARCHAR(100) NOT NULL,
+    UNIQUE KEY `uq_wards_constituency_slug` (`constituency_id`, `slug`),
     FOREIGN KEY (`constituency_id`) REFERENCES `constituencies`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -172,11 +176,14 @@ CREATE TABLE IF NOT EXISTS `projects` (
     `ward_id`          INT UNSIGNED NULL,
     `name`             VARCHAR(200) NOT NULL,
     `slug`             VARCHAR(200) NOT NULL UNIQUE,
-    `status`           ENUM('planning','active','stalled','completed') DEFAULT 'planning',
+    `location_label`   VARCHAR(200) NULL,
+    `status`           ENUM('planning','active','on_hold','stalled','completed','cancelled') DEFAULT 'planning',
     `pct_complete`     TINYINT UNSIGNED DEFAULT 0,
     `contract_sum`     DECIMAL(15,2) NULL,
     `start_date`       DATE NULL,
     `est_delivery`     DATE NULL,
+    `current_milestone` VARCHAR(255) NULL,
+    `contractor_name`  VARCHAR(180) NULL,
     `contractor_id`    INT UNSIGNED NULL,
     `consultant_id`    INT UNSIGNED NULL,
     `description`      TEXT NULL,
@@ -184,6 +191,7 @@ CREATE TABLE IF NOT EXISTS `projects` (
     `images_json`      TEXT NULL,
     `funding_source`   VARCHAR(150) NULL,
     `lead_agency`      VARCHAR(150) NULL,
+    `site_engineer`    VARCHAR(150) NULL,
     `units`            INT UNSIGNED NULL,
     `is_featured`      TINYINT(1)   DEFAULT 0,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
@@ -989,26 +997,39 @@ CREATE TABLE IF NOT EXISTS `news_tags` (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `news_articles` (
     `id`                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `post_format`       VARCHAR(40) NOT NULL DEFAULT 'article',
     `category_id`       INT UNSIGNED NULL,
     `author_id`         INT UNSIGNED NOT NULL,
     `title`             VARCHAR(255) NOT NULL,
     `slug`              VARCHAR(255) NOT NULL UNIQUE,
     `excerpt`           TEXT NULL,
+    `read_time`         VARCHAR(50) NULL,
     `body`              LONGTEXT     NOT NULL,
     `featured_image_id` INT UNSIGNED NULL,
+    `image_caption`     VARCHAR(500) NULL,
+    `inline_image_id`   INT UNSIGNED NULL,
+    `attachment_id`     INT UNSIGNED NULL,
+    `external_url`      VARCHAR(500) NULL,
     `status`            ENUM('draft','published','scheduled','archived') DEFAULT 'draft',
+    `is_featured`       TINYINT(1) DEFAULT 0,
+    `is_visible`        TINYINT(1) NOT NULL DEFAULT 1,
     `published_at`      DATETIME NULL,
     `scheduled_for`     DATETIME NULL,
     `views`             INT UNSIGNED DEFAULT 0,
     `seo_title`         VARCHAR(255) NULL,
     `seo_description`   TEXT NULL,
     `og_image_id`       INT UNSIGNED NULL,
+    `metadata_json`     LONGTEXT NULL,
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at`        DATETIME NULL,
     FOREIGN KEY (`category_id`) REFERENCES `news_categories`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`author_id`)   REFERENCES `users`(`id`),
     INDEX `idx_status`    (`status`),
-    INDEX `idx_published` (`published_at`)
+    INDEX `idx_published` (`published_at`),
+    INDEX `idx_news_format` (`post_format`),
+    INDEX `idx_news_visibility` (`is_visible`),
+    INDEX `idx_news_deleted` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1124,12 +1145,30 @@ CREATE TABLE IF NOT EXISTS `contact_submissions` (
     `email`       VARCHAR(160) NOT NULL,
     `phone`       VARCHAR(30)  NULL,
     `subject`     VARCHAR(200) NULL,
+    `attachment_path` VARCHAR(255) NULL,
     `message`     TEXT         NOT NULL,
     `is_read`     TINYINT(1)   DEFAULT 0,
+    `status`      ENUM('new','read','replied','archived') NOT NULL DEFAULT 'new',
     `assigned_to` INT UNSIGNED NULL,
     `replied_at`  DATETIME NULL,
     `created_at`  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_contact_submissions_status` (`status`, `created_at`),
     FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `contact_departments` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `name`        VARCHAR(150) NOT NULL,
+    `subject_key` VARCHAR(80)  NULL,
+    `role`        VARCHAR(255) NULL,
+    `email`       VARCHAR(150) NULL,
+    `phone`       VARCHAR(50)  NULL,
+    `icon`        VARCHAR(80)  NULL,
+    `accent`      VARCHAR(30)  NULL,
+    `sort_order`  SMALLINT UNSIGNED DEFAULT 0,
+    `is_visible`  TINYINT(1) DEFAULT 1,
+    UNIQUE KEY `uq_contact_department_name` (`name`),
+    KEY `idx_contact_departments_visible` (`is_visible`, `sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

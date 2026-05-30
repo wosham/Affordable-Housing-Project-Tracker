@@ -83,7 +83,7 @@ Logger::log('upload', 'media_library', $id, ['path' => $relativePath, 'folder' =
 
 Response::json([
     'success' => true,
-    'message' => 'Image uploaded.',
+    'message' => 'File uploaded.',
     'media' => [
         'id' => $id,
         'path' => $relativePath,

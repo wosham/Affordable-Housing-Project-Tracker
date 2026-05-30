@@ -21,16 +21,37 @@ INSERT IGNORE INTO `roles` (`name`, `slug`, `color`) VALUES
 ('Intern / Site Staff',   'intern',      '#2a2a2a');
 
 -- ============================================================
--- CONSTITUENCIES (7 in Trans-Nzoia County)
+-- CONSTITUENCIES (5 in Trans-Nzoia County)
 -- ============================================================
-INSERT IGNORE INTO `constituencies` (`name`, `slug`, `total_units`, `total_projects`) VALUES
-('Cherangany',   'cherangany',   0, 0),
-('Saboti',       'saboti',       0, 0),
-('Kiminini',     'kiminini',     0, 0),
-('Kwanza',       'kwanza',       0, 0),
-('Endebess',     'endebess',     0, 0),
-('Trans-Nzoia West', 'trans-nzoia-west', 0, 0),
-('Trans-Nzoia East', 'trans-nzoia-east', 0, 0);
+INSERT IGNORE INTO `constituencies` (`name`, `slug`, `population`, `total_units`, `total_projects`, `avg_completion`, `status`) VALUES
+('Cherangany',   'cherangany',   152000, 200, 1, 35, 'active'),
+('Saboti',       'saboti',       165000, 1120, 2, 58, 'active'),
+('Kiminini',     'kiminini',     138000, 120, 2, 5, 'planning'),
+('Kwanza',       'kwanza',       112000, 80, 1, 8, 'planning'),
+('Endebess',     'endebess',     104000, 210, 2, 10, 'active');
+
+INSERT IGNORE INTO `wards` (`constituency_id`, `name`, `slug`) VALUES
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'saboti' LIMIT 1), 'Matisi', 'matisi'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'saboti' LIMIT 1), 'Tuwan', 'tuwan'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'saboti' LIMIT 1), 'Kinyoro', 'kinyoro'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'saboti' LIMIT 1), 'Bidii', 'bidii'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'saboti' LIMIT 1), 'Township', 'township'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'cherangany' LIMIT 1), 'Matunda', 'matunda'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'cherangany' LIMIT 1), 'Sinyerere', 'sinyerere'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'cherangany' LIMIT 1), 'Kaplamai', 'kaplamai'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'cherangany' LIMIT 1), 'Motosiet', 'motosiet'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'endebess' LIMIT 1), 'Endebess', 'endebess'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'endebess' LIMIT 1), 'Chepchoina', 'chepchoina'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'endebess' LIMIT 1), 'Kapkoi', 'kapkoi'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'endebess' LIMIT 1), 'Metkei', 'metkei'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kiminini' LIMIT 1), 'Kiminini', 'kiminini'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kiminini' LIMIT 1), 'Waitaluk', 'waitaluk'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kiminini' LIMIT 1), 'Sikhendu', 'sikhendu'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kiminini' LIMIT 1), 'Hospital', 'hospital'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kwanza' LIMIT 1), 'Kwanza', 'kwanza'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kwanza' LIMIT 1), 'Keiyo', 'keiyo'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kwanza' LIMIT 1), 'Bidii', 'bidii'),
+((SELECT `id` FROM `constituencies` WHERE `slug` = 'kwanza' LIMIT 1), 'Kapomboi', 'kapomboi');
 
 -- ============================================================
 -- PROJECT CATEGORIES
@@ -88,7 +109,7 @@ INSERT IGNORE INTO `cms_settings` (`key`, `value`, `type`, `label`, `group`) VAL
 ('stat_units_targeted', '4000',                       'number',  'Units Targeted',          'stats'),
 ('stat_units_completed','0',                          'number',  'Units Completed',         'stats'),
 ('stat_projects_active','0',                          'number',  'Active Projects',         'stats'),
-('stat_constituencies', '7',                          'number',  'Constituencies Covered',  'stats'),
+('stat_constituencies', '5',                          'number',  'Constituencies Covered',  'stats'),
 ('social_twitter',      '',                           'text',    'Twitter / X URL',         'social'),
 ('social_facebook',     '',                           'text',    'Facebook URL',            'social'),
 ('social_youtube',      '',                           'text',    'YouTube URL',             'social'),

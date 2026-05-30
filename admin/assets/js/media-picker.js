@@ -8,6 +8,9 @@
   var items = [];
   var folders = {};
   var activeFolder = 'cms';
+  var activeType = 'image';
+  var activeAccept = 'image/*';
+  var activeTitle = 'Choose or upload image';
 
   var folderIcons = {
     heroes: 'fa-panorama',
@@ -44,22 +47,22 @@
     picker.innerHTML =
       '<div class="sa-media-modal__backdrop" data-picker-close></div>' +
       '<section class="sa-media-modal__panel sa-media-picker__panel" role="dialog" aria-modal="true" aria-label="Choose media">' +
-      '<header><div><span class="sa-panel-label"><i class="fa-solid fa-photo-film"></i> Media Picker</span><h3>Choose or upload image</h3><p>Select an existing asset or upload into the correct content collection.</p></div><button class="btn btn--icon btn--outline" type="button" data-picker-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>' +
+      '<header><div><span class="sa-panel-label"><i class="fa-solid fa-photo-film"></i> Media Picker</span><h3 data-picker-title>Choose or upload image</h3><p>Select an existing asset or upload into the correct content collection.</p></div><button class="btn btn--icon btn--outline" type="button" data-picker-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>' +
       '<div class="sa-media-picker__tabs"><button class="is-active" type="button" data-picker-tab="library">Choose from Library</button><button type="button" data-picker-tab="upload">Upload New</button></div>' +
       '<div class="sa-media-picker__body" data-picker-panel="library">' +
       '<div class="sa-media-picker__library">' +
       '<aside class="sa-media-picker__folders" data-picker-folders></aside>' +
-      '<div class="sa-media-picker__workspace"><div class="sa-media-toolbar"><label class="sa-media-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-picker-search placeholder="Search images..."></label><button class="btn btn--outline" type="button" data-picker-refresh><i class="fa-solid fa-rotate"></i> Refresh</button></div>' +
-      '<div class="sa-media-status" data-picker-status>Loading images...</div><div class="sa-media-grid" data-picker-grid></div></div>' +
+      '<div class="sa-media-picker__workspace"><div class="sa-media-toolbar"><label class="sa-media-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-picker-search placeholder="Search assets..."></label><button class="btn btn--outline" type="button" data-picker-refresh><i class="fa-solid fa-rotate"></i> Refresh</button></div>' +
+      '<div class="sa-media-status" data-picker-status>Loading assets...</div><div class="sa-media-grid" data-picker-grid></div></div>' +
       '</div>' +
       '</div>' +
       '<form class="sa-media-picker__body is-hidden" data-picker-panel="upload" data-picker-upload-form>' +
       '<input type="hidden" name="csrf_form" value="cms_editor"><input type="hidden" name="folder" data-picker-folder value="cms">' +
-      '<div class="sa-media-drop"><input type="file" name="file" accept="image/*" required><i class="fa-solid fa-cloud-arrow-up"></i><strong>Upload into this collection</strong><span data-picker-folder-label>CMS Assets</span></div>' +
+      '<div class="sa-media-drop"><input type="file" name="file" accept="image/*" required data-picker-file><i class="fa-solid fa-cloud-arrow-up"></i><strong>Upload into this collection</strong><span data-picker-folder-label>CMS Assets</span></div>' +
       '<div class="form-grid form-grid--2"><label class="form-field"><span class="form-label">Title</span><input class="form-input" name="title"></label><label class="form-field"><span class="form-label">Alt text</span><input class="form-input" name="alt_text"></label></div>' +
       '<footer><span data-picker-upload-state>Ready</span><button class="btn btn--primary" type="submit"><i class="fa-solid fa-upload"></i> Upload & Use</button></footer>' +
       '</form>' +
-      '<footer><span data-picker-selected>No image selected</span><button class="btn btn--outline" type="button" data-picker-close>Cancel</button><button class="btn btn--primary" type="button" data-picker-use disabled><i class="fa-solid fa-check"></i> Use Selected</button></footer>' +
+      '<footer><span data-picker-selected>No asset selected</span><button class="btn btn--outline" type="button" data-picker-close>Cancel</button><button class="btn btn--primary" type="button" data-picker-use disabled><i class="fa-solid fa-check"></i> Use Selected</button></footer>' +
       '</section>';
     document.body.appendChild(picker);
     bindPicker();
@@ -95,37 +98,41 @@
     var grid = qs('[data-picker-grid]', picker);
     if (!grid) return;
     if (!items.length) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-state__icon"><i class="fa-solid fa-image"></i></span><strong class="empty-state__title">No images found</strong><span class="empty-state__text">Upload a new image or sync the media library.</span></div>';
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-state__icon"><i class="fa-solid fa-photo-film"></i></span><strong class="empty-state__title">No assets found</strong><span class="empty-state__text">Upload a new asset or sync the media library.</span></div>';
       return;
     }
     grid.innerHTML = items.map(function (item) {
+      var isImage = String(item.type_group || '').toLowerCase() === 'image';
+      var thumb = isImage
+        ? '<img src="' + esc(item.url) + '" alt="' + esc(item.alt_text || item.title) + '" loading="lazy">'
+        : '<i class="fa-solid ' + (String(item.extension || '').toLowerCase() === 'pdf' ? 'fa-file-pdf' : 'fa-file-lines') + '"></i>';
       return '<article class="sa-media-card' + (selected && selected.id === item.id ? ' is-active' : '') + '" data-picker-media-id="' + item.id + '">' +
-        '<div class="sa-media-thumb"><span class="sa-media-type">' + esc(item.extension || 'image') + '</span><img src="' + esc(item.url) + '" alt="' + esc(item.alt_text || item.title) + '" loading="lazy"></div>' +
+        '<div class="sa-media-thumb"><span class="sa-media-type">' + esc(item.extension || activeType) + '</span>' + thumb + '</div>' +
         '<strong title="' + esc(item.title) + '">' + esc(item.title) + '</strong><small>' + esc(item.folder_label) + '</small></article>';
     }).join('');
   }
 
   function load() {
     var search = qs('[data-picker-search]', picker);
-    var params = new URLSearchParams({ type: 'image', folder: activeFolder, q: search ? search.value : '', per_page: 48 });
-    status('Loading images...');
+    var params = new URLSearchParams({ type: activeType, folder: activeFolder, q: search ? search.value : '', per_page: 48 });
+    status('Loading assets...');
     return window.AHPTC.request('api/media/list.php?' + params.toString()).then(function (data) {
       items = data.media || [];
       folders = data.folders || folders;
       renderFolders();
       if (!items.length && activeFolder) {
-        return window.AHPTC.request('api/media/list.php?type=image&per_page=48').then(function (fallback) {
+        return window.AHPTC.request('api/media/list.php?type=' + encodeURIComponent(activeType) + '&per_page=48').then(function (fallback) {
           items = fallback.media || [];
           folders = fallback.folders || folders;
           renderFolders();
-          status('This collection is empty. Showing all images for quick selection.');
+          status('This collection is empty. Showing matching assets for quick selection.');
           render();
         });
       }
-      status(items.length + ' images available');
+      status(items.length + ' assets available');
       render();
     }).catch(function (error) {
-      status(error.message || 'Could not load images');
+      status(error.message || 'Could not load assets');
     });
   }
 
@@ -133,17 +140,39 @@
     var wrap = button.closest('[data-cms-upload]');
     targetInput = wrap ? qs('[data-cms-upload-target]', wrap) : null;
     contextFolder = button.getAttribute('data-media-picker-folder') || (wrap && wrap.getAttribute('data-upload-folder')) || 'cms';
+    activeType = button.getAttribute('data-media-picker-type') || (wrap && wrap.getAttribute('data-media-kind')) || 'image';
+    activeAccept = button.getAttribute('data-media-picker-accept') || (activeType === 'pdf' ? 'application/pdf,.pdf' : 'image/*');
+    activeTitle = button.getAttribute('data-media-picker-title') || (activeType === 'pdf' ? 'Choose or upload PDF' : 'Choose or upload image');
     activeFolder = contextFolder;
     selected = null;
     build().hidden = false;
+    picker.setAttribute('data-active-panel', 'library');
+    picker.querySelectorAll('[data-picker-tab]').forEach(function (tab) {
+      tab.classList.toggle('is-active', tab.getAttribute('data-picker-tab') === 'library');
+    });
+    picker.querySelectorAll('[data-picker-panel]').forEach(function (panel) {
+      panel.classList.toggle('is-hidden', panel.getAttribute('data-picker-panel') !== 'library');
+    });
+    var title = qs('[data-picker-title]', picker);
+    if (title) title.textContent = activeTitle;
+    var file = qs('[data-picker-file]', picker);
+    if (file) file.setAttribute('accept', activeAccept);
+    if (file) file.value = '';
+    var uploadForm = qs('[data-picker-upload-form]', picker);
+    if (uploadForm) uploadForm.reset();
     var folderInput = qs('[data-picker-folder]', picker);
     if (folderInput) folderInput.value = contextFolder;
+    var csrfForm = qs('meta[name="csrf-form"]');
+    var csrfInput = qs('input[name="csrf_form"]', picker);
+    if (csrfInput && csrfForm) csrfInput.value = csrfForm.getAttribute('content') || 'cms_editor';
     var label = qs('[data-picker-folder-label]', picker);
     if (label) label.textContent = 'Destination: ' + contextFolder.replace(/-/g, ' ');
     var use = qs('[data-picker-use]', picker);
     if (use) use.disabled = true;
     var selectedLabel = qs('[data-picker-selected]', picker);
-    if (selectedLabel) selectedLabel.textContent = 'No image selected';
+    if (selectedLabel) selectedLabel.textContent = 'No asset selected';
+    var uploadState = qs('[data-picker-upload-state]', picker);
+    if (uploadState) uploadState.textContent = 'Ready';
     load();
   }
 
@@ -153,9 +182,24 @@
 
   function useSelected() {
     if (!selected || !targetInput) return;
-    targetInput.value = selected.path;
+    var valueMode = targetInput.getAttribute('data-media-picker-value') || 'path';
+    targetInput.value = valueMode === 'id' ? selected.id : selected.path;
     targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    updateControl(selected, targetInput.closest('[data-cms-upload]'));
     close();
+  }
+
+  function updateControl(item, wrap) {
+    if (!wrap || !item) return;
+    var name = qs('[data-cms-asset-name]', wrap);
+    if (name) name.textContent = item.title || item.filename || 'Selected asset';
+    var preview = qs('[data-cms-asset-preview]', wrap);
+    if (!preview) return;
+    if ((item.type_group || activeType) === 'image') {
+      preview.innerHTML = '<img src="' + esc(item.url) + '" alt="">';
+    } else {
+      preview.innerHTML = '<span><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span>';
+    }
   }
 
   function bindPicker() {
@@ -164,6 +208,7 @@
 
       var tab = event.target.closest('[data-picker-tab]');
       if (tab) {
+        picker.setAttribute('data-active-panel', tab.getAttribute('data-picker-tab') || 'library');
         picker.querySelectorAll('[data-picker-tab]').forEach(function (button) {
           button.classList.toggle('is-active', button === tab);
         });
@@ -189,7 +234,7 @@
         var use = qs('[data-picker-use]', picker);
         if (use) use.disabled = !selected;
         var label = qs('[data-picker-selected]', picker);
-        if (label) label.textContent = selected ? selected.title : 'No image selected';
+        if (label) label.textContent = selected ? selected.title : 'No asset selected';
         render();
       }
 

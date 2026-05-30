@@ -186,27 +186,53 @@
         return;
       }
 
-      /* Simulate async submit */
+      const endpoint = form.getAttribute('data-contact-endpoint') || 'api/public/contact-submit.php';
+      const formData = new FormData(form);
+
       submitBtn.classList.add('is-loading');
       submitBtn.disabled = true;
       if (errorBox) errorBox.hidden = true;
 
-      setTimeout(() => {
-        submitBtn.classList.remove('is-loading');
-        submitBtn.disabled = false;
+      fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      })
+        .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+        .then(({ ok, data }) => {
+          submitBtn.classList.remove('is-loading');
+          submitBtn.disabled = false;
 
-        /* Show success */
-        const nameVal  = document.getElementById('ctName') ? document.getElementById('ctName').value.trim() : '';
-        const emailVal = document.getElementById('ctEmail') ? document.getElementById('ctEmail').value.trim() : '';
-        const nameOut  = document.getElementById('ctSuccessName');
-        const emailOut = document.getElementById('ctSuccessEmail');
-        if (nameOut)  nameOut.textContent  = nameVal;
-        if (emailOut) emailOut.textContent = emailVal;
+          if (!ok || !data.success) {
+            const apiErrors = data.errors || {};
+            Object.keys(apiErrors).forEach((key) => {
+              if (fields[key] && fields[key].err) fields[key].err.textContent = apiErrors[key];
+              if (fields[key] && fields[key].el) fields[key].el.classList.add('is-error');
+            });
+            const fileErr = document.getElementById('ctFileErr');
+            if (apiErrors.attachment && fileErr) fileErr.textContent = apiErrors.attachment;
+            if (errorBox) {
+              const message = errorBox.querySelector('[data-contact-error-message]');
+              if (message && data.message) message.textContent = data.message;
+              errorBox.hidden = false;
+            }
+            return;
+          }
 
-        form.querySelectorAll('.ct-field-group, .ct-form-row--2col, .ct-form-footer, .ct-privacy-note').forEach((el) => { el.style.display = 'none'; });
-        if (successBox) successBox.hidden = false;
-        successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 1600);
+          const successMessage = successBox ? successBox.querySelector('[data-contact-success-message]') : null;
+          if (successMessage && data.message) successMessage.textContent = data.message;
+          form.querySelectorAll('.ct-field-group, .ct-form-row--2col, .ct-form-footer, .ct-privacy-note').forEach((el) => { el.style.display = 'none'; });
+          if (successBox) {
+            successBox.hidden = false;
+            successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        })
+        .catch(() => {
+          submitBtn.classList.remove('is-loading');
+          submitBtn.disabled = false;
+          if (errorBox) errorBox.hidden = false;
+        });
     });
 
     if (resetBtn) {

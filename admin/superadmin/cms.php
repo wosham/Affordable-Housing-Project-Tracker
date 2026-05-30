@@ -178,7 +178,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </div>
 </section>
 
-<section class="card sa-cms-settings">
+<section class="card sa-cms-settings" id="settings">
   <div class="section-heading">
     <div>
       <h3>Global Settings</h3>
@@ -260,17 +260,60 @@ function cms_page_blueprints(): array
     return [
         'home' => ['template' => 'landing', 'route_path' => 'index.php', 'hero_image' => 'uploads/heroes/hero-main.jpg', 'sections' => cms_sections(['hero', 'ticker', 'stats', 'about', 'projects', 'map', 'news', 'gallery', 'cta'])],
         'about' => ['template' => 'content', 'route_path' => 'about.php', 'hero_image' => 'uploads/gallery/maili-tatu-2.jpg', 'sections' => cms_sections(['hero', 'overview', 'pillars', 'timeline', 'legal_framework', 'partners', 'faq_teaser', 'leadership_contact', 'apply_cta'])],
-        'projects' => ['template' => 'listing', 'route_path' => 'projects.php', 'hero_image' => 'uploads/gallery/maili-tatu-2.jpg', 'sections' => cms_sections(['hero', 'stats_strip', 'listing_intro'])],
+        'projects' => [
+            'template' => 'listing',
+            'route_path' => 'projects.php',
+            'hero_image' => 'uploads/gallery/maili-tatu-2.jpg',
+            'seo_title' => 'All Projects | Trans-Nzoia County Affordable Housing Tracker',
+            'seo_description' => 'Browse all affordable housing projects in Trans-Nzoia County with live construction progress, contractor details and unit counts across all 5 constituencies.',
+            'seo_keywords' => 'Trans-Nzoia affordable housing projects, AHP Kenya, Maili Tatu estate, Matunda estate, Saboti housing, Cherangany housing',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/projects.php',
+            'sections' => cms_sections(['projects_hero', 'projects_filters', 'projects_listing']),
+        ],
         'project-detail' => ['template' => 'template', 'route_path' => 'project-detail.php', 'sections' => cms_sections(['template_labels', 'sidebar_cta', 'related_links'])],
-        'constituencies' => ['template' => 'listing', 'route_path' => 'constituencies.php', 'sections' => cms_sections(['hero', 'map_intro', 'county_progress', 'grid_intro'])],
-        'constituency-detail' => ['template' => 'template', 'route_path' => 'constituency-detail.php', 'sections' => cms_sections(['template_labels', 'apply_cta', 'related_links'])],
-        'news' => ['template' => 'listing', 'route_path' => 'news.php', 'sections' => cms_sections(['hero', 'featured_intro', 'listing_intro', 'newsletter_cta'])],
+        'constituencies' => [
+            'template' => 'listing',
+            'route_path' => 'constituencies.php',
+            'hero_image' => 'uploads/gallery/maili-tatu-3.jpg',
+            'seo_title' => 'Constituencies | Trans-Nzoia County Affordable Housing Tracker',
+            'seo_description' => 'Explore affordable housing coverage across all 5 constituencies in Trans-Nzoia County - Saboti, Cherangany, Endebess, Kiminini and Kwanza.',
+            'seo_keywords' => 'Trans-Nzoia constituencies, Saboti housing, Cherangany AHP, Endebess housing, Kiminini housing, Kwanza housing',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/constituencies.php',
+            'sections' => cms_sections(['constituencies_hero', 'constituencies_map', 'constituencies_progress', 'constituencies_grid', 'constituencies_apply_cta']),
+        ],
+        'constituency-detail' => [
+            'template' => 'template',
+            'route_path' => 'constituency-detail.php',
+            'seo_title' => 'Constituency Detail | Trans-Nzoia County Affordable Housing Tracker',
+            'seo_description' => 'Detailed affordable housing information for Trans-Nzoia constituencies, including live projects, progress, wards and local facts.',
+            'seo_keywords' => 'Trans-Nzoia constituency housing, AHP Kenya, affordable housing projects',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/constituency-detail.php',
+            'sections' => cms_sections(['constituency_detail_labels', 'constituency_detail_facts', 'constituency_detail_related', 'constituency_detail_apply_cta']),
+        ],
+        'news' => [
+            'template' => 'listing',
+            'route_path' => 'news.php',
+            'seo_title' => 'News & Updates | Trans-Nzoia County AHP Tracker',
+            'seo_description' => 'Latest news, official announcements, construction progress reports, and community updates from the Trans-Nzoia County Affordable Housing Programme.',
+            'seo_keywords' => 'Trans-Nzoia housing news, AHP announcements, affordable housing Kenya, county housing updates',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/news.php',
+            'sections' => cms_sections(['news_hero', 'news_mosaic', 'news_featured', 'news_filters', 'news_listing', 'news_cta']),
+        ],
         'news-article' => ['template' => 'template', 'route_path' => 'news-article.php', 'sections' => cms_sections(['template_labels', 'sidebar_facts', 'related_intro'])],
         'gallery' => ['template' => 'media', 'route_path' => 'gallery.php', 'sections' => cms_sections(['hero', 'highlights_intro', 'gallery_grid_intro', 'site_progress_intro', 'video_intro'])],
         'faq' => ['template' => 'content', 'route_path' => 'faq.php', 'sections' => cms_sections(['hero', 'popular_intro', 'faq_listing_intro', 'contact_cta'])],
         'leadership' => ['template' => 'content', 'route_path' => 'leadership.php', 'sections' => cms_sections(['leadership_hero', 'leadership_org_chart', 'leadership_national', 'leadership_spotlight', 'leadership_contractors', 'leadership_quotes', 'leadership_partners', 'leadership_contact_cta'])],
         'stakeholders' => ['template' => 'content', 'route_path' => 'stakeholders.php', 'sections' => cms_sections(['hero', 'ecosystem', 'categories', 'roles', 'timeline', 'voices', 'partners', 'engagement_cta'])],
-        'contact' => ['template' => 'contact', 'route_path' => 'contact.php', 'sections' => cms_sections(['hero', 'quick_contact', 'form_intro', 'office_info', 'departments_intro', 'faq_banner'])],
+        'contact' => [
+            'template' => 'contact',
+            'route_path' => 'contact.php',
+            'hero_image' => 'uploads/heroes/hero-main.jpg',
+            'seo_title' => 'Contact Us | Trans-Nzoia AHP Tracker',
+            'seo_description' => 'Contact the Trans-Nzoia Affordable Housing Programme team by phone, email, office visit or online enquiry form.',
+            'seo_keywords' => 'Trans-Nzoia affordable housing contact, AHP Kenya office, Kitale housing desk, housing enquiry Kenya',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/contact.php',
+            'sections' => cms_sections(['contact_hero', 'contact_quick_cards', 'contact_form', 'contact_office', 'contact_departments', 'contact_faq_banner']),
+        ],
         'privacy' => ['template' => 'legal', 'route_path' => 'legal/privacy.php', 'sections' => cms_legal_sections('Privacy Policy')],
         'terms' => ['template' => 'legal', 'route_path' => 'legal/terms.php', 'sections' => cms_legal_sections('Terms of Use')],
         'disclaimer' => ['template' => 'legal', 'route_path' => 'legal/disclaimer.php', 'sections' => cms_legal_sections('Disclaimer')],

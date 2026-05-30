@@ -10,49 +10,59 @@
   const browseGrid  = document.getElementById('conBrowseGrid');
   const sortBar     = document.getElementById('conGridSort');
 
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   /* --------------------------------------------------
      Build a constituency card
      -------------------------------------------------- */
   function buildCard(c) {
     const statusClass = c.status === 'active' ? 'con-card-status--active' : 'con-card-status--planning';
     const statusLabel = c.status === 'active' ? 'Active' : 'Planning';
-    const wardsList   = c.wards.join(', ');
+    const wardsList   = (c.wards || []).map(esc).join(', ');
+    const link = esc(c.link || '#');
 
     return `
-      <div class="con-card" data-id="${c.id}" tabindex="0" role="button" aria-label="Explore ${c.name} constituency">
+      <div class="con-card" data-id="${esc(c.id)}" tabindex="0" role="button" aria-label="Explore ${esc(c.name)} constituency">
         <div class="con-card-header">
           <div class="con-card-name-wrap">
-            <span class="con-card-name">${c.name}</span>
-            <span class="con-card-pop">${c.population} residents</span>
+            <span class="con-card-name">${esc(c.name)}</span>
+            <span class="con-card-pop">${esc(c.population)} residents</span>
           </div>
           <span class="con-card-status ${statusClass}">${statusLabel}</span>
         </div>
         <div class="con-card-stats">
           <div class="con-card-stat">
-            <span class="con-card-stat-val">${c.projectCount}</span>
+            <span class="con-card-stat-val">${esc(c.projectCount)}</span>
             <span class="con-card-stat-lbl">Projects</span>
           </div>
           <div class="con-card-stat">
-            <span class="con-card-stat-val">${c.totalUnits.toLocaleString()}</span>
+            <span class="con-card-stat-val">${Number(c.totalUnits || 0).toLocaleString()}</span>
             <span class="con-card-stat-lbl">Units</span>
           </div>
           <div class="con-card-stat">
-            <span class="con-card-stat-val">${c.wards.length}</span>
+            <span class="con-card-stat-val">${(c.wards || []).length}</span>
             <span class="con-card-stat-lbl">Wards</span>
           </div>
         </div>
         <div class="con-card-progress-wrap">
           <div class="con-card-progress-meta">
             <span class="con-card-progress-label">Avg. Completion</span>
-            <span class="con-card-progress-pct">${c.avgCompletion}%</span>
+            <span class="con-card-progress-pct">${esc(c.avgCompletion)}%</span>
           </div>
-          <div class="con-card-progress-bar" role="progressbar" aria-valuenow="${c.avgCompletion}" aria-valuemin="0" aria-valuemax="100">
-            <div class="con-card-progress-fill" data-target="${c.avgCompletion}"></div>
+          <div class="con-card-progress-bar" role="progressbar" aria-valuenow="${esc(c.avgCompletion)}" aria-valuemin="0" aria-valuemax="100">
+            <div class="con-card-progress-fill" data-target="${esc(c.avgCompletion)}"></div>
           </div>
         </div>
         <div class="con-card-footer">
           <span class="con-card-wards">${wardsList}</span>
-          <a href="${c.link}" class="con-card-cta" aria-label="Explore ${c.name} constituency">
+          <a href="${link}" class="con-card-cta" aria-label="Explore ${esc(c.name)} constituency">
             Explore <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
           </a>
         </div>
@@ -65,41 +75,42 @@
   function buildBrowseCard(c) {
     const statusClass = c.status === 'active' ? 'con-browse-status--active' : 'con-browse-status--planning';
     const statusLabel = c.status === 'active' ? 'Active' : 'Planning';
+    const link = esc(c.link || '#');
     return `
       <div class="con-browse-card">
         <div class="con-browse-card-top">
           <div>
-            <div class="con-browse-card-name">${c.name}</div>
-            <div class="con-browse-card-pop">${c.population} residents</div>
+            <div class="con-browse-card-name">${esc(c.name)}</div>
+            <div class="con-browse-card-pop">${esc(c.population)} residents</div>
           </div>
           <span class="con-browse-status ${statusClass}">${statusLabel}</span>
         </div>
         <div class="con-browse-stats">
           <div class="con-browse-stat">
-            <span class="con-browse-stat-val">${c.projectCount}</span>
+            <span class="con-browse-stat-val">${esc(c.projectCount)}</span>
             <span class="con-browse-stat-lbl">Projects</span>
           </div>
           <div class="con-browse-stat">
-            <span class="con-browse-stat-val">${c.totalUnits.toLocaleString()}</span>
+            <span class="con-browse-stat-val">${Number(c.totalUnits || 0).toLocaleString()}</span>
             <span class="con-browse-stat-lbl">Units</span>
           </div>
           <div class="con-browse-stat">
-            <span class="con-browse-stat-val">${c.wards.length}</span>
+            <span class="con-browse-stat-val">${(c.wards || []).length}</span>
             <span class="con-browse-stat-lbl">Wards</span>
           </div>
         </div>
         <div class="con-browse-progress">
           <div class="con-browse-progress-meta">
             <span>Avg. Completion</span>
-            <span>${c.avgCompletion}%</span>
+            <span>${esc(c.avgCompletion)}%</span>
           </div>
           <div class="con-browse-bar-track">
-            <div class="con-browse-bar-fill" data-target="${c.avgCompletion}"></div>
+            <div class="con-browse-bar-fill" data-target="${esc(c.avgCompletion)}"></div>
           </div>
         </div>
-        <div class="con-browse-wards">${c.wards.join(' &bull; ')}</div>
-        <a href="${c.link}" class="con-browse-cta">
-          Explore ${c.name} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        <div class="con-browse-wards">${(c.wards || []).map(esc).join(' &bull; ')}</div>
+        <a href="${link}" class="con-browse-cta">
+          Explore ${esc(c.name)} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
         </a>
       </div>`;
   }
@@ -230,7 +241,7 @@
         const name   = con ? con.name : (g.getAttribute('aria-label') || id);
         const units  = con ? con.totalUnits.toLocaleString() + ' units' : '';
         const pct    = con ? con.avgCompletion + '% complete' : '';
-        tooltip.innerHTML = `<strong>${name}</strong>${units ? units + ' &mdash; ' + pct : ''}`;
+        tooltip.innerHTML = `<strong>${esc(name)}</strong>${units ? esc(units) + ' &mdash; ' + esc(pct) : ''}`;
         tooltip.classList.add('is-visible');
       });
 

@@ -10,8 +10,15 @@ class CmsSettingSeeder
             ['maintenance_mode',    '0',                                                         'boolean','Maintenance Mode',  'global'],
             // Contact
             ['contact_email',       'housing@transnzoia.go.ke', 'text',  'Contact Email',  'contact'],
+            ['contact_email_href',  'mailto:housing@transnzoia.go.ke', 'text', 'Contact Email Link', 'contact'],
             ['contact_phone',       '+254 53 000 0000',          'text',  'Contact Phone',  'contact'],
-            ['contact_address',     'Trans-Nzoia County Government, Kitale', 'text', 'Address', 'contact'],
+            ['contact_phone_href',  'tel:+254530000000',         'text',  'Contact Phone Link', 'contact'],
+            ['contact_whatsapp',    '0700 000 000',              'text',  'WhatsApp Number', 'contact'],
+            ['contact_whatsapp_href', 'https://wa.me/254700000000', 'text', 'WhatsApp Link', 'contact'],
+            ['contact_office',      'Ardhi House, Kitale',       'text',  'Office Name', 'contact'],
+            ['contact_address',     'Ardhi House, Moi Avenue, Kitale, Trans-Nzoia County', 'text', 'Address', 'contact'],
+            ['contact_postal_address', 'P.O. Box 123-30200',     'text',  'Postal Address', 'contact'],
+            ['contact_maps_url',    'https://maps.google.com/?q=Kitale+Trans-Nzoia+County', 'text', 'Google Maps Link', 'contact'],
             // Stats (shown in hero/about sections)
             ['stat_projects',       '47',   'number', 'Total Projects',   'stats'],
             ['stat_units',          '5600', 'number', 'Housing Units',    'stats'],
