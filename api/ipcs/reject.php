@@ -6,8 +6,12 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 ApiMiddleware::handle([
     'methods' => ['POST'],
     'roles' => ['superadmin', 'manager', 'consultant', 'clerk'],
-    'csrf_form' => 'superadmin_approvals',
+    'csrf' => false,
 ]);
+
+if (!ipc_csrf_ok()) {
+    Response::json(['success' => false, 'message' => 'Invalid security token.'], 419);
+}
 
 $input = approval_input();
 $ipcId = Security::cleanInt($input['ipc_id'] ?? 0);
@@ -17,7 +21,7 @@ if ($ipcId <= 0) {
     Response::json(['success' => false, 'message' => 'IPC id is required.'], 422);
 }
 
-if ($reason === '') {
+if (SystemConfig::bool('ipc.rejection_reason_required', true) && $reason === '') {
     Response::json(['success' => false, 'message' => 'A rejection reason is required.'], 422);
 }
 
@@ -39,7 +43,10 @@ $step = match (Auth::role()) {
 
 try {
     Database::beginTransaction();
-    Database::query("UPDATE ipcs SET status = 'rejected' WHERE id = ?", [$ipcId]);
+    Database::query(
+        "UPDATE ipcs SET status = 'rejected', rejected_by = ?, rejected_at = NOW(), rejection_reason = ? WHERE id = ?",
+        [(int)Auth::id(), $reason, $ipcId]
+    );
     IPCApproval::record($ipcId, $step, (int)Auth::id(), 'rejected', $reason);
     approval_audit('reject', 'ipcs', $ipcId, ['ipc_number' => $ipc['ipc_number'], 'reason' => $reason]);
 
@@ -61,6 +68,13 @@ function approval_input(): array
 {
     $json = Security::jsonInput();
     return $json !== [] ? $json : $_POST;
+}
+
+function ipc_csrf_ok(): bool
+{
+    $token = Csrf::fromRequest();
+    return Csrf::verify($token, 'superadmin_approvals')
+        || Csrf::verify($token, 'superadmin_ipcs');
 }
 
 function approval_audit(string $action, string $module, int $targetId, array $details = []): void

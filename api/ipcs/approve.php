@@ -6,8 +6,12 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 ApiMiddleware::handle([
     'methods' => ['POST'],
     'roles' => ['superadmin'],
-    'csrf_form' => 'superadmin_approvals',
+    'csrf' => false,
 ]);
+
+if (!ipc_csrf_ok()) {
+    Response::json(['success' => false, 'message' => 'Invalid security token.'], 419);
+}
 
 $input = approval_input();
 $ipcId = Security::cleanInt($input['ipc_id'] ?? 0);
@@ -28,7 +32,10 @@ if (!in_array($ipc['status'], ['endorsed', 'certified'], true)) {
 
 try {
     Database::beginTransaction();
-    Database::query("UPDATE ipcs SET status = 'approved', approved_at = NOW() WHERE id = ?", [$ipcId]);
+    Database::query(
+        "UPDATE ipcs SET status = 'approved', approved_at = NOW(), approved_by = ?, rejected_by = NULL, rejected_at = NULL, rejection_reason = NULL WHERE id = ?",
+        [(int)Auth::id(), $ipcId]
+    );
     IPCApproval::record($ipcId, 4, (int)Auth::id(), 'approved', $comment);
     approval_audit('approve', 'ipcs', $ipcId, ['ipc_number' => $ipc['ipc_number'], 'project' => $ipc['project_name']]);
 
@@ -51,6 +58,13 @@ function approval_input(): array
 {
     $json = Security::jsonInput();
     return $json !== [] ? $json : $_POST;
+}
+
+function ipc_csrf_ok(): bool
+{
+    $token = Csrf::fromRequest();
+    return Csrf::verify($token, 'superadmin_approvals')
+        || Csrf::verify($token, 'superadmin_ipcs');
 }
 
 function approval_audit(string $action, string $module, int $targetId, array $details = []): void

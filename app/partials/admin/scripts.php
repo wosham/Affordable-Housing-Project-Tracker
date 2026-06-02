@@ -22,6 +22,7 @@ $scripts = [];
 
 if ($loadAdminGlobal) {
     $scripts[] = 'admin/assets/js/admin-global.js';
+    $scripts[] = 'admin/assets/js/notifications.js';
 }
 
 foreach ([$adminScripts, $componentScripts, $pageScripts] as $scriptGroup) {

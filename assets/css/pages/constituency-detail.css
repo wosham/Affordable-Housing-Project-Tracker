@@ -1,5 +1,5 @@
 /* =========================================================
-   TRANS-NZOIA AHP — Constituency Detail Page Stylesheet
+   TRANS-NZOIA AHP - Constituency Detail Page Stylesheet
    ========================================================= */
 
 /* Shared breadcrumb / page-hero base */
@@ -206,7 +206,7 @@
 
 /* Reuse proj-card styles from projects.css */
 .proj-card { background:var(--white); border:1px solid var(--neutral-100); border-radius:var(--radius-xl); overflow:hidden; display:flex; flex-direction:column; transition:transform var(--transition-medium),box-shadow var(--transition-medium),border-color var(--transition-fast); text-decoration:none; color:inherit; }
-.proj-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(22,51,0,0.12); border-color: rgba(159,232,112,0.4); border-left: 3px solid var(--lime); }
+.proj-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(22,51,0,0.12); border-color: rgba(159,232,112,0.4); }
 .proj-card-img { position:relative; height:190px; background:var(--neutral-100); overflow:hidden; flex-shrink:0; }
 .proj-card-img img { width:100%; height:100%; object-fit:cover; transition:transform 0.5s ease; }
 .proj-card:hover .proj-card-img img { transform:scale(1.06); }
@@ -536,6 +536,13 @@
   transform: translateY(-2px);
 }
 
+.cd-related-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
 .cd-related-name {
   font-family: var(--font-display);
   font-size: 1.05rem;
@@ -614,6 +621,11 @@
 }
 .con-browse-status--active   { background: rgba(34,197,94,0.12); color: #16a34a; border: 1px solid rgba(34,197,94,0.25); }
 .con-browse-status--planning { background: rgba(245,158,11,0.12); color: #b45309; border: 1px solid rgba(245,158,11,0.25); }
+
+.cd-empty-text {
+  color: var(--neutral-400);
+  font-family: var(--font-heading);
+}
 
 /* ---------------------------------------------------------
    7. APPLY CTA BANNER

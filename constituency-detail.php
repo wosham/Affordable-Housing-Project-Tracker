@@ -122,6 +122,9 @@ $totalUnits = array_sum(array_map(static fn (array $project): int => (int)($proj
 $avgCompletion = $projectCount > 0 ? (int)round(array_sum(array_map(static fn (array $project): int => (int)($project['pct_complete'] ?? 0), $projects)) / $projectCount) : 0;
 $wardCount = $constituency ? count($constituency['wards']) : 0;
 $isFound = $constituency !== null;
+if (!$isFound) {
+    http_response_code(404);
+}
 
 $e = static fn (mixed $value): string => Security::e($value);
 $text = static fn (array $content, string $key, string $default = ''): string => CmsLoader::text($content, $key, $default);

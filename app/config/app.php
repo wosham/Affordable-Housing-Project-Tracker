@@ -22,7 +22,7 @@ return [
     ],
     'security' => [
         'allowed_redirect_hosts' => ['localhost', '127.0.0.1'],
-        'max_upload_bytes' => 5242880,
-        'allowed_upload_extensions' => ['pdf', 'jpg', 'jpeg', 'png'],
+        'max_upload_bytes' => 52428800,
+        'allowed_upload_extensions' => ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'mov'],
     ],
 ];

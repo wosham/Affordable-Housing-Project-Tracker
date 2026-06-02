@@ -11,6 +11,7 @@
   var activeType = 'image';
   var activeAccept = 'image/*';
   var activeTitle = 'Choose or upload image';
+  var multiple = false;
 
   var folderIcons = {
     heroes: 'fa-panorama',
@@ -18,6 +19,8 @@
     banners: 'fa-panorama',
     logos: 'fa-copyright',
     gallery: 'fa-images',
+    'gallery-thumbnails': 'fa-image',
+    'gallery-videos': 'fa-video',
     projects: 'fa-building',
     news: 'fa-newspaper',
     profiles: 'fa-user-tie',
@@ -106,10 +109,21 @@
       var thumb = isImage
         ? '<img src="' + esc(item.url) + '" alt="' + esc(item.alt_text || item.title) + '" loading="lazy">'
         : '<i class="fa-solid ' + (String(item.extension || '').toLowerCase() === 'pdf' ? 'fa-file-pdf' : 'fa-file-lines') + '"></i>';
-      return '<article class="sa-media-card' + (selected && selected.id === item.id ? ' is-active' : '') + '" data-picker-media-id="' + item.id + '">' +
+      var isActive = multiple
+        ? Array.isArray(selected) && selected.some(function (entry) { return entry.id === item.id; })
+        : selected && selected.id === item.id;
+      return '<article class="sa-media-card' + (isActive ? ' is-active' : '') + '" data-picker-media-id="' + item.id + '">' +
+        (multiple ? '<span class="sa-media-card__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>' : '') +
         '<div class="sa-media-thumb"><span class="sa-media-type">' + esc(item.extension || activeType) + '</span>' + thumb + '</div>' +
         '<strong title="' + esc(item.title) + '">' + esc(item.title) + '</strong><small>' + esc(item.folder_label) + '</small></article>';
     }).join('');
+  }
+
+  function selectedFromInput() {
+    if (!multiple || !targetInput) return [];
+    return String(targetInput.value || '').split(/[\s,]+/).filter(Boolean).map(function (id) {
+      return { id: parseInt(id, 10), title: 'Asset #' + id };
+    }).filter(function (item) { return item.id > 0; });
   }
 
   function load() {
@@ -141,10 +155,11 @@
     targetInput = wrap ? qs('[data-cms-upload-target]', wrap) : null;
     contextFolder = button.getAttribute('data-media-picker-folder') || (wrap && wrap.getAttribute('data-upload-folder')) || 'cms';
     activeType = button.getAttribute('data-media-picker-type') || (wrap && wrap.getAttribute('data-media-kind')) || 'image';
-    activeAccept = button.getAttribute('data-media-picker-accept') || (activeType === 'pdf' ? 'application/pdf,.pdf' : 'image/*');
-    activeTitle = button.getAttribute('data-media-picker-title') || (activeType === 'pdf' ? 'Choose or upload PDF' : 'Choose or upload image');
+    activeAccept = button.getAttribute('data-media-picker-accept') || (activeType === 'pdf' ? 'application/pdf,.pdf' : (activeType === 'video' ? 'video/mp4,video/webm,video/quicktime,.mov' : 'image/*'));
+    activeTitle = button.getAttribute('data-media-picker-title') || (activeType === 'pdf' ? 'Choose or upload PDF' : (activeType === 'video' ? 'Choose or upload video' : 'Choose or upload image'));
+    multiple = button.hasAttribute('data-media-picker-multiple');
     activeFolder = contextFolder;
-    selected = null;
+    selected = multiple ? selectedFromInput() : null;
     build().hidden = false;
     picker.setAttribute('data-active-panel', 'library');
     picker.querySelectorAll('[data-picker-tab]').forEach(function (tab) {
@@ -170,7 +185,7 @@
     var use = qs('[data-picker-use]', picker);
     if (use) use.disabled = true;
     var selectedLabel = qs('[data-picker-selected]', picker);
-    if (selectedLabel) selectedLabel.textContent = 'No asset selected';
+    if (selectedLabel) selectedLabel.textContent = multiple && selected.length ? selected.length + ' assets selected' : (multiple ? 'No assets selected' : 'No asset selected');
     var uploadState = qs('[data-picker-upload-state]', picker);
     if (uploadState) uploadState.textContent = 'Ready';
     load();
@@ -183,6 +198,16 @@
   function useSelected() {
     if (!selected || !targetInput) return;
     var valueMode = targetInput.getAttribute('data-media-picker-value') || 'path';
+    if (multiple) {
+      var selectedItems = Array.isArray(selected) ? selected : [];
+      targetInput.value = selectedItems.map(function (item) {
+        return valueMode === 'id' ? item.id : item.path;
+      }).join(',');
+      targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+      updateControl(selectedItems, targetInput.closest('[data-cms-upload]'));
+      close();
+      return;
+    }
     targetInput.value = valueMode === 'id' ? selected.id : selected.path;
     targetInput.dispatchEvent(new Event('input', { bubbles: true }));
     updateControl(selected, targetInput.closest('[data-cms-upload]'));
@@ -191,15 +216,52 @@
 
   function updateControl(item, wrap) {
     if (!wrap || !item) return;
+    if (Array.isArray(item)) {
+      var multiName = qs('[data-cms-asset-name]', wrap);
+      if (multiName) multiName.textContent = item.length ? item.length + ' assets selected' : 'No assets selected';
+      var multiPreview = qs('[data-cms-asset-preview]', wrap);
+      if (multiPreview) {
+        var firstImage = item.find(function (entry) { return (entry.type_group || activeType) === 'image'; });
+        if (firstImage) {
+          multiPreview.innerHTML = '<img src="' + esc(firstImage.url) + '" alt="">';
+        } else {
+          multiPreview.innerHTML = '<span><i class="fa-solid ' + (activeType === 'video' ? 'fa-video' : 'fa-photo-film') + '" aria-hidden="true"></i></span>';
+        }
+      }
+      renderSelectedList(item, wrap);
+      return;
+    }
     var name = qs('[data-cms-asset-name]', wrap);
     if (name) name.textContent = item.title || item.filename || 'Selected asset';
     var preview = qs('[data-cms-asset-preview]', wrap);
     if (!preview) return;
     if ((item.type_group || activeType) === 'image') {
       preview.innerHTML = '<img src="' + esc(item.url) + '" alt="">';
+    } else if ((item.type_group || activeType) === 'video') {
+      preview.innerHTML = '<span><i class="fa-solid fa-video" aria-hidden="true"></i></span>';
     } else {
       preview.innerHTML = '<span><i class="fa-solid fa-file-pdf" aria-hidden="true"></i></span>';
     }
+  }
+
+  function renderSelectedList(items, wrap) {
+    var list = qs('[data-selected-list]', wrap);
+    if (!list) return;
+    if (!items.length) {
+      list.innerHTML = '';
+      return;
+    }
+    list.innerHTML = items.map(function (item) {
+      var isImage = (item.type_group || activeType) === 'image';
+      var media = isImage && item.url
+        ? '<img src="' + esc(item.url) + '" alt="">'
+        : '<span><i class="fa-solid ' + (activeType === 'video' ? 'fa-video' : 'fa-image') + '"></i></span>';
+      return '<div class="sa-gallery-selected-media" data-selected-id="' + esc(item.id) + '">' +
+        '<div class="sa-gallery-selected-media__thumb">' + media + '</div>' +
+        '<span>' + esc(item.title || item.filename || ('Asset #' + item.id)) + '</span>' +
+        '<button type="button" data-gallery-selected-remove="' + esc(item.id) + '" aria-label="Remove selected asset"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>';
+    }).join('');
   }
 
   function bindPicker() {
@@ -230,11 +292,22 @@
 
       var card = event.target.closest('[data-picker-media-id]');
       if (card) {
-        selected = items.find(function (item) { return item.id === parseInt(card.getAttribute('data-picker-media-id'), 10); });
+        var picked = items.find(function (item) { return item.id === parseInt(card.getAttribute('data-picker-media-id'), 10); });
+        if (multiple) {
+          selected = Array.isArray(selected) ? selected : [];
+          var existingIndex = selected.findIndex(function (item) { return item.id === picked.id; });
+          if (existingIndex >= 0) {
+            selected.splice(existingIndex, 1);
+          } else {
+            selected.push(picked);
+          }
+        } else {
+          selected = picked;
+        }
         var use = qs('[data-picker-use]', picker);
-        if (use) use.disabled = !selected;
+        if (use) use.disabled = multiple ? !selected.length : !selected;
         var label = qs('[data-picker-selected]', picker);
-        if (label) label.textContent = selected ? selected.title : 'No asset selected';
+        if (label) label.textContent = multiple ? (selected.length + ' assets selected') : (selected ? selected.title : 'No asset selected');
         render();
       }
 
@@ -257,7 +330,14 @@
         var state = qs('[data-picker-upload-state]', picker);
         if (state) state.textContent = 'Uploading...';
         window.AHPTC.request('api/media/upload.php', { method: 'POST', body: new FormData(form) }).then(function (data) {
-          selected = data.media;
+          if (multiple) {
+            selected = Array.isArray(selected) ? selected : [];
+            if (!selected.some(function (item) { return item.id === data.media.id; })) {
+              selected.push(data.media);
+            }
+          } else {
+            selected = data.media;
+          }
           useSelected();
         }).catch(function (error) {
           if (state) state.textContent = error.message || 'Upload failed';

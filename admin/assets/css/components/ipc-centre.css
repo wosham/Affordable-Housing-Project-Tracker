@@ -1,0 +1,255 @@
+.sa-ipc-page > .card,
+.sa-ipc-page > .stat-grid,
+.sa-ipc-page > .ipc-detail-grid {
+  margin-bottom: 1rem;
+}
+
+.sa-ipc-page > .card:last-child {
+  margin-bottom: 0;
+}
+
+.ipc-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.ipc-hero h2 {
+  margin: .35rem 0 .35rem;
+  font-size: 1.45rem;
+}
+
+.ipc-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.ipc-stats {
+  gap: 1rem;
+}
+
+.ipc-stats .stat-widget {
+  min-height: 106px;
+}
+
+.ipc-status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  padding: .9rem;
+}
+
+.ipc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .6rem .75rem;
+  border: 1px solid var(--admin-border, #dfe7d7);
+  border-radius: 8px;
+  background: var(--admin-surface, #fff);
+  color: var(--admin-text, #1e2b18);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ipc-tab span {
+  display: inline-flex;
+  min-width: 1.5rem;
+  justify-content: center;
+  padding: .15rem .4rem;
+  border-radius: 999px;
+  background: var(--admin-surface-muted, #f2f7ee);
+  font-size: .78rem;
+}
+
+.ipc-tab.is-active {
+  background: var(--admin-primary, #183d03);
+  border-color: var(--admin-primary, #183d03);
+  color: #fff;
+}
+
+.ipc-tab.is-active span {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+
+.ipc-filter {
+  margin-bottom: 0;
+}
+
+.ipc-table th.is-money,
+.ipc-table td.is-money {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ipc-table td small,
+.ipc-muted {
+  display: block;
+  color: var(--admin-muted, #687866);
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.ipc-status-pipeline .card__header,
+.ipc-line-items .card__header,
+.ipc-timeline-card .card__header {
+  margin-bottom: .8rem;
+}
+
+.ipc-pipeline {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .7rem;
+}
+
+.ipc-pipeline-step {
+  min-height: 86px;
+  padding: .8rem;
+  border: 1px solid var(--admin-border, #dfe7d7);
+  border-radius: 8px;
+  background: var(--admin-surface-muted, #f7fbf3);
+}
+
+.ipc-pipeline-step span {
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  background: #e4ecd9;
+  font-weight: 800;
+  margin-bottom: .45rem;
+}
+
+.ipc-pipeline-step strong {
+  display: block;
+  font-size: .86rem;
+  line-height: 1.25;
+}
+
+.ipc-pipeline-step.is-complete,
+.ipc-pipeline-step.is-current {
+  border-color: var(--admin-primary, #183d03);
+}
+
+.ipc-pipeline-step.is-complete span,
+.ipc-pipeline-step.is-current span {
+  background: var(--admin-primary, #183d03);
+  color: #fff;
+}
+
+.ipc-pipeline-step.is-current {
+  box-shadow: 0 0 0 3px rgba(26, 84, 8, .1);
+}
+
+.ipc-pipeline-step.is-muted {
+  opacity: .55;
+}
+
+.ipc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ipc-dl {
+  display: grid;
+  gap: .65rem;
+  margin: 0;
+}
+
+.ipc-dl div {
+  display: grid;
+  grid-template-columns: minmax(120px, .4fr) 1fr;
+  gap: .8rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid var(--admin-border, #e5ecde);
+}
+
+.ipc-dl dt {
+  color: var(--admin-muted, #687866);
+  font-weight: 700;
+}
+
+.ipc-dl dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.ipc-warning-panel ul {
+  display: grid;
+  gap: .55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ipc-warning-panel li {
+  display: flex;
+  gap: .55rem;
+  align-items: flex-start;
+  color: #7a3a00;
+  font-weight: 700;
+}
+
+.ipc-timeline {
+  display: grid;
+  gap: .75rem;
+}
+
+.ipc-timeline-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .75rem;
+  align-items: start;
+  padding: .75rem;
+  border: 1px solid var(--admin-border, #dfe7d7);
+  border-radius: 8px;
+  background: var(--admin-surface-muted, #f8fbf5);
+}
+
+.ipc-timeline-item small,
+.ipc-timeline-item p {
+  display: block;
+  margin: .18rem 0 0;
+  color: var(--admin-muted, #687866);
+}
+
+.ipc-decision-modal .modal__dialog {
+  max-width: 560px;
+}
+
+@media (max-width: 1180px) {
+  .ipc-pipeline {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ipc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .ipc-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ipc-action-bar {
+    justify-content: flex-start;
+  }
+
+  .ipc-pipeline {
+    grid-template-columns: 1fr;
+  }
+
+  .ipc-dl div {
+    grid-template-columns: 1fr;
+    gap: .2rem;
+  }
+}

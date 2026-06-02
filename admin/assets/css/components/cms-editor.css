@@ -602,6 +602,10 @@
     align-items: start;
 }
 
+.sa-cms-editor-layout--legal {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+}
+
 .sa-cms-editor-main,
 .sa-cms-section-list {
     display: grid;
@@ -611,6 +615,13 @@
 .sa-cms-editor-aside {
     position: sticky;
     top: calc(var(--admin-header-height) + var(--admin-space-md));
+}
+
+.sa-cms-editor-layout--legal .sa-cms-editor-aside {
+    position: sticky;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--admin-space-md);
 }
 
 .sa-cms-section-card {
@@ -650,6 +661,11 @@
     padding: var(--admin-space-lg);
 }
 
+.sa-cms-section-fields .form-field--full,
+.sa-cms-page-form .form-field--full {
+    grid-column: 1 / -1;
+}
+
 .sa-quill-editor {
     min-height: 220px;
     border: 1px solid var(--admin-border);
@@ -659,6 +675,67 @@
 
 .sa-quill-editor--document {
     min-height: 520px;
+}
+
+.sa-cms-section-card--legal {
+    overflow: hidden;
+}
+
+.sa-cms-section-card--legal .sa-cms-section-card__head {
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--admin-lime-soft) 72%, transparent), transparent 62%),
+        var(--admin-surface);
+}
+
+.sa-legal-editor-shell {
+    display: grid;
+    gap: var(--admin-space-md);
+    padding: var(--admin-space-md);
+    border: 1px solid color-mix(in srgb, var(--admin-border) 80%, transparent);
+    border-radius: var(--admin-radius);
+    background: color-mix(in srgb, var(--admin-surface-muted) 70%, var(--admin-surface));
+}
+
+.sa-legal-editor-shell__intro {
+    display: grid;
+    gap: .35rem;
+}
+
+.sa-legal-editor-shell__intro p {
+    margin: 0;
+    color: var(--admin-text-muted);
+    font-size: .84rem;
+    line-height: 1.5;
+}
+
+.sa-quill-editor--legal {
+    min-height: 720px;
+    background: #fff;
+}
+
+.sa-quill-editor--legal .ql-editor {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 2rem 2.25rem;
+    color: var(--admin-text);
+    font-size: .96rem;
+    line-height: 1.75;
+}
+
+.sa-quill-editor--legal .ql-editor h1,
+.sa-quill-editor--legal .ql-editor h2 {
+    margin-top: 1.35rem;
+    color: var(--admin-text);
+    font-weight: 900;
+}
+
+.sa-quill-editor--legal .ql-editor blockquote {
+    margin: 1rem 0;
+    padding: .9rem 1rem;
+    border-color: color-mix(in srgb, var(--admin-warning) 45%, var(--admin-border));
+    background: color-mix(in srgb, var(--admin-warning-bg) 65%, #fff);
+    color: var(--admin-text);
 }
 
 .sa-cms-asset-control {

@@ -18,9 +18,11 @@ if (!attendance_api_user_can_access_project((int)Auth::id(), $projectId)) {
 }
 
 $date = date('Y-m-d');
-$closeTime = trim((string)($_POST['closes_at'] ?? '17:00'));
+$defaultClose = SystemConfig::text('attendance.signin_end', '18:00');
+$closeTime = trim((string)($_POST['closes_at'] ?? $defaultClose));
 if (!preg_match('/^\d{2}:\d{2}$/', $closeTime)) {
-    $closeTime = '17:00';
+    $minutes = max(30, SystemConfig::int('attendance.gateway_default_minutes', 720));
+    $closeTime = date('H:i', time() + ($minutes * 60));
 }
 
 $closesAt = $date . ' ' . $closeTime . ':00';

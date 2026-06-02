@@ -1,6 +1,18 @@
 <?php
-// API — Notifications: Mark all notifications as read for current user
+
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
-header('Content-Type: application/json');
-Guard::auth();
-echo json_encode(['status' => 'stub']);
+
+ApiMiddleware::handle([
+    'methods' => ['POST'],
+    'auth' => true,
+    'csrf_form' => 'default',
+]);
+
+$userId = (int)(Auth::id() ?? 0);
+$marked = Notification::markAllRead($userId);
+
+Response::json([
+    'success' => true,
+    'unread' => 0,
+    'marked' => $marked,
+]);

@@ -18,21 +18,41 @@ if ($email === '' || $password === '') {
 
 $audit = static function (?int $userId, string $action, array $details = []) use ($email): void {
     try {
+        $payload = array_merge(['email' => $email], $details);
+        $severity = $action === 'login_failed' ? 'critical' : 'info';
+        $ip = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45) ?: null;
+        $userAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255) ?: null;
+        $route = substr((string)($_SERVER['REQUEST_URI'] ?? 'admin/api/login.php'), 0, 255);
+        $method = substr((string)($_SERVER['REQUEST_METHOD'] ?? 'POST'), 0, 10);
         Database::query(
-            'INSERT INTO audit_logs (user_id, action, module, target_id, details_json, ip, user_agent)
-             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO audit_logs
+                (user_id, actor_role, action, module, target_id, details_json, ip, user_agent, request_method, route, severity, event_hash, metadata_json)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $userId,
+                $details['role'] ?? null,
                 $action,
                 'auth',
                 $userId ?? 0,
-                json_encode(array_merge(['email' => $email], $details), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-                $_SERVER['REMOTE_ADDR'] ?? null,
-                substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+                json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                $ip,
+                $userAgent,
+                $method,
+                $route,
+                $severity,
+                hash('sha256', implode('|', [(string)($userId ?? 0), $action, 'auth', (string)$ip, $email])),
+                json_encode(['referer' => substr((string)($_SERVER['HTTP_REFERER'] ?? ''), 0, 500) ?: null], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             ]
         );
     } catch (Throwable) {
-        // Audit logging must never block authentication.
+        try {
+            Database::query(
+                'INSERT INTO audit_logs (user_id, action, module, target_id, details_json, ip, user_agent)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [$userId, $action, 'auth', $userId ?? 0, json_encode(array_merge(['email' => $email], $details), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), $_SERVER['REMOTE_ADDR'] ?? null, substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255)]
+            );
+        } catch (Throwable) {
+        }
     }
 };
 

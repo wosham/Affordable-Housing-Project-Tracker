@@ -86,10 +86,14 @@ class Migration_072_CmsPublicPageScrape
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
 
             if (in_array($slug, ['privacy', 'terms', 'disclaimer'], true)) {
-                $article = $this->extractArticle($source);
-                $title = $meta['pageTitle'] ?? ucwords(str_replace('-', ' ', $slug));
+                $defaults = $this->legalDocumentDefaults($slug);
+                $article = $defaults['body'];
+                $title = $defaults['title'];
                 $legalStmt->execute([$pageId, $title . ' Document', json_encode([
                     'title' => $title,
+                    'subtitle' => $defaults['subtitle'],
+                    'icon' => $defaults['icon'],
+                    'last_updated' => $defaults['last_updated'],
                     'body' => $article,
                 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
             }
@@ -110,6 +114,79 @@ class Migration_072_CmsPublicPageScrape
             }
         }
         return $meta;
+    }
+
+    private function legalDocumentDefaults(string $slug): array
+    {
+        $defaults = [
+            'privacy' => [
+                'title' => 'Privacy Policy',
+                'subtitle' => 'How Trans-Nzoia County Government collects, uses, and protects your personal data in connection with the Affordable Housing Programme.',
+                'icon' => 'fa-shield-halved',
+                'body' => <<<'HTML'
+<h2>Introduction</h2>
+<p>Trans-Nzoia County Government is committed to protecting personal data submitted through the Affordable Housing Programme Tracker and related public service channels.</p>
+<h2>Information We Collect</h2>
+<p>We may collect contact details, enquiry details, application references, device information, and correspondence submitted through public forms or official programme workflows.</p>
+<h2>How We Use Information</h2>
+<p>Information is used to respond to enquiries, support programme administration, improve public services, maintain security, and comply with legal obligations.</p>
+<h2>Data Sharing</h2>
+<p>Data may be shared with authorised county departments, national housing agencies, service providers, or regulators where required for official programme delivery.</p>
+<h2>Security and Retention</h2>
+<p>Reasonable technical and organisational safeguards are applied. Records are retained only for as long as needed for programme, audit, legal, and public accountability purposes.</p>
+<h2>Your Rights</h2>
+<p>You may request access, correction, restriction, or deletion of personal data subject to applicable Kenyan law and official records retention requirements.</p>
+<h2>Contact</h2>
+<p>Privacy questions may be sent to the Department of Land, Housing and Physical Planning through the official contacts published on this website.</p>
+HTML,
+            ],
+            'terms' => [
+                'title' => 'Terms of Use',
+                'subtitle' => 'Rules and conditions for using the Trans-Nzoia County Affordable Housing Programme Tracker website and digital services.',
+                'icon' => 'fa-file-contract',
+                'body' => <<<'HTML'
+<h2>Acceptance of Terms</h2>
+<p>By using this website, you agree to use the Affordable Housing Programme Tracker for lawful public information and service access purposes only.</p>
+<h2>Public Information</h2>
+<p>Programme data is published to support transparency and accountability. Official records remain held by the responsible county and national government offices.</p>
+<h2>User Responsibilities</h2>
+<p>Users must not misuse the website, attempt unauthorised access, submit false information, interfere with service availability, or reproduce content in a misleading manner.</p>
+<h2>Applications and External Portals</h2>
+<p>Housing applications, allocation processes, and beneficiary services may be handled through official national or county systems linked from this website.</p>
+<h2>Intellectual Property</h2>
+<p>Website content, photographs, documents, and design elements remain protected by applicable law unless expressly stated otherwise.</p>
+<h2>Changes to Terms</h2>
+<p>These terms may be updated as programme operations, legal requirements, or digital service arrangements change.</p>
+<h2>Contact</h2>
+<p>Questions about these terms may be sent through the official contacts published on this website.</p>
+HTML,
+            ],
+            'disclaimer' => [
+                'title' => 'Disclaimer',
+                'subtitle' => 'Important limitations and qualifications on the data, information, and content published on the Trans-Nzoia County Affordable Housing Programme Tracker website.',
+                'icon' => 'fa-triangle-exclamation',
+                'body' => <<<'HTML'
+<h2>General Notice</h2>
+<p>The Affordable Housing Programme Tracker is provided for public information, transparency, and accountability. It does not replace certified government records.</p>
+<h2>Project Data and Construction Progress</h2>
+<p>Construction progress, unit counts, timelines, and status updates are based on available programme records and may change after site verification, approvals, or reporting updates.</p>
+<h2>Financial Information</h2>
+<p>Budget, contract, levy, payment, and financing information is presented for public transparency and may be subject to audit, reconciliation, or official publication cycles.</p>
+<h2>Allocation and Eligibility Information</h2>
+<p>Information about applications, eligibility, balloting, and allocation is general guidance only. Official eligibility decisions are made through authorised government processes.</p>
+<h2>Maps and Media</h2>
+<p>Maps, photographs, videos, and visual materials are published for illustration and public awareness. They may not represent final designs, boundaries, or completed works.</p>
+<h2>Third-Party Content</h2>
+<p>External links are provided for convenience. The county is not responsible for third-party website availability, accuracy, or content.</p>
+<h2>Liability</h2>
+<p>To the extent permitted by law, the county is not liable for loss arising from reliance on information published on this website without independent official verification.</p>
+<h2>Contact</h2>
+<p>For certified records or official clarifications, contact the Department of Land, Housing and Physical Planning through the official contacts published on this website.</p>
+HTML,
+            ],
+        ];
+
+        return ($defaults[$slug] ?? $defaults['disclaimer']) + ['last_updated' => '2026-01-01'];
     }
 
     private function extractHeadings(string $source): array

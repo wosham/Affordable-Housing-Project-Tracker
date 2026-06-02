@@ -1,10 +1,258 @@
-/* Gantt Chart Component — TODO: Phase 5 */
-.gantt-wrap { overflow-x: auto; }
-.gantt-table { min-width: 900px; border-collapse: collapse; font-size: .8rem; }
-.gantt-table th { padding: .5rem .75rem; background: var(--admin-bg); border-bottom: 2px solid var(--admin-border); }
-.gantt-table td { padding: .4rem .75rem; border-bottom: 1px solid var(--admin-border); }
-.gantt-bar-cell { position: relative; height: 32px; }
-.gantt-bar { position: absolute; height: 20px; top: 6px; border-radius: 4px; background: var(--admin-primary); opacity: .85; }
-.gantt-bar--actual  { background: var(--admin-lime); opacity: 1; }
-.gantt-bar--delayed { background: var(--admin-danger); }
-.gantt-bar--done    { background: var(--admin-success); }
+.sa-programme-page {
+  display: grid;
+  gap: 18px;
+}
+
+.programme-hero,
+.programme-project-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.programme-hero h2 {
+  margin: 8px 0 6px;
+  font-size: 1.45rem;
+}
+
+.programme-hero p,
+.programme-project-meta span {
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.programme-hero__actions,
+.programme-project-form,
+.programme-project-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.programme-project-picker {
+  min-width: min(520px, 100%);
+}
+
+.programme-project-meta {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.programme-project-meta strong {
+  flex-basis: 100%;
+}
+
+.programme-stats {
+  gap: 14px;
+}
+
+.programme-filter {
+  grid-template-columns: minmax(220px, 1.4fr) repeat(5, minmax(135px, 1fr)) auto;
+}
+
+.gantt-wrap {
+  position: relative;
+  overflow-x: auto;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.gantt-scale {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-width: 920px;
+  height: 34px;
+  padding: 0 14px;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.gantt-scale span:nth-child(2) {
+  text-align: center;
+}
+
+.gantt-scale span:nth-child(3) {
+  text-align: right;
+}
+
+.gantt-today {
+  position: absolute;
+  top: 0;
+  bottom: -999px;
+  width: 2px;
+  background: var(--admin-danger);
+  opacity: .75;
+  z-index: 2;
+}
+
+.gantt-list {
+  min-width: 920px;
+  display: grid;
+  gap: 8px;
+  padding: 0 14px 12px;
+}
+
+.gantt-row {
+  display: grid;
+  grid-template-columns: 280px minmax(560px, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg);
+}
+
+.gantt-row.is-critical {
+  border-color: color-mix(in srgb, var(--admin-warning) 45%, var(--admin-border));
+}
+
+.gantt-task strong,
+.programme-table td strong {
+  display: block;
+}
+
+.gantt-task small,
+.programme-table td small {
+  display: block;
+  margin-top: 3px;
+  color: var(--admin-text-muted);
+  font-size: .76rem;
+}
+
+.gantt-bars {
+  position: relative;
+  height: 38px;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent 59px,
+      var(--admin-border) 60px
+    ),
+    var(--admin-surface-muted);
+}
+
+.gantt-bar {
+  position: absolute;
+  left: 0;
+  min-width: 18px;
+  border-radius: 999px;
+}
+
+.gantt-bar--planned {
+  top: 7px;
+  height: 12px;
+  background: var(--admin-primary);
+}
+
+.gantt-bar--actual {
+  top: 22px;
+  height: 9px;
+  background: var(--admin-lime);
+}
+
+.gantt-row--delayed .gantt-bar--planned,
+.gantt-row--blocked .gantt-bar--planned {
+  background: var(--admin-danger);
+}
+
+.gantt-row--due .gantt-bar--planned {
+  background: var(--admin-warning);
+}
+
+.gantt-bar i {
+  position: absolute;
+  right: 6px;
+  top: -5px;
+  color: #fff;
+  font-style: normal;
+  font-size: .68rem;
+  line-height: 1;
+}
+
+.programme-empty {
+  min-width: 920px;
+}
+
+.programme-table {
+  min-width: 980px;
+}
+
+.programme-progress {
+  width: 120px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.programme-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-primary);
+}
+
+.programme-modal {
+  width: min(820px, calc(100vw - 32px));
+}
+
+.checkbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg);
+}
+
+.checkbox-card input {
+  margin-top: 3px;
+}
+
+@media (max-width: 1200px) {
+  .programme-filter {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .programme-filter .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .programme-hero,
+  .programme-project-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .programme-hero__actions,
+  .programme-project-form,
+  .programme-project-picker,
+  .programme-project-form .btn {
+    width: 100%;
+  }
+
+  .programme-project-meta {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .programme-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .gantt-row {
+    grid-template-columns: 220px minmax(480px, 1fr);
+  }
+}

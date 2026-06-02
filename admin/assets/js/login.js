@@ -117,10 +117,19 @@
 
       fetch('api/login.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrf
+        },
         body: JSON.stringify({ email: email, password: pass, _csrf_token: csrf })
       })
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          data._status = res.status;
+          return data;
+        });
+      })
       .then(function (data) {
         btn.classList.remove('is-loading');
         btn.disabled = false;
@@ -129,6 +138,11 @@
         } else {
           if (errorAlert) errorAlert.hidden = false;
           if (errorMsg) errorMsg.textContent = data.message || 'Invalid email or password. Please try again.';
+          if (data._status === 419) {
+            if (errorMsg) errorMsg.textContent = 'Security token refreshed. Reloading login page...';
+            setTimeout(function () { window.location.reload(); }, 900);
+            return;
+          }
           if (passIn) { passIn.value = ''; passIn.focus(); passIn.classList.remove('is-valid'); }
         }
       })

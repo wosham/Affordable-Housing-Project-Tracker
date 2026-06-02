@@ -19,7 +19,7 @@ $breadcrumbs = [
 
 cms_ensure_page_registry();
 
-$pages = CmsPage::allWithSectionCounts();
+$pages = CmsPage::allWithSectionCounts(); 
 $settings = CmsSetting::grouped();
 $cmsStats = cms_dashboard_stats($pages, $settings);
 $groups = [
@@ -270,7 +270,15 @@ function cms_page_blueprints(): array
             'canonical_url' => 'https://housing.transnzoia.go.ke/projects.php',
             'sections' => cms_sections(['projects_hero', 'projects_filters', 'projects_listing']),
         ],
-        'project-detail' => ['template' => 'template', 'route_path' => 'project-detail.php', 'sections' => cms_sections(['template_labels', 'sidebar_cta', 'related_links'])],
+        'project-detail' => [
+            'template' => 'template',
+            'route_path' => 'project-detail.php',
+            'seo_title' => 'Project Detail | Trans-Nzoia County Affordable Housing Tracker',
+            'seo_description' => 'Detailed construction progress, contractor information, milestones and site photos for affordable housing projects in Trans-Nzoia County.',
+            'seo_keywords' => 'Trans-Nzoia AHP project detail, affordable housing Kenya, construction progress',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/project-detail.php',
+            'sections' => cms_sections(['project_detail_labels', 'project_detail_overview', 'project_detail_sidebar', 'project_detail_apply_cta', 'project_detail_not_found']),
+        ],
         'constituencies' => [
             'template' => 'listing',
             'route_path' => 'constituencies.php',
@@ -299,8 +307,25 @@ function cms_page_blueprints(): array
             'canonical_url' => 'https://housing.transnzoia.go.ke/news.php',
             'sections' => cms_sections(['news_hero', 'news_mosaic', 'news_featured', 'news_filters', 'news_listing', 'news_cta']),
         ],
-        'news-article' => ['template' => 'template', 'route_path' => 'news-article.php', 'sections' => cms_sections(['template_labels', 'sidebar_facts', 'related_intro'])],
-        'gallery' => ['template' => 'media', 'route_path' => 'gallery.php', 'sections' => cms_sections(['hero', 'highlights_intro', 'gallery_grid_intro', 'site_progress_intro', 'video_intro'])],
+        'news-article' => [
+            'template' => 'template',
+            'route_path' => 'news-article.php',
+            'seo_title' => 'News Article | Trans-Nzoia County AHP Tracker',
+            'seo_description' => 'Read official Trans-Nzoia Affordable Housing Programme news, announcements, reports and updates.',
+            'seo_keywords' => 'Trans-Nzoia housing news, affordable housing, AHP reports',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/news-article.php',
+            'sections' => cms_sections(['news_article_labels', 'news_article_sidebar', 'news_article_downloads', 'news_article_not_found']),
+        ],
+        'gallery' => [
+            'template' => 'media',
+            'route_path' => 'gallery.php',
+            'hero_image' => 'uploads/gallery/maili-tatu-2.jpg',
+            'seo_title' => 'Photo Gallery | Trans-Nzoia County AHP Tracker',
+            'seo_description' => 'Photo and video documentation of Trans-Nzoia Affordable Housing Programme construction progress, ceremonies, community engagements and site activity.',
+            'seo_keywords' => 'Trans-Nzoia affordable housing gallery, AHP Kenya photos, construction progress videos',
+            'canonical_url' => 'https://housing.transnzoia.go.ke/gallery.php',
+            'sections' => cms_sections(['gallery_hero', 'gallery_highlights', 'gallery_archive', 'gallery_site_progress', 'gallery_videos', 'gallery_empty_states']),
+        ],
         'faq' => ['template' => 'content', 'route_path' => 'faq.php', 'sections' => cms_sections(['hero', 'popular_intro', 'faq_listing_intro', 'contact_cta'])],
         'leadership' => ['template' => 'content', 'route_path' => 'leadership.php', 'sections' => cms_sections(['leadership_hero', 'leadership_org_chart', 'leadership_national', 'leadership_spotlight', 'leadership_contractors', 'leadership_quotes', 'leadership_partners', 'leadership_contact_cta'])],
         'stakeholders' => ['template' => 'content', 'route_path' => 'stakeholders.php', 'sections' => cms_sections(['hero', 'ecosystem', 'categories', 'roles', 'timeline', 'voices', 'partners', 'engagement_cta'])],
@@ -338,13 +363,48 @@ function cms_sections(array $keys): array
 
 function cms_legal_sections(string $title): array
 {
+    $slug = strtolower(str_replace([' ', 'policy', 'of', 'use'], ['-', '', '', ''], $title));
+    $slug = match ($title) {
+        'Privacy Policy' => 'privacy',
+        'Terms of Use' => 'terms',
+        default => 'disclaimer',
+    };
+    $defaults = cms_legal_default_content($slug, $title);
+
     return [[
         'section_key' => 'legal_document',
         'label' => $title . ' Document',
         'section_type' => 'document',
         'editor_mode' => 'document',
         'is_visible' => 1,
+        'content' => $defaults,
     ]];
+}
+
+function cms_legal_default_content(string $slug, string $title): array
+{
+    $defaults = [
+        'privacy' => [
+            'subtitle' => 'How Trans-Nzoia County Government collects, uses, and protects your personal data in connection with the Affordable Housing Programme.',
+            'icon' => 'fa-shield-halved',
+        ],
+        'terms' => [
+            'subtitle' => 'Rules and conditions for using the Trans-Nzoia County Affordable Housing Programme Tracker website and digital services.',
+            'icon' => 'fa-file-contract',
+        ],
+        'disclaimer' => [
+            'subtitle' => 'Important limitations and qualifications on the data, information, and content published on the Trans-Nzoia County Affordable Housing Programme Tracker website.',
+            'icon' => 'fa-triangle-exclamation',
+        ],
+    ];
+
+    return [
+        'title' => $title,
+        'subtitle' => $defaults[$slug]['subtitle'] ?? '',
+        'icon' => $defaults[$slug]['icon'] ?? 'fa-file-shield',
+        'last_updated' => '2026-01-01',
+        'body' => '<h2>' . Security::e($title) . '</h2><p>Use the legal document editor to maintain this page content.</p>',
+    ];
 }
 
 function cms_default_section_content(array $section): array

@@ -14,6 +14,9 @@ $phone = Security::cleanString((string)($_POST['phone'] ?? ''));
 $subject = Security::cleanString((string)($_POST['subject'] ?? ''));
 $message = trim(strip_tags((string)($_POST['message'] ?? '')));
 $honeypot = trim((string)($_POST['_gotcha'] ?? ''));
+$ipAddress = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 64);
+$userAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+$sourceUrl = substr((string)($_SERVER['HTTP_REFERER'] ?? Url::to('contact.php')), 0, 500);
 
 if ($honeypot !== '') {
     Response::json(['success' => true, 'message' => 'Message received.']);
@@ -34,6 +37,24 @@ if (strlen($message) < 10) {
 }
 if (strlen($message) > 1000) {
     $errors['message'] = 'Please keep your message under 1000 characters.';
+}
+
+if ($ipAddress !== '') {
+    try {
+        $limit = max(1, SystemConfig::int('public.contact_rate_limit_10m', 5));
+        $recent = Database::fetch(
+            'SELECT COUNT(*) AS total FROM contact_submissions WHERE ip_address = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)',
+            [$ipAddress]
+        );
+        if ((int)($recent['total'] ?? 0) >= $limit) {
+            Response::json([
+                'success' => false,
+                'message' => 'Please wait a few minutes before sending another message.',
+            ], 429);
+        }
+    } catch (Throwable) {
+        // Older schemas may not have ip_address yet; validation continues safely.
+    }
 }
 
 $attachmentPath = null;
@@ -60,15 +81,26 @@ try {
 
     try {
         Database::query(
-            'INSERT INTO contact_submissions (name, email, phone, subject, message, attachment_path, is_read, status)
-             VALUES (?, ?, ?, ?, ?, ?, 0, ?)',
-            [$payload['name'], $payload['email'], $payload['phone'], $payload['subject'], $payload['message'], $attachmentPath, 'new']
+            'INSERT INTO contact_submissions (name, email, phone, subject, message, attachment_path, is_read, status, ip_address, user_agent, source_url)
+             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)',
+            [$payload['name'], $payload['email'], $payload['phone'], $payload['subject'], $payload['message'], $attachmentPath, 'new', $ipAddress ?: null, $userAgent ?: null, $sourceUrl ?: null]
         );
     } catch (Throwable) {
         Database::query(
             'INSERT INTO contact_submissions (name, email, phone, subject, message, is_read)
              VALUES (?, ?, ?, ?, ?, 0)',
             [$payload['name'], $payload['email'], $payload['phone'], $payload['subject'], $payload['message']]
+        );
+    }
+
+    $submissionId = (int)Database::lastInsertId();
+    if ($submissionId > 0 && class_exists('Notification')) {
+        Notification::pushRole(
+            'superadmin',
+            'contact',
+            'New public contact message',
+            $payload['name'] . ' sent: ' . $payload['subject'],
+            'admin/superadmin/contact-inbox.php'
         );
     }
 
@@ -93,8 +125,9 @@ function contact_store_attachment(array $file, array &$errors): ?string
     }
 
     $size = (int)($file['size'] ?? 0);
-    if ($size <= 0 || $size > 5 * 1024 * 1024) {
-        $errors['attachment'] = 'Attachment must be 5MB or smaller.';
+    $maxMb = max(1, SystemConfig::int('public.contact_attachment_max_mb', 5));
+    if ($size <= 0 || $size > $maxMb * 1024 * 1024) {
+        $errors['attachment'] = 'Attachment must be ' . $maxMb . 'MB or smaller.';
         return null;
     }
 

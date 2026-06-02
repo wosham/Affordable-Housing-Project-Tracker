@@ -1,11 +1,11 @@
 /* Admin Cards Component — additive card variants. Base .card lives in admin-global.css */
 
-/* Colored accent border on left edge */
-.card--accent-success { border-left: 4px solid var(--admin-success); }
-.card--accent-warning { border-left: 4px solid var(--admin-warning); }
-.card--accent-danger  { border-left: 4px solid var(--admin-danger); }
-.card--accent-info    { border-left: 4px solid var(--admin-info); }
-.card--accent-lime    { border-left: 4px solid var(--admin-lime); }
+/* Colored state border variants */
+.card--accent-success { border-color: color-mix(in srgb, var(--admin-success) 45%, var(--admin-border)); }
+.card--accent-warning { border-color: color-mix(in srgb, var(--admin-warning) 45%, var(--admin-border)); }
+.card--accent-danger  { border-color: color-mix(in srgb, var(--admin-danger) 45%, var(--admin-border)); }
+.card--accent-info    { border-color: color-mix(in srgb, var(--admin-info) 45%, var(--admin-border)); }
+.card--accent-lime    { border-color: color-mix(in srgb, var(--admin-lime) 45%, var(--admin-border)); }
 
 /* Hoverable card */
 .card--hoverable { transition: box-shadow .18s ease, transform .18s ease; cursor: pointer; }

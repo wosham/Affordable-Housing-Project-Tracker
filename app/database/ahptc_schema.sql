@@ -81,12 +81,21 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 -- 5. PASSWORD RESETS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `password_resets` (
-    `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `user_id`    INT UNSIGNED NOT NULL,
-    `token`      VARCHAR(255) NOT NULL UNIQUE,
-    `expires_at` DATETIME     NOT NULL,
-    `used`       TINYINT(1)   DEFAULT 0,
-    `created_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `id`                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id`            INT UNSIGNED NOT NULL,
+    `email`              VARCHAR(190) NULL,
+    `token`              VARCHAR(255) NOT NULL UNIQUE,
+    `token_hash`         CHAR(64) NULL,
+    `expires_at`         DATETIME     NOT NULL,
+    `used`               TINYINT(1)   DEFAULT 0,
+    `used_at`            DATETIME NULL,
+    `created_ip`         VARCHAR(45) NULL,
+    `created_user_agent` VARCHAR(255) NULL,
+    `created_at`         TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_password_resets_hash` (`token_hash`),
+    INDEX `idx_password_resets_user_used` (`user_id`, `used`, `expires_at`),
+    INDEX `idx_password_resets_email_created` (`email`, `created_at`),
+    INDEX `idx_password_resets_ip_created` (`created_ip`, `created_at`),
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -96,16 +105,29 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
 CREATE TABLE IF NOT EXISTS `audit_logs` (
     `id`           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `user_id`      INT UNSIGNED NULL,
+    `actor_role`   VARCHAR(80)  NULL,
     `action`       VARCHAR(100) NOT NULL,
     `module`       VARCHAR(80)  NOT NULL,
     `target_id`    INT UNSIGNED DEFAULT 0,
     `details_json` TEXT         NULL,
     `ip`           VARCHAR(45)  NULL,
     `user_agent`   VARCHAR(255) NULL,
+    `request_method` VARCHAR(10) NULL,
+    `route`        VARCHAR(255) NULL,
+    `severity`     ENUM('info','warning','critical') DEFAULT 'info',
+    `event_hash`   CHAR(64) NULL,
+    `metadata_json` JSON NULL,
     `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_user`    (`user_id`),
     INDEX `idx_module`  (`module`),
-    INDEX `idx_created` (`created_at`)
+    INDEX `idx_created` (`created_at`),
+    INDEX `idx_audit_action_created` (`action`, `created_at`),
+    INDEX `idx_audit_module_created` (`module`, `created_at`),
+    INDEX `idx_audit_severity_created` (`severity`, `created_at`),
+    INDEX `idx_audit_ip_created` (`ip`, `created_at`),
+    INDEX `idx_audit_target` (`module`, `target_id`),
+    INDEX `idx_audit_actor_role` (`actor_role`, `created_at`),
+    INDEX `idx_audit_event_hash` (`event_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -116,10 +138,26 @@ CREATE TABLE IF NOT EXISTS `announcements` (
     `author_id`         INT UNSIGNED NOT NULL,
     `title`             VARCHAR(255) NOT NULL,
     `body`              TEXT         NOT NULL,
+    `type`              VARCHAR(60)  DEFAULT 'info',
+    `status`            ENUM('draft','published','archived') DEFAULT 'draft',
+    `priority`          ENUM('low','normal','high','urgent') DEFAULT 'normal',
     `target_roles_json` TEXT         NULL,
     `is_pinned`         TINYINT(1)   DEFAULT 0,
+    `cta_label`         VARCHAR(120) NULL,
+    `cta_url`           VARCHAR(255) NULL,
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `published_at`      DATETIME     NULL,
+    `updated_at`        DATETIME     NULL,
     `expires_at`        DATETIME     NULL,
+    `archived_at`       DATETIME     NULL,
+    `metadata_json`     LONGTEXT     NULL,
+    INDEX `idx_announcements_status` (`status`),
+    INDEX `idx_announcements_type` (`type`),
+    INDEX `idx_announcements_priority` (`priority`),
+    INDEX `idx_announcements_pinned` (`is_pinned`),
+    INDEX `idx_announcements_published_at` (`published_at`),
+    INDEX `idx_announcements_expires_at` (`expires_at`),
+    INDEX `idx_announcements_author` (`author_id`),
     FOREIGN KEY (`author_id`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -234,7 +272,8 @@ CREATE TABLE IF NOT EXISTS `project_assignments` (
     `assigned_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`)    REFERENCES `users`(`id`)    ON DELETE CASCADE,
-    UNIQUE KEY `uq_project_user` (`project_id`, `user_id`)
+    UNIQUE KEY `uq_project_user` (`project_id`, `user_id`),
+    INDEX `idx_project_assignments_user_project` (`user_id`, `project_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -249,7 +288,8 @@ CREATE TABLE IF NOT EXISTS `milestones` (
     `status`      ENUM('pending','current','done') DEFAULT 'pending',
     `sequence`    SMALLINT UNSIGNED DEFAULT 0,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    INDEX `idx_project_seq` (`project_id`, `sequence`)
+    INDEX `idx_project_seq` (`project_id`, `sequence`),
+    INDEX `idx_milestones_project_status_target` (`project_id`, `status`, `target_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -301,7 +341,17 @@ CREATE TABLE IF NOT EXISTS `boq_items` (
     `certified_qty` DECIMAL(12,3) DEFAULT 0,
     `paid_qty`      DECIMAL(12,3) DEFAULT 0,
     `status`        VARCHAR(40)  DEFAULT 'active',
-    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
+    `updated_by`    INT UNSIGNED NULL,
+    `last_certified_at` DATETIME NULL,
+    `last_paid_at`  DATETIME NULL,
+    `notes`         TEXT NULL,
+    `created_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    INDEX `idx_boq_project` (`project_id`),
+    INDEX `idx_boq_project_section` (`project_id`, `section`),
+    INDEX `idx_boq_project_status` (`project_id`, `status`),
+    INDEX `idx_boq_item_no` (`item_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -319,7 +369,21 @@ CREATE TABLE IF NOT EXISTS `programme_tasks` (
     `depends_on_task_id`  INT UNSIGNED NULL,
     `assigned_to`         INT UNSIGNED NULL,
     `status`              VARCHAR(40)  DEFAULT 'pending',
-    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
+    `sort_order`          INT UNSIGNED DEFAULT 0,
+    `critical_path`       TINYINT(1) DEFAULT 0,
+    `baseline_start`      DATE NULL,
+    `baseline_end`        DATE NULL,
+    `notes`               TEXT NULL,
+    `updated_by`          INT UNSIGNED NULL,
+    `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    INDEX `idx_programme_project` (`project_id`),
+    INDEX `idx_programme_project_status` (`project_id`, `status`),
+    INDEX `idx_programme_project_dates` (`project_id`, `planned_start`, `planned_end`),
+    INDEX `idx_programme_assigned_to` (`assigned_to`),
+    INDEX `idx_programme_dependency` (`depends_on_task_id`),
+    INDEX `idx_programme_project_status_end` (`project_id`, `status`, `end_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -616,16 +680,28 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     `gross_amount`     DECIMAL(15,2) DEFAULT 0,
     `retention_amount` DECIMAL(15,2) DEFAULT 0,
     `net_amount`       DECIMAL(15,2) DEFAULT 0,
-    `status`           ENUM('draft','submitted','clerk-endorsed','certified','approved','paid') DEFAULT 'draft',
+    `status`           ENUM('draft','submitted','clerk-endorsed','certified','endorsed','approved','rejected','paid') DEFAULT 'draft',
     `submitted_at`     DATETIME NULL,
     `certified_at`     DATETIME NULL,
     `approved_at`      DATETIME NULL,
+    `approved_by`      INT UNSIGNED NULL,
+    `rejected_by`      INT UNSIGNED NULL,
+    `rejected_at`      DATETIME NULL,
+    `rejection_reason` TEXT NULL,
     `paid_at`          DATETIME NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)    REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`contractor_id`) REFERENCES `users`(`id`),
-    UNIQUE KEY `uq_project_ipc_no` (`project_id`, `ipc_number`)
+    FOREIGN KEY (`approved_by`) REFERENCES `users`(`id`),
+    FOREIGN KEY (`rejected_by`) REFERENCES `users`(`id`),
+    UNIQUE KEY `uq_project_ipc_no` (`project_id`, `ipc_number`),
+    INDEX `idx_ipcs_status` (`status`),
+    INDEX `idx_ipcs_project_status` (`project_id`, `status`),
+    INDEX `idx_ipcs_contractor_status` (`contractor_id`, `status`),
+    INDEX `idx_ipcs_submitted_at` (`submitted_at`),
+    INDEX `idx_ipcs_approved_at` (`approved_at`),
+    INDEX `idx_ipcs_paid_at` (`paid_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -641,7 +717,9 @@ CREATE TABLE IF NOT EXISTS `ipc_lines` (
     `rate`            DECIMAL(12,2) DEFAULT 0,
     `amount`          DECIMAL(15,2) DEFAULT 0,
     FOREIGN KEY (`ipc_id`)      REFERENCES `ipcs`(`id`)      ON DELETE CASCADE,
-    FOREIGN KEY (`boq_item_id`) REFERENCES `boq_items`(`id`) ON DELETE SET NULL
+    FOREIGN KEY (`boq_item_id`) REFERENCES `boq_items`(`id`) ON DELETE SET NULL,
+    INDEX `idx_ipc_lines_ipc` (`ipc_id`),
+    INDEX `idx_ipc_lines_boq` (`boq_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -656,7 +734,10 @@ CREATE TABLE IF NOT EXISTS `ipc_approvals` (
     `comments`    TEXT NULL,
     `actioned_at` DATETIME     NOT NULL,
     FOREIGN KEY (`ipc_id`)    REFERENCES `ipcs`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`action_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`action_by`) REFERENCES `users`(`id`),
+    INDEX `idx_ipc_approvals_ipc_step` (`ipc_id`, `step`),
+    INDEX `idx_ipc_approvals_action` (`action`),
+    INDEX `idx_ipc_approvals_actioned_at` (`actioned_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -809,19 +890,27 @@ CREATE TABLE IF NOT EXISTS `attendance_records` (
     FOREIGN KEY (`user_id`)    REFERENCES `users`(`id`)               ON DELETE CASCADE,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`)            ON DELETE CASCADE,
     FOREIGN KEY (`gateway_id`) REFERENCES `attendance_gateways`(`id`) ON DELETE CASCADE,
-    UNIQUE KEY `uq_user_date` (`user_id`, `date`)
+    UNIQUE KEY `uq_user_date` (`user_id`, `date`),
+    INDEX `idx_attendance_project_date_status` (`project_id`, `date`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 45. MESSAGE THREADS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `message_threads` (
-    `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `subject`    VARCHAR(255) NOT NULL,
-    `type`       ENUM('direct','group','project-channel') DEFAULT 'direct',
-    `project_id` INT UNSIGNED NULL,
-    `created_by` INT UNSIGNED NOT NULL,
-    `created_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `subject`         VARCHAR(255) NOT NULL,
+    `type`            ENUM('direct','group','project-channel') DEFAULT 'direct',
+    `status`          ENUM('open','archived') DEFAULT 'open',
+    `priority`        ENUM('normal','urgent') DEFAULT 'normal',
+    `project_id`      INT UNSIGNED NULL,
+    `created_by`      INT UNSIGNED NOT NULL,
+    `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `last_message_id` INT UNSIGNED NULL,
+    `last_message_at` DATETIME NULL,
+    `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_threads_last_message` (`last_message_at`),
+    INDEX `idx_threads_project` (`project_id`),
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`created_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -833,10 +922,16 @@ CREATE TABLE IF NOT EXISTS `messages` (
     `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `thread_id`  INT UNSIGNED NOT NULL,
     `sender_id`  INT UNSIGNED NOT NULL,
+    `parent_id`  INT UNSIGNED NULL,
     `body`       TEXT         NOT NULL,
     `created_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `edited_at`  DATETIME NULL,
     `is_deleted` TINYINT(1)   DEFAULT 0,
+    `deleted_by` INT UNSIGNED NULL,
+    `deleted_at` DATETIME NULL,
+    `metadata_json` JSON NULL,
+    INDEX `idx_messages_thread_created` (`thread_id`, `created_at`),
+    INDEX `idx_messages_sender` (`sender_id`),
     FOREIGN KEY (`thread_id`) REFERENCES `message_threads`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -845,11 +940,18 @@ CREATE TABLE IF NOT EXISTS `messages` (
 -- 47. MESSAGE PARTICIPANTS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `message_participants` (
-    `id`        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `thread_id` INT UNSIGNED NOT NULL,
-    `user_id`   INT UNSIGNED NOT NULL,
-    `joined_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    `is_admin`  TINYINT(1)   DEFAULT 0,
+    `id`           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `thread_id`    INT UNSIGNED NOT NULL,
+    `user_id`      INT UNSIGNED NOT NULL,
+    `role_at_join` VARCHAR(50) NULL,
+    `joined_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `last_read_at` DATETIME NULL,
+    `is_admin`     TINYINT(1)   DEFAULT 0,
+    `is_muted`     TINYINT(1)   DEFAULT 0,
+    `is_archived`  TINYINT(1)   DEFAULT 0,
+    `archived_at`  DATETIME NULL,
+    INDEX `idx_participants_user` (`user_id`, `is_archived`),
+    INDEX `idx_participants_thread` (`thread_id`),
     FOREIGN KEY (`thread_id`) REFERENCES `message_threads`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`)   REFERENCES `users`(`id`)           ON DELETE CASCADE,
     UNIQUE KEY `uq_thread_user` (`thread_id`, `user_id`)
@@ -863,6 +965,7 @@ CREATE TABLE IF NOT EXISTS `message_reads` (
     `message_id` INT UNSIGNED NOT NULL,
     `user_id`    INT UNSIGNED NOT NULL,
     `read_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_reads_user` (`user_id`),
     FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`)    REFERENCES `users`(`id`)    ON DELETE CASCADE,
     UNIQUE KEY `uq_msg_user` (`message_id`, `user_id`)
@@ -873,12 +976,20 @@ CREATE TABLE IF NOT EXISTS `message_reads` (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `message_attachments` (
     `id`            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `message_id`    INT UNSIGNED NOT NULL,
+    `message_id`    INT UNSIGNED NULL,
+    `uploaded_by`   INT UNSIGNED NULL,
     `filename`      VARCHAR(255) NOT NULL,
     `original_name` VARCHAR(255) NOT NULL,
     `size`          INT UNSIGNED NOT NULL,
     `type`          VARCHAR(100) NOT NULL,
+    `mime_type`     VARCHAR(120) NULL,
     `path`          VARCHAR(255) NOT NULL,
+    `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `download_count` INT UNSIGNED DEFAULT 0,
+    `checksum`      VARCHAR(128) NULL,
+    `upload_token`  VARCHAR(64) NULL,
+    INDEX `idx_attachments_message` (`message_id`),
+    INDEX `idx_attachments_token` (`upload_token`),
     FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1052,6 +1163,7 @@ CREATE TABLE IF NOT EXISTS `gallery_categories` (
     `name`       VARCHAR(100) NOT NULL,
     `slug`       VARCHAR(100) NOT NULL UNIQUE,
     `project_id` INT UNSIGNED NULL,
+    `sort_order` SMALLINT UNSIGNED DEFAULT 0,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1062,12 +1174,49 @@ CREATE TABLE IF NOT EXISTS `gallery_images` (
     `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `category_id` INT UNSIGNED NULL,
     `image_id`    INT UNSIGNED NULL COMMENT 'FK to media_library',
+    `thumbnail_media_id` INT UNSIGNED NULL,
+    `project_id`   INT UNSIGNED NULL,
+    `constituency_id` INT UNSIGNED NULL,
+    `title`       VARCHAR(180) NULL,
     `caption`     VARCHAR(255) NULL,
+    `alt_text`    VARCHAR(255) NULL,
+    `credit`      VARCHAR(180) NULL,
     `taken_at`    DATE NULL,
     `location`    VARCHAR(200) NULL,
+    `site_key`    VARCHAR(120) NULL,
+    `year`        SMALLINT UNSIGNED NULL,
+    `media_type`  ENUM('image','video') NOT NULL DEFAULT 'image',
+    `video_url`   VARCHAR(500) NULL,
+    `duration`    VARCHAR(30) NULL,
+    `external_url` VARCHAR(500) NULL,
+    `highlight_summary` TEXT NULL,
     `is_featured` TINYINT(1)   DEFAULT 0,
+    `is_highlight` TINYINT(1) NOT NULL DEFAULT 0,
+    `status`       ENUM('draft','published','hidden') NOT NULL DEFAULT 'published',
     `sort_order`  SMALLINT UNSIGNED DEFAULT 0,
+    `updated_at`  TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`category_id`) REFERENCES `gallery_categories`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================
+-- 60B. GALLERY MEDIA ITEMS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `gallery_media` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `gallery_id` INT UNSIGNED NOT NULL,
+    `media_id`   INT UNSIGNED NULL,
+    `thumbnail_media_id` INT UNSIGNED NULL,
+    `media_type` ENUM('image','video') NOT NULL DEFAULT 'image',
+    `video_url`  VARCHAR(500) NULL,
+    `caption`    VARCHAR(255) NULL,
+    `alt_text`   VARCHAR(255) NULL,
+    `sort_order` SMALLINT UNSIGNED DEFAULT 0,
+    `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`gallery_id`) REFERENCES `gallery_images`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`media_id`) REFERENCES `media_library`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`thumbnail_media_id`) REFERENCES `media_library`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1151,8 +1300,20 @@ CREATE TABLE IF NOT EXISTS `contact_submissions` (
     `status`      ENUM('new','read','replied','archived') NOT NULL DEFAULT 'new',
     `assigned_to` INT UNSIGNED NULL,
     `replied_at`  DATETIME NULL,
+    `response_note` TEXT NULL,
+    `read_at`     DATETIME NULL,
+    `archived_at` DATETIME NULL,
+    `ip_address`  VARCHAR(64) NULL,
+    `user_agent`  VARCHAR(255) NULL,
+    `source_url`  VARCHAR(500) NULL,
+    `updated_by`  INT UNSIGNED NULL,
     `created_at`  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY `idx_contact_submissions_status` (`status`, `created_at`),
+    KEY `idx_contact_read_status` (`is_read`, `status`),
+    KEY `idx_contact_assigned_status` (`assigned_to`, `status`),
+    KEY `idx_contact_created` (`created_at`),
+    KEY `idx_contact_email` (`email`),
     FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1180,23 +1341,42 @@ CREATE TABLE IF NOT EXISTS `subscribers` (
     `name`          VARCHAR(150) NULL,
     `status`        ENUM('active','unsubscribed') DEFAULT 'active',
     `subscribed_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    `ip`            VARCHAR(45)  NULL
+    `ip`            VARCHAR(45)  NULL,
+    `source_url`    VARCHAR(500) NULL,
+    `user_agent`    VARCHAR(255) NULL,
+    `unsubscribed_at` DATETIME NULL,
+    `reactivated_at` DATETIME NULL,
+    `updated_by`    INT UNSIGNED NULL,
+    `updated_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_subscribers_status` (`status`, `subscribed_at`),
+    INDEX `idx_subscribers_email` (`email`),
+    INDEX `idx_subscribers_subscribed_at` (`subscribed_at`),
+    INDEX `idx_subscribers_ip` (`ip`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 66. NOTIFICATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `notifications` (
-    `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `user_id`    INT UNSIGNED NOT NULL,
-    `type`       VARCHAR(80)  NOT NULL,
-    `title`      VARCHAR(255) NOT NULL,
-    `body`       TEXT NULL,
-    `link`       VARCHAR(500) NULL,
-    `is_read`    TINYINT(1)   DEFAULT 0,
-    `created_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `id`            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id`       INT UNSIGNED NOT NULL,
+    `type`          VARCHAR(80)  NOT NULL,
+    `priority`      ENUM('normal','urgent') DEFAULT 'normal',
+    `title`         VARCHAR(255) NOT NULL,
+    `body`          TEXT NULL,
+    `link`          VARCHAR(500) NULL,
+    `source_module` VARCHAR(80) NULL,
+    `source_id`     INT UNSIGNED NULL,
+    `metadata_json` JSON NULL,
+    `is_read`       TINYINT(1)   DEFAULT 0,
+    `read_at`       DATETIME NULL,
+    `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-    INDEX `idx_user_read` (`user_id`, `is_read`)
+    INDEX `idx_user_read` (`user_id`, `is_read`),
+    INDEX `idx_notifications_user_created` (`user_id`, `created_at`),
+    INDEX `idx_notifications_user_read_created` (`user_id`, `is_read`, `created_at`),
+    INDEX `idx_notifications_type_created` (`type`, `created_at`),
+    INDEX `idx_notifications_source` (`source_module`, `source_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1232,7 +1412,109 @@ CREATE TABLE IF NOT EXISTS `media_usage` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 69. MIGRATIONS TRACKER
+-- 69. REPORT RUNS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `report_runs` (
+    `id`           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id`      INT UNSIGNED NULL,
+    `report_type`  VARCHAR(80) NOT NULL,
+    `format`       VARCHAR(20) NOT NULL,
+    `filters_json` JSON NULL,
+    `row_count`    INT UNSIGNED DEFAULT 0,
+    `status`       ENUM('generated','failed') DEFAULT 'generated',
+    `created_at`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_report_runs_user_created` (`user_id`, `created_at`),
+    INDEX `idx_report_runs_type_created` (`report_type`, `created_at`),
+    CONSTRAINT `fk_report_runs_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 70. SYSTEM SETTINGS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `system_settings` (
+    `id`             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `setting_key`    VARCHAR(120) NOT NULL UNIQUE,
+    `setting_group`  VARCHAR(80)  NOT NULL,
+    `label`          VARCHAR(160) NOT NULL,
+    `description`    TEXT NULL,
+    `value`          LONGTEXT NULL,
+    `default_value`  LONGTEXT NULL,
+    `type`           ENUM('text','number','boolean','time','json','select','email','url') DEFAULT 'text',
+    `options_json`   JSON NULL,
+    `is_sensitive`   TINYINT(1) DEFAULT 0,
+    `is_public`      TINYINT(1) DEFAULT 0,
+    `sort_order`     INT UNSIGNED DEFAULT 0,
+    `updated_by`     INT UNSIGNED NULL,
+    `created_at`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_system_settings_group_sort` (`setting_group`, `sort_order`),
+    INDEX `idx_system_settings_public` (`is_public`),
+    INDEX `idx_system_settings_updated` (`updated_at`),
+    CONSTRAINT `fk_system_settings_user` FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 71. SYSTEM SETTING REVISIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `system_setting_revisions` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `setting_key` VARCHAR(120) NOT NULL,
+    `old_value`   LONGTEXT NULL,
+    `new_value`   LONGTEXT NULL,
+    `changed_by`  INT UNSIGNED NULL,
+    `changed_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `ip`          VARCHAR(45) NULL,
+    `user_agent`  VARCHAR(255) NULL,
+    INDEX `idx_system_setting_revisions_key_changed` (`setting_key`, `changed_at`),
+    INDEX `idx_system_setting_revisions_user_changed` (`changed_by`, `changed_at`),
+    CONSTRAINT `fk_setting_revisions_user` FOREIGN KEY (`changed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 72. SYSTEM HEALTH SNAPSHOTS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `system_health_snapshots` (
+    `id`            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `status`        ENUM('healthy','warning','critical') DEFAULT 'healthy',
+    `score`         TINYINT UNSIGNED DEFAULT 100,
+    `checks_json`   JSON NULL,
+    `db_json`       JSON NULL,
+    `storage_json`  JSON NULL,
+    `workflow_json` JSON NULL,
+    `security_json` JSON NULL,
+    `created_by`    INT UNSIGNED NULL,
+    `created_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_health_status_created` (`status`, `created_at`),
+    INDEX `idx_health_created` (`created_at`),
+    INDEX `idx_health_created_by` (`created_by`, `created_at`),
+    CONSTRAINT `fk_health_snapshots_user` FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 73. EMAIL LOGS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `email_logs` (
+    `id`                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `provider`            VARCHAR(40) DEFAULT 'resend',
+    `provider_message_id` VARCHAR(120) NULL,
+    `recipient_email`     VARCHAR(190) NOT NULL,
+    `recipient_user_id`   INT UNSIGNED NULL,
+    `subject`             VARCHAR(255) NOT NULL,
+    `template_key`        VARCHAR(80) NULL,
+    `status`              ENUM('queued','sent','failed','skipped') DEFAULT 'queued',
+    `error_message`       TEXT NULL,
+    `payload_json`        JSON NULL,
+    `sent_at`             DATETIME NULL,
+    `created_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_email_logs_recipient` (`recipient_email`),
+    INDEX `idx_email_logs_user_created` (`recipient_user_id`, `created_at`),
+    INDEX `idx_email_logs_status_created` (`status`, `created_at`),
+    INDEX `idx_email_logs_provider_message` (`provider_message_id`),
+    CONSTRAINT `fk_email_logs_user` FOREIGN KEY (`recipient_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 74. MIGRATIONS TRACKER
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `_migrations` (
     `id`        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -1243,6 +1525,6 @@ CREATE TABLE IF NOT EXISTS `_migrations` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
--- END OF SCHEMA — 68 tables + _migrations tracker created
+-- END OF SCHEMA — 69 tables + _migrations tracker created
 -- Next: Import ahptc_seeds.sql, then run admin/setup.php
 -- ============================================================

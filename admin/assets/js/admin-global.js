@@ -234,30 +234,7 @@
     });
   }
 
-  function initNotifications() {
-    qsa('[data-notification-mark-all]').forEach(function (button) {
-      button.addEventListener('click', function () {
-        if (button.disabled) return;
-        button.disabled = true;
-
-        request('api/notifications/mark-all-read.php', {
-          method: 'POST',
-          body: {}
-        }).catch(function () {
-          // Notification APIs are wired in a later phase; keep the shell resilient.
-        }).finally(function () {
-          qsa('.notification-item.is-unread').forEach(function (item) {
-            item.classList.remove('is-unread');
-          });
-          qsa('[data-notification-count]').forEach(function (count) {
-            count.textContent = '0';
-            count.hidden = true;
-            count.classList.add('is-empty');
-          });
-        });
-      });
-    });
-  }
+  function initNotifications() {}
 
   function initKeyboard() {
     document.addEventListener('keydown', function (event) {

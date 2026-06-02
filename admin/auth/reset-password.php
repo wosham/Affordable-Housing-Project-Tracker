@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+<?php
+require_once __DIR__ . '/../../app/core/bootstrap.php';
+Guard::guest();
+$csrfToken = Csrf::token('reset_password');
+$resetToken = trim((string)($_GET['token'] ?? ''));
+?><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -9,6 +14,10 @@
   <title>Reset Password | Trans-Nzoia AHP Tracker</title>
   <link rel="icon" type="image/png" href="../../uploads/logos/afforadablehousinglogo.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <meta name="csrf-token" content="<?= Security::e($csrfToken) ?>">
+  <meta name="csrf-token-name" content="<?= Security::e(Csrf::tokenName()) ?>">
+  <meta name="csrf-form" content="reset_password">
+  <meta name="reset-token" content="<?= Security::e($resetToken) ?>">
   <link rel="stylesheet" href="../../assets/css/global.css">
   <link rel="stylesheet" href="../assets/css/reset-password.css">
 </head>

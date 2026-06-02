@@ -1,5 +1,5 @@
 /* =========================================================
-   TRANS-NZOIA AHP — News Article Reading Page
+   TRANS-NZOIA AHP - News Article Reading Page
    ========================================================= */
 
 /* ── Reading Progress Bar ── */
@@ -606,6 +606,12 @@
   transition: gap .2s, color .2s;
 }
 .article-related-link:hover { color: var(--primary-400, #3d8c00); gap: .65em; }
+.article-related-empty {
+  font-size: .8rem;
+  color: var(--neutral-500, #6b8f58);
+  line-height: 1.5;
+  margin: 0 0 .75rem;
+}
 .article-related-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
 
 /* ── Print Styles ── */

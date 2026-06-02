@@ -1,0 +1,156 @@
+.sa-contact-inbox-page {
+  display: grid;
+  gap: 18px;
+}
+
+.contact-inbox-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.contact-inbox-hero h2 {
+  margin: 8px 0 6px;
+  font-size: 1.45rem;
+}
+
+.contact-inbox-hero p {
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.contact-inbox-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contact-inbox-filter {
+  grid-template-columns: minmax(220px, 1.4fr) repeat(5, minmax(130px, 1fr)) auto auto;
+}
+
+.filter-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding-top: 22px;
+  color: var(--admin-text);
+  font-size: .85rem;
+}
+
+.contact-inbox-table {
+  min-width: 1080px;
+}
+
+.contact-inbox-table tr.is-unread td {
+  background: color-mix(in srgb, var(--admin-lime) 10%, transparent);
+}
+
+.contact-inbox-table td small {
+  display: block;
+  margin-top: 3px;
+  color: var(--admin-text-muted);
+  font-size: .75rem;
+}
+
+.contact-message-preview {
+  max-width: 360px;
+  color: var(--admin-text-muted);
+}
+
+.contact-modal {
+  width: min(820px, calc(100vw - 32px));
+}
+
+.contact-detail {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.contact-detail__loading {
+  padding: 18px;
+  color: var(--admin-text-muted);
+  border: 1px dashed var(--admin-border);
+  border-radius: 8px;
+}
+
+.contact-detail-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg);
+}
+
+.contact-detail-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.contact-detail-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--admin-text-muted);
+  font-size: .82rem;
+}
+
+.contact-detail-message {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.contact-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  color: var(--admin-primary);
+  background: var(--admin-surface-muted);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: .82rem;
+}
+
+.contact-modal-controls {
+  margin-top: 12px;
+}
+
+@media (max-width: 1150px) {
+  .contact-inbox-filter {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .contact-inbox-filter .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .contact-inbox-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .contact-inbox-hero__actions,
+  .contact-inbox-hero__actions .btn {
+    width: 100%;
+  }
+
+  .contact-inbox-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-check {
+    padding-top: 0;
+  }
+}

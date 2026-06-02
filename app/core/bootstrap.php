@@ -27,12 +27,17 @@ require_once __DIR__ . '/Model.php';
 foreach (glob(dirname(__DIR__) . '/models/*.php') ?: [] as $modelFile) {
     require_once $modelFile;
 }
+foreach (glob(dirname(__DIR__) . '/services/*.php') ?: [] as $serviceFile) {
+    require_once $serviceFile;
+}
 require_once __DIR__ . '/Csrf.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Url.php';
 require_once __DIR__ . '/Response.php';
 require_once __DIR__ . '/Guard.php';
+require_once __DIR__ . '/RoleAccess.php';
 require_once __DIR__ . '/Logger.php';
+require_once __DIR__ . '/SystemConfig.php';
 require_once __DIR__ . '/Validator.php';
 require_once __DIR__ . '/Uploader.php';
 require_once __DIR__ . '/Paginator.php';

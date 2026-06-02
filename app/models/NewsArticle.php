@@ -62,6 +62,40 @@ class NewsArticle extends Model
         );
     }
 
+    public static function relatedFor(array $article, int $limit = 4): array
+    {
+        $articleId = (int)($article['id'] ?? 0);
+        $categorySlug = (string)($article['category_slug'] ?? '');
+        $related = [];
+
+        if ($categorySlug !== '') {
+            $related = self::withRelations(['category' => $categorySlug], $limit + 1);
+        }
+
+        $related = array_values(array_filter(
+            $related,
+            static fn (array $item): bool => (int)($item['id'] ?? 0) !== $articleId
+        ));
+
+        if (count($related) < $limit) {
+            $fallback = self::withRelations([], $limit + 4);
+            foreach ($fallback as $item) {
+                if ((int)($item['id'] ?? 0) === $articleId) {
+                    continue;
+                }
+                if (in_array((int)$item['id'], array_map(static fn (array $row): int => (int)$row['id'], $related), true)) {
+                    continue;
+                }
+                $related[] = $item;
+                if (count($related) >= $limit) {
+                    break;
+                }
+            }
+        }
+
+        return array_slice($related, 0, $limit);
+    }
+
     public static function publicCategories(): array
     {
         return Database::fetchAll("
@@ -188,6 +222,10 @@ class NewsArticle extends Model
         $slug = self::uniqueSlug((string)($input['slug'] ?? $title), $id);
         $publishedAt = self::dateOrNull((string)($input['published_at'] ?? ''));
         $scheduledFor = self::dateOrNull((string)($input['scheduled_for'] ?? ''));
+        $externalUrl = trim((string)($input['external_url'] ?? ''));
+        if ($externalUrl !== '' && !filter_var($externalUrl, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException('External URL must be a valid URL.');
+        }
 
         if ($status === 'published' && $publishedAt === null) {
             $publishedAt = date('Y-m-d H:i:s');
@@ -205,12 +243,12 @@ class NewsArticle extends Model
             'slug' => $slug,
             'excerpt' => trim((string)($input['excerpt'] ?? '')),
             'read_time' => trim((string)($input['read_time'] ?? '')),
-            'body' => trim((string)($input['body'] ?? '')),
+            'body' => self::cleanBodyHtml((string)($input['body'] ?? '')),
             'featured_image_id' => self::nullableInt($input['featured_image_id'] ?? null),
             'image_caption' => trim((string)($input['image_caption'] ?? '')),
             'inline_image_id' => self::nullableInt($input['inline_image_id'] ?? null),
             'attachment_id' => self::nullableInt($input['attachment_id'] ?? null),
-            'external_url' => trim((string)($input['external_url'] ?? '')),
+            'external_url' => $externalUrl,
             'status' => $status,
             'is_featured' => !empty($input['is_featured']) ? 1 : 0,
             'is_visible' => !empty($input['is_visible']) ? 1 : 0,
@@ -228,6 +266,23 @@ class NewsArticle extends Model
         if ($data['body'] === '') {
             $fallback = $data['excerpt'] !== '' ? $data['excerpt'] : $title;
             $data['body'] = '<p>' . Security::e($fallback) . '</p>';
+        }
+
+        if ($data['excerpt'] === '') {
+            $data['excerpt'] = substr(trim((string)preg_replace('/\s+/', ' ', strip_tags($data['body']))), 0, 220);
+        }
+
+        if ($data['read_time'] === '') {
+            $wordCount = str_word_count(strip_tags($data['body']));
+            $data['read_time'] = max(1, (int)ceil($wordCount / 220)) . ' min read';
+        }
+
+        if (in_array($status, ['published', 'scheduled'], true) && $data['category_id'] === null) {
+            throw new RuntimeException('Published and scheduled posts need a category.');
+        }
+
+        if ($format === 'pdf_report' && in_array($status, ['published', 'scheduled'], true) && $data['attachment_id'] === null) {
+            throw new RuntimeException('PDF report posts need a PDF/report attachment.');
         }
 
         if ($id) {
@@ -366,6 +421,21 @@ class NewsArticle extends Model
                 );
             }
         }
+    }
+
+    private static function cleanBodyHtml(string $html): string
+    {
+        $html = trim($html);
+        if ($html === '') {
+            return '';
+        }
+
+        $html = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $html) ?? '';
+        $html = preg_replace('/<style\b[^>]*>.*?<\/style>/is', '', $html) ?? '';
+        $html = preg_replace('/\son[a-z]+\s*=\s*(["\']).*?\1/is', '', $html) ?? '';
+        $html = preg_replace('/\s(href|src)\s*=\s*(["\'])\s*javascript:.*?\2/is', '', $html) ?? '';
+
+        return strip_tags($html, '<p><br><strong><b><em><i><u><s><a><ul><ol><li><blockquote><h2><h3><h4><figure><figcaption><img><table><thead><tbody><tr><th><td>');
     }
 
     private static function selectSql(): string

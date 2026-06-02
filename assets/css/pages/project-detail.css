@@ -94,6 +94,8 @@
 
 .pd-badge--active   { background: rgba(34,197,94,0.90); color: #fff; }
 .pd-badge--planning { background: rgba(245,158,11,0.90); color: #fff; }
+.pd-badge--completed { background: rgba(14,165,233,0.90); color: #fff; }
+.pd-badge--watch { background: rgba(239,68,68,0.90); color: #fff; }
 .pd-badge--con {
   background: rgba(159,232,112,0.12);
   color: var(--lime);
@@ -214,8 +216,7 @@
 .pd-fact {
   background: var(--white);
   border: 1px solid var(--neutral-100);
-  border-left: 4px solid var(--lime);
-  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+  border-radius: var(--radius-xl);
   padding: var(--space-5) var(--space-6);
   display: flex;
   flex-direction: column;
@@ -320,7 +321,6 @@
   font-size: 13px;
   color: var(--neutral-700);
   padding: var(--space-3) var(--space-4);
-  border-left: 3px solid var(--lime);
   background: var(--white);
   border-bottom: 1px solid var(--neutral-50);
   transition: background 0.15s;
@@ -597,6 +597,23 @@
   padding: 2px 8px;
   border-radius: var(--radius-full);
   vertical-align: middle;
+}
+
+.pd-timeline-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-100);
+  border-radius: var(--radius-lg);
+  color: var(--neutral-500);
+  font-family: var(--font-heading);
+  font-size: 13px;
+}
+
+.pd-timeline-empty i {
+  color: var(--primary-500);
 }
 
 /* ---------------------------------------------------------
@@ -936,6 +953,8 @@
 
 .pd-sb-status--active   { background: rgba(34,197,94,0.12); color: #16a34a; }
 .pd-sb-status--planning { background: rgba(245,158,11,0.12); color: #d97706; }
+.pd-sb-status--completed { background: rgba(14,165,233,0.12); color: #0284c7; }
+.pd-sb-status--watch { background: rgba(239,68,68,0.12); color: #dc2626; }
 
 /* Mini progress bar in completion row */
 .pd-sb-pct {
@@ -1106,6 +1125,7 @@
   color: var(--neutral-200);
 }
 
+.pd-not-found h1,
 .pd-not-found h2 {
   font-family: var(--font-heading);
   font-size: 22px;

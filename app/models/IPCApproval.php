@@ -22,6 +22,24 @@ class IPCApproval extends Model
         ", [$ipcId]);
     }
 
+    public static function latestForIPC(int $ipcId): ?array
+    {
+        return Database::fetch("
+            SELECT ia.*, CONCAT(u.first_name, ' ', u.last_name) AS actor_name, r.slug AS actor_role_slug
+            FROM ipc_approvals ia
+            INNER JOIN users u ON u.id = ia.action_by
+            LEFT JOIN roles r ON r.id = u.role_id
+            WHERE ia.ipc_id = ?
+            ORDER BY ia.actioned_at DESC, ia.id DESC
+            LIMIT 1
+        ", [$ipcId]);
+    }
+
+    public static function timeline(int $ipcId): array
+    {
+        return self::forIPC($ipcId);
+    }
+
     public static function record(int $ipcId, int $step, int $actorId, string $action, string $comments = ''): int
     {
         return (int)self::create([

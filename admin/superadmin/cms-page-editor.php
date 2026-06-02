@@ -34,6 +34,10 @@ $isProjectsEditor = (string)$page['slug'] === 'projects';
 if ($isProjectsEditor) {
     cms_editor_ensure_projects_sections((int)$page['id']);
 }
+$isProjectDetailEditor = (string)$page['slug'] === 'project-detail';
+if ($isProjectDetailEditor) {
+    cms_editor_ensure_project_detail_sections((int)$page['id']);
+}
 $isConstituenciesEditor = (string)$page['slug'] === 'constituencies';
 if ($isConstituenciesEditor) {
     cms_editor_ensure_constituencies_sections((int)$page['id']);
@@ -46,6 +50,14 @@ if ($isConstituencyDetailEditor) {
 $isNewsEditor = (string)$page['slug'] === 'news';
 if ($isNewsEditor) {
     cms_editor_ensure_news_sections((int)$page['id']);
+}
+$isNewsArticleEditor = (string)$page['slug'] === 'news-article';
+if ($isNewsArticleEditor) {
+    cms_editor_ensure_news_article_sections((int)$page['id']);
+}
+$isGalleryEditor = (string)$page['slug'] === 'gallery';
+if ($isGalleryEditor) {
+    cms_editor_ensure_gallery_sections((int)$page['id']);
 }
 
 $sections = CmsSection::forPage((int)$page['id']);
@@ -85,16 +97,23 @@ $isLeadershipEditor = (string)$page['slug'] === 'leadership';
 $isStakeholdersEditor = (string)$page['slug'] === 'stakeholders';
 $isContactEditor = (string)$page['slug'] === 'contact';
 $isProjectsEditor = (string)$page['slug'] === 'projects';
+$isProjectDetailEditor = (string)$page['slug'] === 'project-detail';
 $isConstituenciesEditor = (string)$page['slug'] === 'constituencies';
 $isConstituencyDetailEditor = (string)$page['slug'] === 'constituency-detail';
 $isNewsEditor = (string)$page['slug'] === 'news';
+$isNewsArticleEditor = (string)$page['slug'] === 'news-article';
+$isGalleryEditor = (string)$page['slug'] === 'gallery';
+$isLegalEditor = (string)($page['template'] ?? '') === 'legal';
 $publicationStatus = cms_editor_publication_status((string)($page['status'] ?? 'draft'));
-$missingImageCount = trim((string)($page['hero_image'] ?? '')) === '' ? 1 : 0;
+$missingImageCount = (!$isLegalEditor && trim((string)($page['hero_image'] ?? '')) === '') ? 1 : 0;
 $emptyFieldCount = 0;
 
 foreach ($editableSections as $editorSection) {
     $editorContent = is_array($editorSection['content'] ?? null) ? $editorSection['content'] : [];
     foreach ($editorContent as $contentKey => $contentValue) {
+        if ($isLegalEditor && str_contains((string)$contentKey, 'image')) {
+            continue;
+        }
         if (str_contains((string)$contentKey, 'image') && trim((string)$contentValue) === '') {
             $missingImageCount++;
         }
@@ -139,7 +158,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </div>
 </section>
 
-<div class="sa-cms-editor-layout">
+<div class="sa-cms-editor-layout <?= $isLegalEditor ? 'sa-cms-editor-layout--legal' : '' ?>">
   <main class="sa-cms-editor-main">
     <section class="card sa-cms-meta-card">
       <div class="section-heading">
@@ -699,6 +718,90 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['empty_reset_label', 'No-results reset button', 'text'],
       ]); ?>
     </section>
+<?php elseif ($isProjectDetailEditor): ?>
+    <section class="sa-project-detail-cms sa-home-cms" aria-label="Project detail template editor">
+      <nav class="card sa-home-cms-nav" aria-label="Project detail editor sections">
+        <a href="#project-detail-labels"><i class="fa-solid fa-tags" aria-hidden="true"></i> Labels</a>
+        <a href="#project-detail-overview"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Overview</a>
+        <a href="#project-detail-sidebar"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Sidebar</a>
+        <a href="#project-detail-cta"><i class="fa-solid fa-house-circle-check" aria-hidden="true"></i> Apply CTA</a>
+        <a href="#project-detail-not-found"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Not Found</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-database" aria-hidden="true"></i></div>
+        <div>
+          <h3>Project records power this template</h3>
+          <p>This editor controls shared wording, sidebar labels and application call-to-action text. Each project's title, images, progress, contractor, dates, milestones and gallery come from the project registry.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Project Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('project-detail-labels', $sectionsByKey['project_detail_labels'] ?? null, 'Template Labels', 'Controls hero badges, fact labels and common project wording used by every project detail page.', [
+          ['projects_breadcrumb_label', 'Projects breadcrumb label', 'text'],
+          ['active_status_label', 'Active status label', 'text'],
+          ['planning_status_label', 'Planning status label', 'text'],
+          ['completed_status_label', 'Completed status label', 'text'],
+          ['watch_status_label', 'Watch status label', 'text'],
+          ['started_label', 'Started badge label', 'text'],
+          ['delivery_label', 'Delivery badge label', 'text'],
+          ['construction_complete_label', 'Completion label', 'text'],
+          ['units_label', 'Units label', 'text'],
+          ['ward_label', 'Ward label', 'text'],
+          ['contractor_label', 'Contractor label', 'text'],
+          ['funding_label', 'Funding label', 'text'],
+          ['start_date_label', 'Start date label', 'text'],
+          ['est_delivery_label', 'Estimated delivery label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('project-detail-overview', $sectionsByKey['project_detail_overview'] ?? null, 'Overview, Progress & Media', 'Controls section headings, empty states and progress wording. Values are pulled from the selected project record.', [
+          ['section_label', 'Overview eyebrow', 'text'],
+          ['title', 'Overview title', 'text'],
+          ['lead_agency_label', 'Lead agency label', 'text'],
+          ['site_engineer_label', 'Site engineer label', 'text'],
+          ['funding_label', 'Funding label', 'text'],
+          ['current_activity_label', 'Current activity label', 'text'],
+          ['progress_label', 'Progress eyebrow', 'text'],
+          ['progress_title', 'Progress heading', 'text'],
+          ['overall_completion_label', 'Overall completion label', 'text'],
+          ['progress_note', 'Progress note', 'textarea'],
+          ['units_in_progress_label', 'Units in progress label', 'text'],
+          ['target_delivery_label', 'Target delivery label', 'text'],
+          ['timeline_label', 'Timeline eyebrow', 'text'],
+          ['timeline_title', 'Timeline heading', 'text'],
+          ['timeline_empty_text', 'Timeline empty state', 'textarea'],
+          ['gallery_label', 'Gallery eyebrow', 'text'],
+          ['gallery_title', 'Gallery heading', 'text'],
+          ['gallery_empty_text', 'Gallery empty state', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('project-detail-sidebar', $sectionsByKey['project_detail_sidebar'] ?? null, 'Sidebar', 'Controls the contractor card, project info table and related-link labels.', [
+          ['contractor_title', 'Contractor card title', 'text'],
+          ['contractor_role_label', 'Contractor role label', 'text'],
+          ['project_info_title', 'Project info heading', 'text'],
+          ['constituency_label', 'Constituency label', 'text'],
+          ['status_label', 'Status label', 'text'],
+          ['target_units_label', 'Target units label', 'text'],
+          ['completion_label', 'Completion label', 'text'],
+          ['related_title', 'Related heading', 'text'],
+          ['constituency_link_suffix', 'Constituency link suffix', 'text'],
+          ['all_projects_prefix', 'All projects prefix', 'text'],
+          ['back_projects_label', 'Back projects label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('project-detail-cta', $sectionsByKey['project_detail_apply_cta'] ?? null, 'Application CTA', 'Controls the sidebar application card.', [
+          ['title', 'CTA heading', 'text'],
+          ['subtitle', 'CTA supporting copy', 'textarea'],
+          ['button_label', 'Button label', 'text'],
+          ['button_url', 'Button URL', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('project-detail-not-found', $sectionsByKey['project_detail_not_found'] ?? null, 'Not Found', 'Controls the missing-project message.', [
+          ['title', 'Not-found title', 'text'],
+          ['text', 'Not-found message', 'textarea'],
+          ['button_label', 'Button label', 'text'],
+      ]); ?>
+    </section>
 <?php elseif ($isConstituencyDetailEditor): ?>
     <section class="sa-constituency-detail-cms sa-home-cms" aria-label="Constituency detail template editor">
       <nav class="card sa-home-cms-nav" aria-label="Constituency detail editor sections">
@@ -921,6 +1024,126 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['button_url', 'Button URL', 'text'],
       ]); ?>
     </section>
+<?php elseif ($isNewsArticleEditor): ?>
+    <section class="sa-news-article-cms sa-home-cms" aria-label="News article template editor">
+      <nav class="card sa-home-cms-nav" aria-label="News article editor sections">
+        <a href="#news-article-labels"><i class="fa-solid fa-tags" aria-hidden="true"></i> Labels</a>
+        <a href="#news-article-sidebar"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Sidebar</a>
+        <a href="#news-article-downloads"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> Downloads</a>
+        <a href="#news-article-not-found"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Not Found</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></div>
+        <div>
+          <h3>One template for every article</h3>
+          <p>This editor controls public labels, side panels and empty states. Headlines, body copy, images and attachments are managed in the News post editor.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/news.php')) ?>"><i class="fa-solid fa-list" aria-hidden="true"></i> News Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('news-article-labels', $sectionsByKey['news_article_labels'] ?? null, 'Article Labels', 'Controls breadcrumb, meta and article-wide labels.', [
+          ['news_breadcrumb_label', 'News breadcrumb label', 'text'],
+          ['default_read_time', 'Default read time', 'text'],
+          ['author_fallback', 'Author fallback', 'text'],
+          ['view_all_news_label', 'View all news label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-article-sidebar', $sectionsByKey['news_article_sidebar'] ?? null, 'Sidebar', 'Controls article detail and related-story panel labels.', [
+          ['details_title', 'Details panel title', 'text'],
+          ['category_label', 'Category label', 'text'],
+          ['format_label', 'Format label', 'text'],
+          ['published_label', 'Published label', 'text'],
+          ['source_label', 'Source label', 'text'],
+          ['related_title', 'Related stories title', 'text'],
+          ['related_empty_text', 'No related stories text', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-article-downloads', $sectionsByKey['news_article_downloads'] ?? null, 'Downloads & Links', 'Controls public button text for reports and source links.', [
+          ['download_label', 'Download button label', 'text'],
+          ['external_label', 'External link button label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('news-article-not-found', $sectionsByKey['news_article_not_found'] ?? null, 'Not Found', 'Controls the message shown when an article is missing or unpublished.', [
+          ['title', 'Not-found title', 'text'],
+          ['text', 'Not-found message', 'textarea'],
+          ['button_label', 'Button label', 'text'],
+      ]); ?>
+    </section>
+<?php elseif ($isGalleryEditor): ?>
+    <section class="sa-gallery-cms sa-home-cms" aria-label="Gallery page editor">
+      <nav class="card sa-home-cms-nav" aria-label="Gallery page editor sections">
+        <a href="#gallery-hero"><i class="fa-solid fa-images" aria-hidden="true"></i> Hero</a>
+        <a href="#gallery-highlights"><i class="fa-solid fa-star" aria-hidden="true"></i> Highlights</a>
+        <a href="#gallery-archive"><i class="fa-solid fa-border-all" aria-hidden="true"></i> Archive</a>
+        <a href="#gallery-sites"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Sites</a>
+        <a href="#gallery-videos"><i class="fa-solid fa-circle-play" aria-hidden="true"></i> Videos</a>
+      </nav>
+
+      <section class="card sa-cms-module-callout">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-photo-film" aria-hidden="true"></i></div>
+        <div>
+          <h3>Gallery records power the public media page</h3>
+          <p>This editor controls page wording, labels and empty states. Photos, videos, categories, highlights and site assignments are managed in the Gallery registry.</p>
+        </div>
+        <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/gallery.php')) ?>"><i class="fa-solid fa-images" aria-hidden="true"></i> Gallery Registry</a>
+      </section>
+
+      <?php cms_editor_home_block('gallery-hero', $sectionsByKey['gallery_hero'] ?? null, 'Hero', 'Controls the first screen, background image, intro copy and KPI labels.', [
+          ['background_image', 'Hero background image', 'upload', 'gallery'],
+          ['background_alt', 'Hero image description', 'text'],
+          ['breadcrumb_label', 'Breadcrumb label', 'text'],
+          ['eyebrow', 'Hero badge', 'text'],
+          ['title', 'Hero title', 'text'],
+          ['subtitle', 'Hero supporting copy', 'textarea'],
+          ['scroll_label', 'Scroll hint label', 'text'],
+          ['photos_label', 'Photos KPI label', 'text'],
+          ['sites_label', 'Sites KPI label', 'text'],
+          ['years_label', 'Years KPI label', 'text'],
+          ['events_label', 'Events KPI label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('gallery-highlights', $sectionsByKey['gallery_highlights'] ?? null, 'Featured Moments', 'Controls the highlight carousel heading and empty message. Slides come from gallery items marked as highlights.', [
+          ['eyebrow', 'Section eyebrow', 'text'],
+          ['title', 'Section heading', 'text'],
+          ['subtitle', 'Section introduction', 'textarea'],
+          ['empty_text', 'Empty state message', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('gallery-archive', $sectionsByKey['gallery_archive'] ?? null, 'Photo Archive', 'Controls the filterable photo archive labels and heading.', [
+          ['eyebrow', 'Section eyebrow', 'text'],
+          ['title', 'Section heading', 'text'],
+          ['subtitle', 'Section introduction', 'textarea'],
+          ['category_label', 'Category filter label', 'text'],
+          ['year_label', 'Year filter label', 'text'],
+          ['all_label', 'All filter label', 'text'],
+          ['showing_label', 'Showing label', 'text'],
+          ['photos_label', 'Photos label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('gallery-sites', $sectionsByKey['gallery_site_progress'] ?? null, 'Progress by Site', 'Controls site progress labels. Site stats come from gallery and project records.', [
+          ['eyebrow', 'Section eyebrow', 'text'],
+          ['title', 'Section heading', 'text'],
+          ['subtitle', 'Section introduction', 'textarea'],
+          ['units_label', 'Units label', 'text'],
+          ['completion_label', 'Completion label', 'text'],
+          ['photos_label', 'Photos label', 'text'],
+          ['details_label', 'Details link label', 'text'],
+      ]); ?>
+
+      <?php cms_editor_home_block('gallery-videos', $sectionsByKey['gallery_videos'] ?? null, 'Progress Videos', 'Controls the video section heading and empty state. Video cards come from gallery video records.', [
+          ['eyebrow', 'Section eyebrow', 'text'],
+          ['title', 'Section heading', 'text'],
+          ['subtitle', 'Section introduction', 'textarea'],
+          ['empty_text', 'Empty state message', 'textarea'],
+      ]); ?>
+
+      <?php cms_editor_home_block('gallery-empty-states', $sectionsByKey['gallery_empty_states'] ?? null, 'Empty States', 'Controls gallery no-results and lightbox labels.', [
+          ['no_results_text', 'No-results text', 'textarea'],
+          ['reset_label', 'Reset filters label', 'text'],
+          ['lightbox_label', 'Lightbox label', 'text'],
+      ]); ?>
+    </section>
 <?php elseif ($isContactEditor): ?>
     <section class="sa-contact-cms sa-home-cms" aria-label="Contact page editor">
       <nav class="card sa-home-cms-nav" aria-label="Contact page editor sections">
@@ -1022,11 +1245,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php foreach ($editableSections as $section): ?>
       <?php $content = is_array($section['content'] ?? null) ? $section['content'] : []; ?>
       <?php $isDocument = ($section['editor_mode'] ?? '') === 'document' || ($section['section_type'] ?? '') === 'document'; ?>
-      <article class="card sa-cms-section-card" data-cms-section data-section-id="<?= (int)$section['id'] ?>" data-section-key="<?= Security::e($section['section_key']) ?>">
+      <article class="card sa-cms-section-card <?= $isLegalEditor ? 'sa-cms-section-card--legal' : '' ?>" data-cms-section data-section-id="<?= (int)$section['id'] ?>" data-section-key="<?= Security::e($section['section_key']) ?>">
         <header class="sa-cms-section-card__head">
           <div>
             <h3><?= Security::e($section['label']) ?></h3>
-            <p>Last updated <?= Security::e(time_ago($section['updated_at'] ?? null)) ?></p>
+            <p><?= $isLegalEditor ? 'Single document editor for the public legal page.' : 'Last updated ' . Security::e(time_ago($section['updated_at'] ?? null)) ?></p>
           </div>
           <div class="sa-cms-section-tools">
             <button class="btn btn--primary btn--sm" type="button" data-cms-save-section><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Section</button>
@@ -1035,12 +1258,27 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
         <div class="form-grid form-grid--2 sa-cms-section-fields">
 <?php if ($isDocument): ?>
+<?php if ($isLegalEditor): ?>
+          <label class="form-field"><span class="form-label">Document title</span><input class="form-input" data-cms-field="title" value="<?= Security::e($content['title'] ?? $section['label']) ?>"></label>
+          <label class="form-field"><span class="form-label">Hero icon</span><input class="form-input" data-cms-field="icon" placeholder="fa-triangle-exclamation" value="<?= Security::e($content['icon'] ?? 'fa-file-shield') ?>"></label>
+          <label class="form-field form-field--full"><span class="form-label">Document summary</span><textarea class="form-textarea" data-cms-field="subtitle" rows="2"><?= Security::e($content['subtitle'] ?? '') ?></textarea></label>
+          <label class="form-field"><span class="form-label">Last updated date</span><input class="form-input" type="date" data-cms-field="last_updated" value="<?= Security::e($content['last_updated'] ?? '') ?>"></label>
+          <div class="form-field form-field--full sa-legal-editor-shell">
+            <div class="sa-legal-editor-shell__intro">
+              <span class="sa-cms-section-kicker">Legal content</span>
+              <p>Use headings, lists, links, callouts and tables directly in the editor. The public page builds its contents menu from the headings automatically.</p>
+            </div>
+            <div class="sa-quill-editor sa-quill-editor--document sa-quill-editor--legal" data-quill-editor><?= $content['body'] ?? '' ?></div>
+            <textarea class="form-textarea is-hidden" data-cms-field="body"><?= Security::e($content['body'] ?? '') ?></textarea>
+          </div>
+<?php else: ?>
           <label class="form-field form-field--full"><span class="form-label">Document title</span><input class="form-input" data-cms-field="title" value="<?= Security::e($content['title'] ?? $section['label']) ?>"></label>
           <div class="form-field form-field--full">
             <span class="form-label">Main content</span>
             <div class="sa-quill-editor sa-quill-editor--document" data-quill-editor><?= $content['body'] ?? '' ?></div>
             <textarea class="form-textarea is-hidden" data-cms-field="body"><?= Security::e($content['body'] ?? '') ?></textarea>
           </div>
+<?php endif; ?>
 <?php else: ?>
           <label class="form-field"><span class="form-label">Eyebrow / label</span><input class="form-input" data-cms-field="eyebrow" value="<?= Security::e($content['eyebrow'] ?? '') ?>"></label>
           <div class="form-field">
@@ -1083,7 +1321,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <div><dt>Editable sections</dt><dd><?= Security::e(format_number(count($editableSections))) ?></dd></div>
         <div><dt>Route</dt><dd><?= Security::e($page['route_path'] ?: '-') ?></dd></div>
         <div><dt>Canonical</dt><dd><?= trim((string)($page['canonical_url'] ?? '')) !== '' ? 'Set' : 'Missing' ?></dd></div>
-        <div><dt>Hero image</dt><dd><?= trim((string)($page['hero_image'] ?? '')) !== '' ? 'Selected' : 'Missing' ?></dd></div>
+        <div><dt><?= $isLegalEditor ? 'Document hero' : 'Hero image' ?></dt><dd><?= $isLegalEditor ? 'Generated' : (trim((string)($page['hero_image'] ?? '')) !== '' ? 'Selected' : 'Missing') ?></dd></div>
       </dl>
     </section>
 
@@ -1091,7 +1329,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h3>Content Quality</h3>
       <ul class="sa-cms-quality-list">
         <li class="<?= $seoConfigured ? 'is-ok' : 'is-warning' ?>"><i class="fa-solid <?= $seoConfigured ? 'fa-circle-check' : 'fa-triangle-exclamation' ?>" aria-hidden="true"></i><span>SEO metadata</span><strong><?= $seoConfigured ? 'Ready' : 'Needs review' ?></strong></li>
-        <li class="<?= $missingImageCount === 0 ? 'is-ok' : 'is-warning' ?>"><i class="fa-solid <?= $missingImageCount === 0 ? 'fa-circle-check' : 'fa-image' ?>" aria-hidden="true"></i><span>Images</span><strong><?= Security::e($missingImageCount === 0 ? 'Ready' : format_number($missingImageCount) . ' missing') ?></strong></li>
+        <li class="<?= $missingImageCount === 0 ? 'is-ok' : 'is-warning' ?>"><i class="fa-solid <?= $missingImageCount === 0 ? 'fa-circle-check' : 'fa-image' ?>" aria-hidden="true"></i><span><?= $isLegalEditor ? 'Media' : 'Images' ?></span><strong><?= Security::e($isLegalEditor ? 'Not required' : ($missingImageCount === 0 ? 'Ready' : format_number($missingImageCount) . ' missing')) ?></strong></li>
         <li class="<?= $emptyFieldCount === 0 ? 'is-ok' : 'is-warning' ?>"><i class="fa-solid <?= $emptyFieldCount === 0 ? 'fa-circle-check' : 'fa-pen-to-square' ?>" aria-hidden="true"></i><span>Empty fields</span><strong><?= Security::e(format_number($emptyFieldCount)) ?></strong></li>
       </ul>
     </section>
@@ -1199,6 +1437,17 @@ function cms_editor_is_retired_section(string $pageSlug, string $template, array
             return !in_array((string)($section['section_key'] ?? ''), $activeProjects, true);
         }
 
+        if ($pageSlug === 'project-detail') {
+            $activeProjectDetail = [
+                'project_detail_labels',
+                'project_detail_overview',
+                'project_detail_sidebar',
+                'project_detail_apply_cta',
+                'project_detail_not_found',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeProjectDetail, true);
+        }
+
         if ($pageSlug === 'constituencies') {
             $activeConstituencies = [
                 'constituencies_hero',
@@ -1230,6 +1479,28 @@ function cms_editor_is_retired_section(string $pageSlug, string $template, array
                 'news_cta',
             ];
             return !in_array((string)($section['section_key'] ?? ''), $activeNews, true);
+        }
+
+        if ($pageSlug === 'news-article') {
+            $activeNewsArticle = [
+                'news_article_labels',
+                'news_article_sidebar',
+                'news_article_downloads',
+                'news_article_not_found',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeNewsArticle, true);
+        }
+
+        if ($pageSlug === 'gallery') {
+            $activeGallery = [
+                'gallery_hero',
+                'gallery_highlights',
+                'gallery_archive',
+                'gallery_site_progress',
+                'gallery_videos',
+                'gallery_empty_states',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeGallery, true);
         }
 
         return false;
@@ -1642,6 +1913,92 @@ function cms_editor_ensure_projects_sections(int $pageId): void
     }
 }
 
+function cms_editor_ensure_project_detail_sections(int $pageId): void
+{
+    $defaults = cms_editor_project_detail_defaults();
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_project_detail_defaults(): array
+{
+    return [
+        ['project_detail_labels', 'Template Labels', 'project_detail_labels', 10, [
+            'projects_breadcrumb_label' => 'Projects',
+            'active_status_label' => 'Active',
+            'planning_status_label' => 'Planning',
+            'completed_status_label' => 'Completed',
+            'watch_status_label' => 'On Hold',
+            'started_label' => 'Started',
+            'delivery_label' => 'Est. Delivery',
+            'construction_complete_label' => 'Construction Complete',
+            'units_label' => 'Units Planned',
+            'ward_label' => 'Ward',
+            'contractor_label' => 'Contractor',
+            'funding_label' => 'Funding Source',
+            'start_date_label' => 'Start Date',
+            'est_delivery_label' => 'Est. Delivery',
+        ]],
+        ['project_detail_overview', 'Overview, Progress & Media', 'project_detail_overview', 20, [
+            'section_label' => 'About This Project',
+            'title' => 'Project Overview',
+            'lead_agency_label' => 'Lead Agency',
+            'site_engineer_label' => 'Site Engineer',
+            'funding_label' => 'Funding',
+            'current_activity_label' => 'Current Activity',
+            'progress_label' => 'Construction Progress',
+            'progress_title' => 'Live Progress Tracker',
+            'overall_completion_label' => 'Overall Completion',
+            'progress_note' => 'Data updated regularly by the Trans-Nzoia County Housing Department.',
+            'units_in_progress_label' => 'Units In Progress',
+            'target_delivery_label' => 'Target Delivery',
+            'timeline_label' => 'Key Milestones',
+            'timeline_title' => 'Construction Timeline',
+            'timeline_empty_text' => 'Milestones will appear after they are added to this project.',
+            'gallery_label' => 'Site Photography',
+            'gallery_title' => 'Photo Gallery',
+            'gallery_empty_text' => 'Site photography will be added as construction progresses.',
+        ]],
+        ['project_detail_sidebar', 'Sidebar', 'project_detail_sidebar', 30, [
+            'contractor_title' => 'Contractor',
+            'contractor_role_label' => 'Principal Contractor',
+            'project_info_title' => 'Project Info',
+            'constituency_label' => 'Constituency',
+            'status_label' => 'Status',
+            'target_units_label' => 'Target Units',
+            'completion_label' => 'Completion',
+            'related_title' => 'Related',
+            'constituency_link_suffix' => 'Constituency',
+            'all_projects_prefix' => 'All',
+            'back_projects_label' => 'Back to All Projects',
+        ]],
+        ['project_detail_apply_cta', 'Application CTA', 'project_detail_apply_cta', 40, [
+            'title' => 'Interested in a Unit?',
+            'subtitle' => 'Register on the national Boma Yangu portal to apply for affordable housing in Trans-Nzoia County.',
+            'button_label' => 'Apply on Boma Yangu',
+            'button_url' => 'https://app.bomayangu.go.ke',
+        ]],
+        ['project_detail_not_found', 'Not Found', 'project_detail_not_found', 50, [
+            'title' => 'Project Not Found',
+            'text' => "The project you're looking for doesn't exist or the URL is incorrect.",
+            'button_label' => 'Back to All Projects',
+        ]],
+    ];
+}
+
 function cms_editor_ensure_constituencies_sections(int $pageId): void
 {
     $defaults = [
@@ -1841,6 +2198,121 @@ function cms_editor_ensure_news_sections(int $pageId): void
             'youtube_url' => '#',
             'button_label' => 'Apply via eCitizen',
             'button_url' => 'https://ecitizen.go.ke',
+        ]],
+    ];
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_ensure_news_article_sections(int $pageId): void
+{
+    $defaults = [
+        ['news_article_labels', 'Article Labels', 'news_article_labels', 10, [
+            'news_breadcrumb_label' => 'News & Updates',
+            'default_read_time' => '4 min',
+            'author_fallback' => 'Trans-Nzoia County Department of Land, Housing & Physical Planning',
+            'view_all_news_label' => 'View all news',
+        ]],
+        ['news_article_sidebar', 'Sidebar Labels', 'news_article_sidebar', 20, [
+            'details_title' => 'Article Details',
+            'category_label' => 'Category',
+            'format_label' => 'Format',
+            'published_label' => 'Published',
+            'source_label' => 'Source',
+            'related_title' => 'Related Stories',
+            'related_empty_text' => 'No related stories are available yet.',
+        ]],
+        ['news_article_downloads', 'Downloads & Links', 'news_article_downloads', 30, [
+            'download_label' => 'Download Report',
+            'external_label' => 'Open Source Link',
+        ]],
+        ['news_article_not_found', 'Not Found', 'news_article_not_found', 40, [
+            'title' => 'Article not found',
+            'text' => 'The article may be unpublished, archived or no longer available.',
+            'button_label' => 'Back to News',
+        ]],
+    ];
+
+    foreach ($defaults as [$key, $label, $type, $sort, $content]) {
+        if (!CmsSection::findForPage($pageId, $key)) {
+            CmsSection::upsert($pageId, [
+                'section_key' => $key,
+                'label' => $label,
+                'section_type' => $type,
+                'editor_mode' => $type,
+                'sort_order' => $sort,
+                'is_visible' => 1,
+                'is_locked' => 1,
+                'content' => $content,
+            ]);
+        }
+    }
+}
+
+function cms_editor_ensure_gallery_sections(int $pageId): void
+{
+    $defaults = [
+        ['gallery_hero', 'Gallery Hero', 'gallery_hero', 10, [
+            'background_image' => 'uploads/gallery/maili-tatu-2.jpg',
+            'background_alt' => 'Affordable housing construction site photography in Trans-Nzoia County',
+            'breadcrumb_label' => 'Photo Gallery',
+            'eyebrow' => 'Visual Documentation - Sites, Events & Progress',
+            'title' => 'Programme in Pictures',
+            'subtitle' => 'A visual record of every milestone - from groundbreaking ceremonies to community barazas, site inspections and construction progress across all five Trans-Nzoia constituencies.',
+            'scroll_label' => 'Browse the gallery',
+            'photos_label' => 'Photos Archived',
+            'sites_label' => 'Sites Documented',
+            'years_label' => 'Years of Coverage',
+            'events_label' => 'Events Captured',
+        ]],
+        ['gallery_highlights', 'Featured Moments', 'gallery_highlights', 20, [
+            'eyebrow' => 'Featured Moments',
+            'title' => 'Programme Highlights',
+            'subtitle' => 'Landmark moments captured - from official programme milestones to community handovers.',
+            'empty_text' => 'Featured gallery moments will appear after they are marked as highlights.',
+        ]],
+        ['gallery_archive', 'Photo Archive', 'gallery_archive', 30, [
+            'eyebrow' => 'Full Archive',
+            'title' => 'Browse All Photos',
+            'subtitle' => 'Filter by category, site or year to find specific documentation of the programme.',
+            'category_label' => 'Category',
+            'year_label' => 'Year',
+            'all_label' => 'All',
+            'showing_label' => 'Showing',
+            'photos_label' => 'photos',
+        ]],
+        ['gallery_site_progress', 'Progress by Site', 'gallery_site_progress', 40, [
+            'eyebrow' => 'By Constituency',
+            'title' => 'Progress by Site',
+            'subtitle' => 'Select a constituency to see its photos and current construction status.',
+            'units_label' => 'Units Planned',
+            'completion_label' => 'Completion',
+            'photos_label' => 'Photos',
+            'details_label' => 'View full site details',
+        ]],
+        ['gallery_videos', 'Progress Videos', 'gallery_videos', 50, [
+            'eyebrow' => 'Video Updates',
+            'title' => 'Progress Videos',
+            'subtitle' => 'Watch construction progress reports, community barazas and official ceremony recordings.',
+            'empty_text' => 'Progress videos will appear after they are published.',
+        ]],
+        ['gallery_empty_states', 'Empty States', 'gallery_empty_states', 60, [
+            'no_results_text' => 'No photos match the selected filters.',
+            'reset_label' => 'Clear filters',
+            'lightbox_label' => 'Photo lightbox',
         ]],
     ];
 

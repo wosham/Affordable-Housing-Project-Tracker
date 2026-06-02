@@ -222,5 +222,45 @@
     });
 
     applyFilters();
+    initSubscribeForm();
   });
+
+  function initSubscribeForm() {
+    var form = document.querySelector('[data-news-subscribe]');
+    if (!form) return;
+
+    var message = form.querySelector('[data-news-subscribe-message]');
+    var button = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      form.classList.remove('is-error', 'is-success');
+      if (message) message.textContent = '';
+
+      var endpoint = form.getAttribute('action') || 'api/public/subscribe.php';
+      var data = new FormData(form);
+      if (button) button.disabled = true;
+
+      fetch(endpoint, {
+        method: 'POST',
+        body: data,
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' }
+      }).then(function (response) {
+        return response.json().then(function (json) {
+          return { ok: response.ok, data: json };
+        });
+      }).then(function (result) {
+        form.classList.toggle('is-success', result.ok && result.data.success);
+        form.classList.toggle('is-error', !result.ok || !result.data.success);
+        if (message) message.textContent = result.data.message || (result.ok ? 'Subscribed.' : 'Subscription failed.');
+        if (result.ok && result.data.success) form.reset();
+      }).catch(function () {
+        form.classList.add('is-error');
+        if (message) message.textContent = 'Unable to subscribe right now.';
+      }).finally(function () {
+        if (button) button.disabled = false;
+      });
+    });
+  }
 }());

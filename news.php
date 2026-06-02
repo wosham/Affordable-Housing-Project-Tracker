@@ -383,6 +383,15 @@ include __DIR__ . '/app/partials/head.php';
             <p><?= $e($text($cta, 'subtitle', 'Follow the programme on social media or apply for housing directly through the eCitizen portal to receive official notifications about unit availability and beneficiary selection.')) ?></p>
           </div>
           <div class="news-cta-actions">
+            <form class="news-subscribe-form" data-news-subscribe action="<?= $e(Url::to('api/public/subscribe.php')) ?>" method="post" novalidate>
+              <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" hidden>
+              <label>
+                <span class="visually-hidden">Email address</span>
+                <input type="email" name="email" placeholder="Email for programme updates" required>
+              </label>
+              <button type="submit"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Subscribe</button>
+              <small data-news-subscribe-message aria-live="polite"></small>
+            </form>
             <div class="news-cta-social" aria-label="Follow us on social media">
               <a href="<?= $e($text($cta, 'x_url', '#')) ?>" aria-label="Follow us on X / Twitter">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>

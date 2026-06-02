@@ -1,0 +1,117 @@
+@import url('privacy.css');
+
+.lg-article--cms {
+  max-width: 920px;
+}
+
+.lg-article--cms .lg-section {
+  padding: 0 0 2.35rem;
+  margin: 0 0 2.35rem;
+}
+
+.lg-article--cms .lg-section:empty {
+  display: none;
+}
+
+.lg-article--cms .lg-section-heading {
+  margin-top: 0;
+}
+
+.lg-article--cms h1,
+.lg-article--cms h2 {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  font-family: var(--font-display, 'Syne', sans-serif) !important;
+  font-size: clamp(1.35rem, 2vw, 1.75rem) !important;
+  line-height: 1.15;
+  color: var(--neutral-950, #050a02) !important;
+}
+
+.lg-article--cms h3 {
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif) !important;
+  font-size: 1rem !important;
+  margin: 1.35rem 0 .55rem;
+  color: var(--neutral-800, #1c2e12) !important;
+}
+
+.lg-article--cms ul,
+.lg-article--cms ol {
+  margin: 0 0 1.15rem 1.2rem;
+  padding: 0;
+}
+
+.lg-article--cms li {
+  margin-bottom: .5rem;
+  color: #1a2a0e;
+  line-height: 1.75;
+}
+
+.lg-article--cms blockquote {
+  margin: 1.25rem 0;
+  padding: 1rem 1.15rem;
+  border: 1px solid #fde68a;
+  border-left: 4px solid #d97706;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.lg-article--cms blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.lg-article--cms table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.1rem 0;
+  overflow: hidden;
+  border: 1px solid var(--neutral-200, #ddeece);
+  border-radius: 12px;
+}
+
+.lg-article--cms th,
+.lg-article--cms td {
+  padding: .8rem .9rem;
+  border-bottom: 1px solid var(--neutral-100, #eef7e6);
+  text-align: left;
+  vertical-align: top;
+}
+
+.lg-article--cms th {
+  background: var(--primary-700, #163300);
+  color: rgba(255, 255, 255, .85);
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.lg-article--cms td {
+  color: var(--neutral-800, #1c2e12);
+  font-size: .88rem;
+}
+
+.lg-toc-nav:empty::after {
+  content: 'Document headings will appear here.';
+  display: block;
+  padding: .85rem 1.1rem;
+  color: var(--neutral-500, #6b8f58);
+  font-size: .78rem;
+}
+
+@media (max-width: 860px) {
+  .lg-article--cms {
+    max-width: none;
+  }
+
+  .lg-article--cms table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media print {
+  .lg-article--cms {
+    max-width: none;
+  }
+}

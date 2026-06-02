@@ -8,6 +8,8 @@ class MediaLibrary extends Model
         'banners' => 'Banners',
         'favicons' => 'Favicons',
         'gallery' => 'Gallery Images',
+        'gallery-thumbnails' => 'Gallery Thumbnails',
+        'gallery-videos' => 'Gallery Videos',
         'heroes' => 'Hero Images',
         'icons' => 'Icons',
         'leadership' => 'Leadership Photos',

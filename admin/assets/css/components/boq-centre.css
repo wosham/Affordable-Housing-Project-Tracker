@@ -1,0 +1,189 @@
+.sa-boq-page {
+  display: grid;
+  gap: 18px;
+}
+
+.boq-hero,
+.boq-project-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.boq-hero h2 {
+  margin: 8px 0 6px;
+  font-size: 1.45rem;
+}
+
+.boq-hero p,
+.boq-project-meta span {
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.boq-hero__actions,
+.boq-project-form,
+.boq-project-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.boq-project-picker {
+  min-width: min(520px, 100%);
+}
+
+.boq-project-meta {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.boq-project-meta strong {
+  flex-basis: 100%;
+}
+
+.boq-stats {
+  gap: 14px;
+}
+
+.boq-registry {
+  overflow: hidden;
+}
+
+.boq-filter {
+  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(160px, 1fr)) auto;
+}
+
+.boq-table-wrap {
+  border-top: 1px solid var(--admin-border);
+}
+
+.boq-table {
+  min-width: 1180px;
+}
+
+.boq-table th,
+.boq-table td {
+  vertical-align: middle;
+}
+
+.boq-table .is-number,
+.boq-table .is-money {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.boq-table td small {
+  display: block;
+  margin-top: 3px;
+  color: var(--admin-text-muted);
+  font-size: .75rem;
+}
+
+.boq-description {
+  min-width: 260px;
+  max-width: 420px;
+}
+
+.boq-progress {
+  width: 120px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.boq-progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  max-width: 100%;
+  border-radius: inherit;
+  background: var(--admin-primary);
+}
+
+.boq-risk-list {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  min-width: 110px;
+}
+
+.boq-modal {
+  width: min(720px, calc(100vw - 32px));
+}
+
+.boq-modal-summary {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+}
+
+.boq-modal-summary span,
+.boq-modal-summary small {
+  color: var(--admin-text-muted);
+}
+
+.checkbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg);
+}
+
+.checkbox-card input {
+  margin-top: 3px;
+}
+
+@media (max-width: 1100px) {
+  .boq-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .boq-filter .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .boq-hero,
+  .boq-project-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .boq-hero__actions,
+  .boq-project-form {
+    width: 100%;
+  }
+
+  .boq-hero__actions .btn,
+  .boq-project-form .btn,
+  .boq-project-picker {
+    width: 100%;
+  }
+
+  .boq-project-meta {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .boq-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .boq-progress {
+    width: 90px;
+  }
+}

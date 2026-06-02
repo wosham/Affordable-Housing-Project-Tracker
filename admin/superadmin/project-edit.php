@@ -183,7 +183,7 @@ function project_edit_old(array $project, ?array $geoFence = null): array
         'geo_site_name' => (string)($geoFence['site_name'] ?? ''),
         'geo_latitude' => (string)($geoFence['latitude'] ?? ''),
         'geo_longitude' => (string)($geoFence['longitude'] ?? ''),
-        'geo_radius_meters' => (string)($geoFence['radius_meters'] ?? '200'),
+        'geo_radius_meters' => (string)($geoFence['radius_meters'] ?? max(20, min(3000, SystemConfig::int('attendance.default_geo_radius_m', 150)))),
         'geo_status' => (string)($geoFence['status'] ?? 'configured'),
         'geo_notes' => (string)($geoFence['notes'] ?? ''),
     ];
@@ -216,7 +216,7 @@ function project_form_input(): array
         'geo_site_name' => Security::cleanString((string)($_POST['geo_site_name'] ?? '')),
         'geo_latitude' => trim((string)($_POST['geo_latitude'] ?? '')),
         'geo_longitude' => trim((string)($_POST['geo_longitude'] ?? '')),
-        'geo_radius_meters' => (string)max(0, Security::cleanInt($_POST['geo_radius_meters'] ?? 200)),
+        'geo_radius_meters' => (string)max(0, Security::cleanInt($_POST['geo_radius_meters'] ?? SystemConfig::int('attendance.default_geo_radius_m', 150))),
         'geo_status' => Security::cleanString((string)($_POST['geo_status'] ?? 'configured')),
         'geo_notes' => trim((string)($_POST['geo_notes'] ?? '')),
     ];

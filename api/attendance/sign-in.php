@@ -29,7 +29,8 @@ $latitude = filter_var($_POST['latitude'] ?? null, FILTER_VALIDATE_FLOAT);
 $longitude = filter_var($_POST['longitude'] ?? null, FILTER_VALIDATE_FLOAT);
 $accuracy = filter_var($_POST['accuracy_meters'] ?? null, FILTER_VALIDATE_FLOAT);
 
-if ($latitude === false || $longitude === false || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+$gpsRequired = SystemConfig::bool('attendance.gps_required', true);
+if ($gpsRequired && ($latitude === false || $longitude === false || $latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180)) {
     Response::json(['success' => false, 'message' => 'A valid GPS latitude and longitude is required.'], 422);
 }
 
@@ -53,7 +54,7 @@ $distance = null;
 $withinFence = false;
 $status = 'present';
 
-if ($geoFence && ($geoFence['status'] ?? '') === 'configured') {
+if ($gpsRequired && $geoFence && ($geoFence['status'] ?? '') === 'configured') {
     $distance = attendance_distance_meters(
         (float)$latitude,
         (float)$longitude,
@@ -64,13 +65,27 @@ if ($geoFence && ($geoFence['status'] ?? '') === 'configured') {
     if (!$withinFence) {
         $status = 'geo-fail';
     }
-} else {
+} elseif ($gpsRequired) {
     $status = 'geo-fail';
 }
 
 if (strtotime((string)$gateway['closes_at']) < time()) {
     $status = 'outside-window';
 }
+
+$lateAfter = SystemConfig::text('attendance.late_after', '08:30');
+if ($status === 'present' && preg_match('/^\d{2}:\d{2}$/', $lateAfter) && date('H:i') > $lateAfter) {
+    $status = 'late';
+}
+
+$maxAccuracy = SystemConfig::number('attendance.min_accuracy_m', 50);
+if ($status === 'present' && $accuracy !== false && $maxAccuracy > 0 && (float)$accuracy > $maxAccuracy) {
+    $status = 'geo-fail';
+}
+
+$storedLatitude = $latitude !== false ? (float)$latitude : null;
+$storedLongitude = $longitude !== false ? (float)$longitude : null;
+$storedAccuracy = $accuracy !== false ? (float)$accuracy : null;
 
 Database::query(
     'INSERT INTO attendance_records
@@ -82,10 +97,10 @@ Database::query(
         Auth::role(),
         (int)$gateway['id'],
         $date,
-        (float)$latitude,
-        (float)$longitude,
+        $storedLatitude,
+        $storedLongitude,
         $distance,
-        $accuracy !== false ? $accuracy : null,
+        $storedAccuracy,
         $status,
         $status === 'present' ? 'accepted' : 'flagged',
     ]

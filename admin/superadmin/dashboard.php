@@ -35,12 +35,31 @@ $totalProjects = (int)$scalar('SELECT COUNT(*) AS total FROM projects');
 $projectUnits = (int)$scalar('SELECT COALESCE(SUM(units), 0) AS total FROM projects');
 $constituencyUnits = (int)$scalar('SELECT COALESCE(SUM(total_units), 0) AS total FROM constituencies');
 $totalUnits = max($projectUnits, $constituencyUnits);
-$pendingApprovals = (int)$scalar("SELECT COUNT(*) AS total FROM ipcs WHERE status = 'certified'");
+$pendingApprovals = (int)$scalar("SELECT COUNT(*) AS total FROM ipcs WHERE status IN ('certified', 'endorsed')");
 $activeUsers = (int)$scalar("SELECT COUNT(*) AS total FROM users WHERE status = 'active'");
 $contractValue = (float)$scalar('SELECT COALESCE(SUM(contract_sum), 0) AS total FROM projects');
 $paidToDate = (float)$scalar('SELECT COALESCE(SUM(amount), 0) AS total FROM payments');
 $retentionHeld = (float)$scalar('SELECT COALESCE(SUM(total_held), 0) AS total FROM retention');
-$unreadContactsCount = (int)$scalar('SELECT COUNT(*) AS total FROM contact_submissions WHERE is_read = 0');
+$boqValue = (float)$scalar('SELECT COALESCE(SUM(COALESCE(NULLIF(amount, 0), COALESCE(quantity, 0) * COALESCE(rate, 0))), 0) AS total FROM boq_items');
+$boqRiskItems = (int)$scalar(
+    'SELECT COUNT(*) AS total
+     FROM boq_items
+     WHERE COALESCE(certified_qty, 0) > COALESCE(quantity, 0)
+        OR COALESCE(paid_qty, 0) > COALESCE(certified_qty, 0)
+        OR ABS(COALESCE(amount, 0) - (COALESCE(quantity, 0) * COALESCE(rate, 0))) > 1'
+);
+$programmeProgress = (int)round((float)$scalar('SELECT COALESCE(AVG(pct_complete), 0) AS total FROM programme_tasks'));
+$delayedProgrammeTasks = (int)$scalar(
+    "SELECT COUNT(*) AS total
+     FROM programme_tasks
+     WHERE status NOT IN ('complete', 'cancelled')
+       AND planned_end IS NOT NULL
+       AND planned_end < CURDATE()"
+);
+$criticalProgrammeTasks = (int)$scalar('SELECT COUNT(*) AS total FROM programme_tasks WHERE critical_path = 1');
+$unreadContactsCount = (int)$scalar("SELECT COUNT(*) AS total FROM contact_submissions WHERE is_read = 0 AND status <> 'archived'");
+$activeSubscribers = (int)$scalar("SELECT COUNT(*) AS total FROM subscribers WHERE status = 'active'");
+$subscribersToday = (int)$scalar("SELECT COUNT(*) AS total FROM subscribers WHERE DATE(subscribed_at) = CURDATE()");
 $stalledProjects = (int)$scalar("SELECT COUNT(*) AS total FROM projects WHERE status = 'stalled'");
 $overdueProjects = (int)$scalar("SELECT COUNT(*) AS total FROM projects WHERE est_delivery < CURDATE() AND status <> 'completed'");
 $approvedAwaitingPayment = (int)$scalar("SELECT COUNT(*) AS total FROM ipcs WHERE status = 'approved'");
@@ -128,16 +147,16 @@ $pendingApprovalRows = $rows(
      FROM ipcs i
      JOIN projects p ON p.id = i.project_id
      LEFT JOIN users u ON u.id = i.contractor_id
-     WHERE i.status = 'certified'
-     ORDER BY i.certified_at DESC, i.submitted_at DESC
+     WHERE i.status IN ('certified', 'endorsed')
+     ORDER BY COALESCE(i.certified_at, i.submitted_at, i.created_at) DESC
      LIMIT 8"
 );
 $unreadContacts = $rows(
-    'SELECT id, name, subject, created_at
+    "SELECT id, name, subject, created_at
      FROM contact_submissions
-     WHERE is_read = 0
+     WHERE is_read = 0 AND status <> 'archived'
      ORDER BY created_at DESC
-     LIMIT 5'
+     LIMIT 5"
 );
 $announcements = $rows(
     'SELECT id, title, is_pinned, created_at, expires_at
@@ -166,13 +185,19 @@ $addSignal = static function (array &$signals, string $severity, string $icon, s
 };
 
 if ($pendingApprovals > 0) {
-    $addSignal($executiveSignals, 'critical', 'fa-clipboard-check', 'Final approvals waiting', format_number($pendingApprovals) . ' certified IPCs need superadmin review.', 'admin/superadmin/approvals.php');
+    $addSignal($executiveSignals, 'critical', 'fa-clipboard-check', 'Final approvals waiting', format_number($pendingApprovals) . ' IPCs need superadmin review.', 'admin/superadmin/ipcs.php?payment_readiness=approval-ready');
 }
 if ($approvedAwaitingPayment > 0) {
     $addSignal($executiveSignals, 'action', 'fa-credit-card', 'Approved IPCs unpaid', format_number($approvedAwaitingPayment) . ' approved IPCs are waiting for payment processing.', 'admin/superadmin/financials.php');
 }
+if ($boqRiskItems > 0) {
+    $addSignal($executiveSignals, 'critical', 'fa-list-check', 'BOQ quantity risk', format_number($boqRiskItems) . ' BOQ items need quantity or payment review.', 'admin/superadmin/boq.php?risk=overpaid');
+}
+if ($delayedProgrammeTasks > 0) {
+    $addSignal($executiveSignals, 'critical', 'fa-chart-gantt', 'Programme delays detected', format_number($delayedProgrammeTasks) . ' tasks are past their planned finish date.', 'admin/superadmin/programme-of-works.php?delay=delayed');
+}
 if ($submittedIpcs > 0) {
-    $addSignal($executiveSignals, 'monitor', 'fa-file-invoice', 'IPC submissions entering workflow', format_number($submittedIpcs) . ' IPCs are waiting for consultant certification.', 'admin/superadmin/approvals.php');
+    $addSignal($executiveSignals, 'monitor', 'fa-file-invoice', 'IPC submissions entering workflow', format_number($submittedIpcs) . ' IPCs are waiting for consultant certification.', 'admin/superadmin/ipcs.php?status=submitted');
 }
 if ($stalledProjects > 0 || $overdueProjects > 0) {
     $addSignal($executiveSignals, 'critical', 'fa-road-barrier', 'Delivery risk detected', format_number($stalledProjects) . ' stalled projects and ' . format_number($overdueProjects) . ' overdue deliveries.', 'admin/superadmin/projects.php');
@@ -194,6 +219,9 @@ if ($openNcrs > 0 || $openDefects > 0 || $recentSevereIncidents > 0) {
 }
 if ($unreadContactsCount > 0) {
     $addSignal($executiveSignals, 'action', 'fa-envelope-open-text', 'Citizen inbox needs response', format_number($unreadContactsCount) . ' unread public submissions.', 'admin/superadmin/contact-inbox.php');
+}
+if ($subscribersToday > 0) {
+    $addSignal($executiveSignals, 'monitor', 'fa-envelope', 'New programme subscribers', format_number($subscribersToday) . ' people subscribed today.', 'admin/superadmin/subscribers.php');
 }
 
 $executiveSignals = array_slice($executiveSignals, 0, 6);
@@ -264,6 +292,8 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <div class="sa-action-grid">
       <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/project-create.php')) ?>"><i class="fa-solid fa-plus" aria-hidden="true"></i><span>New Project</span></a>
       <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/user-create.php')) ?>"><i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>New User</span></a>
+      <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/boq.php')) ?>"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>BOQ Centre</span></a>
+      <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/programme-of-works.php')) ?>"><i class="fa-solid fa-chart-gantt" aria-hidden="true"></i><span>Programme</span></a>
       <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/news-editor.php')) ?>"><i class="fa-solid fa-newspaper" aria-hidden="true"></i><span>News Article</span></a>
       <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms.php')) ?>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Open CMS</span></a>
     </div>
@@ -313,7 +343,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
   </article>
   <article class="stat-widget stat-widget--warning">
     <span class="stat-widget__icon"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span>
-    <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($pendingApprovals)) ?></strong><span class="stat-widget__label">Final Approvals</span><span class="stat-widget__trend">Certified IPC queue</span></span>
+    <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($pendingApprovals)) ?></strong><span class="stat-widget__label">Final Approvals</span><span class="stat-widget__trend">Certified and endorsed IPC queue</span></span>
   </article>
   <article class="stat-widget">
     <span class="stat-widget__icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
@@ -331,9 +361,21 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <span class="stat-widget__icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
     <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_money($retentionHeld)) ?></strong><span class="stat-widget__label">Retention Held</span><span class="stat-widget__trend">Across paid IPCs</span></span>
   </article>
+  <article class="stat-widget stat-widget--info">
+    <span class="stat-widget__icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+    <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_money($boqValue)) ?></strong><span class="stat-widget__label">BOQ Value</span><span class="stat-widget__trend"><?= Security::e(format_number($boqRiskItems)) ?> quantity risks</span></span>
+  </article>
+  <article class="stat-widget stat-widget--warning">
+    <span class="stat-widget__icon"><i class="fa-solid fa-chart-gantt" aria-hidden="true"></i></span>
+    <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_percentage($programmeProgress)) ?></strong><span class="stat-widget__label">Programme Progress</span><span class="stat-widget__trend"><?= Security::e(format_number($delayedProgrammeTasks)) ?> delayed, <?= Security::e(format_number($criticalProgrammeTasks)) ?> critical</span></span>
+  </article>
   <article class="stat-widget stat-widget--danger">
     <span class="stat-widget__icon"><i class="fa-solid fa-inbox" aria-hidden="true"></i></span>
     <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($unreadContactsCount)) ?></strong><span class="stat-widget__label">Unread Contacts</span><span class="stat-widget__trend">Citizen inbox attention</span></span>
+  </article>
+  <article class="stat-widget">
+    <span class="stat-widget__icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
+    <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($activeSubscribers)) ?></strong><span class="stat-widget__label">Subscribers</span><span class="stat-widget__trend"><?= Security::e(format_number($subscribersToday)) ?> joined today</span></span>
   </article>
 </section>
 
@@ -417,11 +459,11 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
 <section class="sa-ops-grid">
   <article class="card">
     <div class="card__header">
-      <div><h2 class="card__title">Pending Final Approvals</h2><p class="card__subtitle">Certified IPCs waiting for superadmin action.</p></div>
-      <a class="btn btn--outline btn--sm" href="<?= Security::e(Url::to('admin/superadmin/approvals.php')) ?>">Open Queue</a>
+      <div><h2 class="card__title">Pending Final Approvals</h2><p class="card__subtitle">Certified and endorsed IPCs waiting for superadmin action.</p></div>
+      <a class="btn btn--outline btn--sm" href="<?= Security::e(Url::to('admin/superadmin/ipcs.php?payment_readiness=approval-ready')) ?>">Open IPC Centre</a>
     </div>
 <?php if ($pendingApprovalRows === []): ?>
-    <div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span><h3 class="empty-state__title">No certified IPCs waiting</h3><p class="empty-state__text">The approval queue is clear.</p></div>
+    <div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span><h3 class="empty-state__title">No IPCs waiting</h3><p class="empty-state__text">The final approval queue is clear.</p></div>
 <?php else: ?>
     <div class="table-wrap">
       <table class="data-table">
@@ -434,7 +476,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
             <td><?= Security::e($ipc['contractor_name']) ?></td>
             <td><?= Security::e(format_money($ipc['net_amount'])) ?></td>
             <td><?= Security::e(format_datetime($ipc['certified_at'] ?: $ipc['submitted_at'])) ?></td>
-            <td><a class="btn btn--primary btn--sm" href="<?= Security::e(Url::to('admin/superadmin/approvals.php')) ?>">Review</a></td>
+            <td><a class="btn btn--primary btn--sm" href="<?= Security::e(Url::to('admin/superadmin/ipc-detail.php?id=' . (int)$ipc['id'])) ?>">Review</a></td>
           </tr>
 <?php endforeach; ?>
         </tbody>

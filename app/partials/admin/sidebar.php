@@ -14,6 +14,9 @@ $roleNav = [
         ['label' => 'Dashboard', 'icon' => 'fa-chart-line', 'path' => 'admin/superadmin/dashboard.php'],
         ['label' => 'Projects', 'icon' => 'fa-building', 'path' => 'admin/superadmin/projects.php'],
         ['label' => 'Users', 'icon' => 'fa-users', 'path' => 'admin/superadmin/users.php'],
+        ['label' => 'IPC Centre', 'icon' => 'fa-file-invoice-dollar', 'path' => 'admin/superadmin/ipcs.php', 'active_paths' => ['admin/superadmin/ipcs.php', 'admin/superadmin/ipc-detail.php']],
+        ['label' => 'BOQ', 'icon' => 'fa-list-check', 'path' => 'admin/superadmin/boq.php'],
+        ['label' => 'Programme', 'icon' => 'fa-chart-gantt', 'path' => 'admin/superadmin/programme-of-works.php'],
         ['label' => 'IPCs & Approvals', 'icon' => 'fa-clipboard-check', 'path' => 'admin/superadmin/approvals.php'],
         ['label' => 'Financials', 'icon' => 'fa-coins', 'path' => 'admin/superadmin/financials.php'],
         ['label' => 'Attendance', 'icon' => 'fa-calendar-check', 'path' => 'admin/superadmin/attendance.php'],
@@ -139,7 +142,7 @@ $adminNav = $adminNav ?? ($roleNav[$roleKey] ?? [
 
 $navGroups = [
     'superadmin' => [
-        ['type' => 'links', 'items' => ['Dashboard', 'Projects', 'Users', 'IPCs & Approvals', 'Financials', 'Attendance']],
+        ['type' => 'links', 'items' => ['Dashboard', 'Projects', 'Users', 'IPC Centre', 'BOQ', 'Programme', 'IPCs & Approvals', 'Financials', 'Attendance']],
         ['label' => 'Public Content', 'icon' => 'fa-newspaper', 'items' => ['Announcements', 'News', 'Gallery', 'Media Library', 'CMS Pages', 'FAQ', 'Leadership', 'Stakeholders']],
         ['label' => 'Communication', 'icon' => 'fa-comments', 'items' => ['Contact Inbox', 'Subscribers', 'Messages']],
         ['label' => 'Intelligence', 'icon' => 'fa-chart-pie', 'items' => ['Analytics', 'Reports', 'Audit Log', 'System Health']],
@@ -207,7 +210,14 @@ $renderSidebarLink = static function (array $item, bool $isChild = false): void 
     $label = (string)($item['label'] ?? '');
     $icon = (string)($item['icon'] ?? 'fa-circle');
     $path = (string)($item['path'] ?? 'admin/index.php');
-    $isActive = Url::isActive($path);
+    $activePaths = array_merge([$path], (array)($item['active_paths'] ?? []));
+    $isActive = false;
+    foreach ($activePaths as $activePath) {
+        if (Url::isActive((string)$activePath)) {
+            $isActive = true;
+            break;
+        }
+    }
     $linkClass = ($isChild ? 'sidebar-link sidebar-link--child' : 'sidebar-link') . ($isActive ? ' is-active' : '');
 ?>
     <a class="<?= Security::e($linkClass) ?>" href="<?= Security::e(Url::to($path)) ?>" title="<?= Security::e($label) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
@@ -249,9 +259,12 @@ $renderSidebarLink = static function (array $item, bool $isChild = false): void 
     $groupChildren = (array)($group['children'] ?? []);
     $groupActive = false;
     foreach ($groupChildren as $child) {
-        if (Url::isActive((string)($child['path'] ?? ''))) {
-            $groupActive = true;
-            break;
+        $activePaths = array_merge([(string)($child['path'] ?? '')], (array)($child['active_paths'] ?? []));
+        foreach ($activePaths as $activePath) {
+            if (Url::isActive((string)$activePath)) {
+                $groupActive = true;
+                break 2;
+            }
         }
     }
 ?>
