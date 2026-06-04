@@ -28,11 +28,13 @@ if (!ReportBuilder::canGenerate($role, $type)) {
 }
 
 try {
-    $report = ReportBuilder::generate($type, $filters);
-    ReportBuilder::recordRun((int)Auth::id(), $type, $format, $filters, (int)($report['row_count'] ?? 0));
+    $scopedFilters = ManagerReport::scopeFilters((int)Auth::id(), $role, $filters);
+    $report = ReportBuilder::generate($type, $scopedFilters);
+    ReportBuilder::recordRun((int)Auth::id(), $type, $format, $filters, (int)($report['row_count'] ?? 0), 'generated', $role === 'manager' ? 'manager' : null, $role === 'manager' ? (int)Auth::id() : null);
 } catch (Throwable $e) {
-    ReportBuilder::recordRun((int)Auth::id(), $type ?: 'unknown', $format, $filters, 0, 'failed');
-    Response::json(['success' => false, 'message' => 'Report could not be generated.'], 500);
+    ReportBuilder::recordRun((int)Auth::id(), $type ?: 'unknown', $format, $filters, 0, 'failed', $role === 'manager' ? 'manager' : null, $role === 'manager' ? (int)Auth::id() : null);
+    $status = $role === 'manager' && str_contains($e->getMessage(), 'project') ? 403 : 500;
+    Response::json(['success' => false, 'message' => $status === 403 ? $e->getMessage() : 'Report could not be generated.'], $status);
 }
 
 $filename = 'ahptc-' . preg_replace('/[^a-z0-9_-]+/i', '-', $type) . '-' . date('Ymd-His');

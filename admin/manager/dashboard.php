@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)(Auth::id() ?? 0);
 $role = (string)(Auth::role() ?? '');
@@ -101,6 +101,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <div class="card__header"><div><h2 class="card__title">Quick Actions</h2><p class="card__subtitle">Common manager workflows.</p></div></div>
       <div class="manager-action-list">
         <a href="<?= Security::e(Url::to('admin/manager/ipc-queue.php')) ?>"><i class="fa-solid fa-file-invoice-dollar"></i> Review IPC queue</a>
+        <a href="<?= Security::e(Url::to('admin/manager/boq.php')) ?>"><i class="fa-solid fa-list-check"></i> Review BOQ</a>
         <a href="<?= Security::e(Url::to('admin/manager/milestones.php')) ?>"><i class="fa-solid fa-bullseye"></i> Update milestones</a>
         <a href="<?= Security::e(Url::to('admin/manager/attendance-summary.php')) ?>"><i class="fa-solid fa-calendar-days"></i> View attendance</a>
         <a href="<?= Security::e(Url::to('admin/manager/hs-incidents.php')) ?>"><i class="fa-solid fa-triangle-exclamation"></i> Report HS incident</a>
@@ -111,7 +112,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
 <section class="manager-grid manager-grid--three">
   <article class="card">
-    <div class="card__header"><div><h2 class="card__title">IPC Queue</h2><p class="card__subtitle">Submitted, endorsed and certified claims.</p></div></div>
+    <div class="card__header"><div><h2 class="card__title">IPC Queue</h2><p class="card__subtitle">Track incoming claims and endorse certified IPCs.</p></div></div>
     <div class="manager-list">
 <?php if ($ipcs === []): ?>
       <div class="empty-state empty-state--compact"><strong class="empty-state__title">No IPCs waiting</strong></div>

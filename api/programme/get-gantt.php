@@ -28,6 +28,12 @@ if (!$project) {
     Response::json(['success' => false, 'message' => 'Project could not be found.'], 404);
 }
 
+$role = (string)Auth::role();
+$userId = (int)Auth::id();
+if ($role !== 'superadmin' && !ManagerProgramme::canAccessProject($userId, $role, (int)$filters['project_id'])) {
+    Response::json(['success' => false, 'message' => 'You do not have access to this project programme.'], 403);
+}
+
 $limit = min(150, max(1, Security::cleanInt($_GET['limit'] ?? 100)));
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $total = ProgrammeTask::countItems($filters);

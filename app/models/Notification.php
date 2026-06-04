@@ -116,6 +116,7 @@ class Notification extends Model
             'system', 'system-health' => 'fa-server',
             'rfi' => 'fa-circle-question',
             'announcement' => 'fa-bullhorn',
+            'assignment' => 'fa-user-plus',
             default => 'fa-bell',
         };
     }

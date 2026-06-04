@@ -3,7 +3,9 @@ $messageUserId = (int)Auth::id();
 $messageRole = (string)(Auth::role() ?: ($adminRole ?? 'staff'));
 $messageRecipients = MessageThread::recipientOptions($messageUserId, $messageRole);
 $messageAudienceOptions = MessageThread::audienceOptions($messageUserId, $messageRole);
-$messageProjects = Database::fetchAll("SELECT id, name FROM projects ORDER BY name ASC");
+$messageProjects = $messageRole === 'manager'
+    ? ManagerReport::projects($messageUserId, $messageRole)
+    : Database::fetchAll("SELECT id, name FROM projects ORDER BY name ASC");
 $initialThreadId = Security::cleanInt($_GET['thread'] ?? 0);
 ?>
 

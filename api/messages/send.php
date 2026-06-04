@@ -32,6 +32,9 @@ $attachmentTokens = array_values(array_filter(array_map('strval', (array)($input
 if ($body === '') {
     Response::json(['success' => false, 'message' => 'Message body is required.'], 422);
 }
+if ($projectId > 0 && $role !== 'superadmin' && !ProjectAssignment::canManageProject($userId, $projectId, $role)) {
+    Response::json(['success' => false, 'message' => 'You cannot link messages to this project.'], 403);
+}
 
 try {
     Database::beginTransaction();

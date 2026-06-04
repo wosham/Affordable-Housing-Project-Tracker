@@ -24,7 +24,7 @@ if (Security::isPost()) {
         } else {
             Database::query("UPDATE projects SET status = 'cancelled' WHERE id = ?", [$projectId]);
             Logger::log('cancel', 'projects', $projectId, ['reason' => 'Delete blocked by related records']);
-            Session::flash('status', 'Project had protected records, so it was marked as cancelled instead.');
+            Session::flash('status', 'Project had linked work, so it was marked as cancelled instead.');
         }
     }
 
@@ -77,7 +77,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <i class="fa-solid fa-plus" aria-hidden="true"></i> New Project
     </a>
     <a class="btn btn--outline" href="<?= Security::e(Url::to('api/projects/get-all.php')) ?>" target="_blank" rel="noopener noreferrer">
-      <i class="fa-solid fa-code" aria-hidden="true"></i> API Feed
+      <i class="fa-solid fa-eye" aria-hidden="true"></i> Project Data
     </a>
   </div>
 </section>
@@ -123,7 +123,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">All Projects</h2>
       <p class="card__subtitle">Filter, inspect and manage all registered programme projects.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalProjects)) ?> records</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalProjects)) ?> projects</span>
   </div>
 
   <form class="filter-bar sa-project-filter" method="get" action="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>">
@@ -235,13 +235,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
               <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('project-detail.php?id=' . urlencode((string)$project['slug']))) ?>" target="_blank" rel="noopener noreferrer" title="View public page" aria-label="View public page">
                 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
               </a>
-              <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('api/projects/get-project.php?slug=' . urlencode((string)$project['slug']))) ?>" target="_blank" rel="noopener noreferrer" title="View API" aria-label="View API">
+              <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('api/projects/get-project.php?slug=' . urlencode((string)$project['slug']))) ?>" target="_blank" rel="noopener noreferrer" title="View data" aria-label="View data">
                 <i class="fa-solid fa-code" aria-hidden="true"></i>
               </a>
               <a class="btn btn--icon btn--primary" href="<?= Security::e(Url::to('admin/superadmin/project-edit.php?id=' . (int)$project['id'])) ?>" title="Edit project" aria-label="Edit project">
                 <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
               </a>
-              <form method="post" action="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>" data-confirm="Delete this project and its project records? This cannot be undone.">
+              <form method="post" action="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>" data-confirm="Delete this project and its linked work? This cannot be undone.">
                 <?= Csrf::field($csrfForm) ?>
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="project_id" value="<?= Security::e((string)$project['id']) ?>">

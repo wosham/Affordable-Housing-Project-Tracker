@@ -127,6 +127,7 @@ $pageTitle = 'Edit User';
 $pageDescription = 'Update AHPTC user access, status, profile photo and profile details.';
 $adminRole = 'superadmin';
 $contentClass = 'sa-user-form-page';
+$componentCss = ['user-profile'];
 $pageScripts = ['user-form'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
@@ -172,9 +173,9 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <?= user_field('First name', 'first_name', $values, $errors, true) ?>
           <?= user_field('Last name', 'last_name', $values, $errors, true) ?>
           <?= user_field('Email address', 'email', $values, $errors, true, 'email') ?>
-          <?= user_field('Phone number', 'phone', $values, $errors, false, 'tel') ?>
-          <?= user_field('Job title', 'job_title', $values, $errors, false, 'text', 'County Director, Resident Engineer...') ?>
-          <?= user_field('Department / organisation', 'department', $values, $errors, false, 'text', 'County Housing Department') ?>
+          <?= user_field('Phone number', 'phone', $values, $errors, true, 'tel', '+254712345678') ?>
+          <?= user_field('Job title', 'job_title', $values, $errors, true, 'text', 'County Director, Resident Engineer...') ?>
+          <?= user_field('Department / organisation', 'department', $values, $errors, true, 'text', 'County Housing Department') ?>
         </div>
       </section>
 
@@ -322,8 +323,17 @@ function user_validate_values(array $values, array $rolesById, array $statusOpti
     if ($values['last_name'] === '') {
         $errors['last_name'] = 'Last name is required.';
     }
-    if ($values['email'] === '' || !filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'Enter a valid email address.';
+    if ($values['email'] === '' || !filter_var($values['email'], FILTER_VALIDATE_EMAIL) || strtolower(substr($values['email'], -10)) !== '@gmail.com') {
+        $errors['email'] = 'Enter a valid Gmail address.';
+    }
+    if (!preg_match('/^\+254[17][0-9]{8}$/', trim((string)$values['phone']))) {
+        $errors['phone'] = 'Enter a Kenyan phone number in +2547XXXXXXXX or +2541XXXXXXXX format.';
+    }
+    if ($values['job_title'] === '') {
+        $errors['job_title'] = 'Job title is required.';
+    }
+    if ($values['department'] === '') {
+        $errors['department'] = 'Department is required.';
     }
     if (!isset($rolesById[(int)$values['role_id']])) {
         $errors['role_id'] = 'Choose a valid role.';

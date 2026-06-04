@@ -118,12 +118,17 @@ class MessageThread extends Model
             }
 
             if ($target === 'project:selected' && $projectId && $projectId > 0) {
-                $expanded = array_merge($expanded, self::projectTeamUserIds($projectId, $viewerId));
+                if (self::canUseProjectAudience($viewerId, $viewerRole, $projectId)) {
+                    $expanded = array_merge($expanded, self::projectTeamUserIds($projectId, $viewerId));
+                }
                 continue;
             }
 
             if (preg_match('/^project:(\d+)$/', $target, $match)) {
-                $expanded = array_merge($expanded, self::projectTeamUserIds((int)$match[1], $viewerId));
+                $targetProjectId = (int)$match[1];
+                if (self::canUseProjectAudience($viewerId, $viewerRole, $targetProjectId)) {
+                    $expanded = array_merge($expanded, self::projectTeamUserIds($targetProjectId, $viewerId));
+                }
             }
         }
 
@@ -249,6 +254,17 @@ class MessageThread extends Model
         ", [$projectId, $projectId, $excludeUserId]);
 
         return array_map('intval', array_column($rows, 'id'));
+    }
+
+    private static function canUseProjectAudience(int $viewerId, string $viewerRole, int $projectId): bool
+    {
+        if ($projectId <= 0) {
+            return false;
+        }
+        if ($viewerRole === 'superadmin') {
+            return true;
+        }
+        return ProjectAssignment::canManageProject($viewerId, $projectId, $viewerRole);
     }
 
     private static function filterSql(int $userId, array $filters): array

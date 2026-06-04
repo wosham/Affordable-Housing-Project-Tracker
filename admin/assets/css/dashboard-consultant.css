@@ -1,6 +1,307 @@
-/* Consultant / Supervising Engineer Dashboard — Role-specific styles
-   TODO: Phase 3 — Full implementation */
-.consultant-sidebar { background: #0a3d62; color: #fff; }
-.consultant-sidebar .nav-link { color: rgba(255,255,255,.8); }
-.consultant-sidebar .nav-link.active,
-.consultant-sidebar .nav-link:hover { color: #74b9ff; background: rgba(255,255,255,.1); }
+.consultant-dashboard-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.consultant-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.consultant-hero h2 {
+  margin: .35rem 0 .25rem;
+  font-size: 1.55rem;
+}
+
+.consultant-hero p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.consultant-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+
+.consultant-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .9rem;
+}
+
+.consultant-stat {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  min-height: 112px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.consultant-stat:hover,
+.consultant-stat:focus {
+  transform: translateY(-2px);
+  border-color: var(--admin-border-strong);
+  box-shadow: var(--admin-shadow-md);
+  outline: none;
+}
+
+.consultant-stat__icon,
+.consultant-document__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 8px;
+  background: var(--admin-lime-soft);
+  color: var(--admin-primary);
+}
+
+.consultant-stat__copy {
+  display: grid;
+  min-width: 0;
+  gap: .08rem;
+}
+
+.consultant-stat__copy strong {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.consultant-stat__copy span {
+  font-weight: 800;
+}
+
+.consultant-stat__copy small,
+.consultant-project-table td small,
+.consultant-list-item small,
+.consultant-document small {
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.consultant-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.consultant-grid--main {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.consultant-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.consultant-side-stack,
+.consultant-list,
+.consultant-action-list {
+  display: grid;
+  align-content: start;
+  gap: .55rem;
+}
+
+.consultant-project-table td {
+  vertical-align: middle;
+}
+
+.consultant-project-table td small,
+.consultant-list-item small {
+  display: block;
+  margin-top: .2rem;
+}
+
+.consultant-progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.consultant-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-primary);
+}
+
+.consultant-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  margin: .1rem .35rem .1rem 0;
+  padding: .25rem .45rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  font-size: .76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.consultant-programme-ring {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 150px;
+  height: 150px;
+  margin: .4rem auto 1rem;
+  border: 10px solid var(--admin-lime-soft);
+  border-radius: 50%;
+  background: #fff;
+  text-align: center;
+}
+
+.consultant-programme-ring strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.consultant-programme-ring span {
+  max-width: 96px;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+  line-height: 1.25;
+}
+
+.consultant-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+}
+
+.consultant-mini-grid span {
+  display: grid;
+  gap: .1rem;
+  padding: .65rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.consultant-mini-grid strong {
+  color: var(--admin-text);
+  font-size: 1.15rem;
+}
+
+.consultant-action-list a,
+.consultant-list-item,
+.consultant-document {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--admin-text);
+  text-decoration: none;
+}
+
+.consultant-action-list a {
+  justify-content: flex-start;
+  font-weight: 800;
+}
+
+.consultant-action-list a:hover,
+.consultant-list-item:hover,
+.consultant-document:hover {
+  border-color: var(--admin-border-strong);
+  background: var(--admin-surface-muted);
+}
+
+.consultant-list-item > span,
+.consultant-document > span:last-of-type {
+  min-width: 0;
+}
+
+.consultant-list-item strong,
+.consultant-document strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.consultant-list-item em,
+.consultant-document em {
+  display: block;
+  color: var(--admin-primary);
+  font-style: normal;
+  font-weight: 850;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.consultant-grid--three > .card {
+  align-self: start;
+  min-height: 0;
+}
+
+.consultant-grid--three .empty-state--compact {
+  min-height: 86px;
+  padding: 1rem;
+}
+
+.consultant-document-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.consultant-document {
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .consultant-stat-grid,
+  .consultant-grid--three,
+  .consultant-document-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .consultant-grid--main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .consultant-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .consultant-hero__actions,
+  .consultant-stat-grid,
+  .consultant-grid--three,
+  .consultant-document-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .consultant-hero__actions .btn {
+    width: 100%;
+  }
+
+  .consultant-stat {
+    min-height: 96px;
+  }
+
+  .consultant-document {
+    align-items: flex-start;
+  }
+}

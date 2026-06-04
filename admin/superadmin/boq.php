@@ -121,7 +121,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">BOQ Registry</h2>
       <p class="card__subtitle">Search, filter and update certified or paid quantities.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalItems)) ?> records</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalItems)) ?> items</span>
   </div>
 
   <form class="filter-bar boq-filter" method="get" action="<?= Security::e(Url::to('admin/superadmin/boq.php')) ?>">
@@ -138,7 +138,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <thead><tr><th>Item</th><th>Description</th><th>Unit</th><th class="is-number">Qty</th><th class="is-money">Rate</th><th class="is-money">Amount</th><th class="is-number">Certified</th><th class="is-number">Paid</th><th>Progress</th><th>Risk</th><th>Actions</th></tr></thead>
       <tbody>
 <?php if ($items === []): ?>
-        <tr><td colspan="11"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span><strong class="empty-state__title">No BOQ items found</strong><span class="empty-state__text">Choose another project or add BOQ records for this project.</span></div></td></tr>
+        <tr><td colspan="11"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span><strong class="empty-state__title">No BOQ items found</strong><span class="empty-state__text">Choose another project or add BOQ items for this project.</span></div></td></tr>
 <?php else: ?>
 <?php foreach ($items as $item): ?>
 <?php $riskLabels = $item['risks'] ?: ['clear']; ?>

@@ -5,13 +5,24 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 ApiMiddleware::handle([
     'methods' => ['POST'],
     'roles' => ['superadmin', 'manager', 'contractor'],
-    'csrf_form' => 'superadmin_programme',
+    'csrf' => false,
 ]);
+
+$token = Csrf::fromRequest();
+$csrfOk = false;
+foreach (['superadmin_programme', 'manager_programme', 'contractor_programme', 'default'] as $form) {
+    if (Csrf::verify($token, $form)) {
+        $csrfOk = true;
+        break;
+    }
+}
+if (!$csrfOk) {
+    Response::json(['success' => false, 'message' => 'CSRF token mismatch. Please refresh the page and try again.'], 419);
+}
 
 $input = $_POST;
 if ($input === []) {
-    $decoded = json_decode(file_get_contents('php://input') ?: '', true);
-    $input = is_array($decoded) ? $decoded : [];
+    $input = Security::jsonInput();
 }
 
 $id = Security::cleanInt($input['id'] ?? $input['task_id'] ?? 0);
@@ -22,6 +33,12 @@ if ($id <= 0) {
 $task = ProgrammeTask::findDetailed($id);
 if (!$task) {
     Response::json(['success' => false, 'message' => 'Programme task could not be found.'], 404);
+}
+
+$role = (string)Auth::role();
+$userId = (int)Auth::id();
+if ($role !== 'superadmin' && !ManagerProgramme::canAccessTask($userId, $role, $task)) {
+    Response::json(['success' => false, 'message' => 'You do not have access to update this programme task.'], 403);
 }
 
 $taskName = Security::cleanString((string)($input['task_name'] ?? ''));
@@ -57,6 +74,19 @@ if ($dependsOn > 0) {
         Response::json(['success' => false, 'message' => 'Dependency must be another task in the same project.'], 422);
     }
 }
+if ($assignedTo > 0 && $role !== 'superadmin') {
+    $assignment = Database::fetch(
+        "SELECT pa.id
+         FROM project_assignments pa
+         JOIN users u ON u.id = pa.user_id
+         WHERE pa.project_id = ? AND pa.user_id = ? AND pa.status = 'active' AND u.status = 'active'
+         LIMIT 1",
+        [(int)$task['project_id'], $assignedTo]
+    );
+    if (!$assignment) {
+        Response::json(['success' => false, 'message' => 'Assigned user must belong to this project team.'], 422);
+    }
+}
 
 Database::beginTransaction();
 try {
@@ -72,7 +102,10 @@ try {
         'depends_on_task_id' => $dependsOn,
         'critical_path' => !empty($input['critical_path']),
         'notes' => $notes,
-    ], (int)Auth::id());
+    ], $userId);
+
+    $updatedRaw = ProgrammeTask::findDetailed($id) ?: [];
+    $signals = ManagerProgramme::updateSignals($task, $updatedRaw);
 
     Logger::log('update', 'programme_tasks', $id, [
         'old' => [
@@ -84,12 +117,23 @@ try {
         ],
         'new' => [
             'task_name' => $taskName,
-            'status' => $status,
-            'pct_complete' => $pct,
+            'status' => $updatedRaw['status'] ?? $status,
+            'pct_complete' => (int)($updatedRaw['pct_complete'] ?? $pct),
             'planned_start' => $plannedStart,
             'planned_end' => $plannedEnd,
         ],
+        'signals' => $signals,
     ]);
+
+    if ($signals !== [] && $role === 'manager') {
+        Notification::pushRole(
+            'superadmin',
+            'programme_task_update',
+            'Programme task needs attention',
+            ($task['project_name'] ?? 'A project') . ': ' . $taskName . ' - ' . implode(', ', $signals) . '.',
+            'admin/superadmin/programme-of-works.php?project_id=' . (int)$task['project_id']
+        );
+    }
 
     Database::commit();
 } catch (Throwable) {

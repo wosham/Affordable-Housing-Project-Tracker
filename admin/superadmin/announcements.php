@@ -97,7 +97,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">Announcement Registry</h2>
       <p class="card__subtitle">Search, filter, publish, pin or archive staff broadcasts.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalAnnouncements)) ?> records</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalAnnouncements)) ?> announcements</span>
   </div>
 
   <form class="filter-bar" method="get" action="<?= Security::e(Url::to('admin/superadmin/announcements.php')) ?>">

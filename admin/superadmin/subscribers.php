@@ -44,7 +44,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Newsletter audience</span>
     <h2>Subscribers</h2>
-    <p>Manage newsletter subscriptions, unsubscribe/reactivate records and export filtered mailing lists.</p>
+    <p>Manage newsletter subscriptions, reactivations and filtered mailing lists.</p>
   </div>
   <div class="subscribers-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('news.php')) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> News Page</a>
@@ -53,7 +53,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="stat-grid stat-grid--4 subscribers-stats" aria-label="Subscriber summary">
-  <?php subscribers_stat('fa-users', $summary['total'] ?? 0, 'Total Subscribers', 'All records'); ?>
+  <?php subscribers_stat('fa-users', $summary['total'] ?? 0, 'Total Subscribers', 'All subscribers'); ?>
   <?php subscribers_stat('fa-user-check', $summary['active'] ?? 0, 'Active', 'Receiving updates'); ?>
   <?php subscribers_stat('fa-user-xmark', $summary['unsubscribed'] ?? 0, 'Unsubscribed', 'Opted out'); ?>
   <?php subscribers_stat('fa-calendar-day', $summary['today'] ?? 0, 'Today', 'New today'); ?>
@@ -69,7 +69,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">Subscriber Registry</h2>
       <p class="card__subtitle">Filter subscribers, export mailing lists and manage opt-in status.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalSubscribers)) ?> records</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalSubscribers)) ?> subscribers</span>
   </div>
 
   <form class="filter-bar subscribers-filter" method="get" action="<?= Security::e(Url::to('admin/superadmin/subscribers.php')) ?>">

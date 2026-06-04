@@ -473,10 +473,10 @@ function render_project_form(array $old, array $errors, array $categories, array
 {
 ?>
   <section class="card sa-form-card">
-    <div class="card__header"><div><h2 class="card__title">Project Identity</h2><p class="card__subtitle">Core public and administrative details used across dashboards and APIs.</p></div></div>
+    <div class="card__header"><div><h2 class="card__title">Project Identity</h2><p class="card__subtitle">Core public and administrative details used across dashboards and project pages.</p></div></div>
     <div class="form-grid form-grid--2">
       <label class="form-field"><span class="form-label">Project name</span><input class="form-input <?= isset($errors['name']) ? 'is-error' : '' ?>" name="name" value="<?= Security::e($old['name']) ?>" required><?= field_error($errors, 'name') ?></label>
-      <label class="form-field"><span class="form-label">Slug</span><input class="form-input <?= isset($errors['slug']) ? 'is-error' : '' ?>" name="slug" value="<?= Security::e($old['slug']) ?>" placeholder="auto-generated if empty"><?= field_error($errors, 'slug') ?><span class="form-hint">Used in public links and APIs.</span></label>
+      <label class="form-field"><span class="form-label">Slug</span><input class="form-input <?= isset($errors['slug']) ? 'is-error' : '' ?>" name="slug" value="<?= Security::e($old['slug']) ?>" placeholder="auto-generated if empty"><?= field_error($errors, 'slug') ?><span class="form-hint">Used in public links and project pages.</span></label>
       <label class="form-field"><span class="form-label">Category</span><select class="form-select <?= isset($errors['category_id']) ? 'is-error' : '' ?>" name="category_id" required><option value="">Choose category</option><?php foreach ($categories as $category): ?><option value="<?= Security::e((string)$category['id']) ?>" <?= (string)$old['category_id'] === (string)$category['id'] ? 'selected' : '' ?>><?= Security::e($category['name']) ?></option><?php endforeach; ?></select><?= field_error($errors, 'category_id') ?></label>
       <label class="form-field"><span class="form-label">Status</span><select class="form-select <?= isset($errors['status']) ? 'is-error' : '' ?>" name="status"><?php foreach (Project::statusOptions() as $status): ?><option value="<?= Security::e($status) ?>" <?= $old['status'] === $status ? 'selected' : '' ?>><?= Security::e(status_label($status)) ?></option><?php endforeach; ?></select><?= field_error($errors, 'status') ?></label>
     </div>

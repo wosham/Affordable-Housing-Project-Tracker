@@ -88,7 +88,7 @@ class ReportBuilder extends Model
         };
     }
 
-    public static function recordRun(?int $userId, string $type, string $format, array $filters, int $rowCount, string $status = 'generated'): int
+    public static function recordRun(?int $userId, string $type, string $format, array $filters, int $rowCount, string $status = 'generated', ?string $scopeRole = null, ?int $scopeUserId = null): int
     {
         try {
             return self::createRun([
@@ -98,6 +98,8 @@ class ReportBuilder extends Model
                 'filters_json' => json_encode($filters, JSON_UNESCAPED_SLASHES),
                 'row_count' => $rowCount,
                 'status' => $status,
+                'scope_role' => $scopeRole,
+                'scope_user_id' => $scopeUserId,
             ]);
         } catch (Throwable) {
             return 0;
@@ -142,7 +144,7 @@ class ReportBuilder extends Model
             fputcsv($handle, [$section['title'] ?? 'Section']);
             $rows = $section['rows'] ?? [];
             if ($rows === []) {
-                fputcsv($handle, ['No records']);
+                fputcsv($handle, ['No data']);
                 fputcsv($handle, []);
                 continue;
             }
@@ -202,7 +204,7 @@ class ReportBuilder extends Model
   <h2><?= Security::e($section['title'] ?? 'Section') ?></h2>
 <?php $rows = $section['rows'] ?? []; ?>
 <?php if ($rows === []): ?>
-  <p class="empty">No records matched this section.</p>
+  <p class="empty">No data matched this section.</p>
 <?php else: ?>
   <table>
     <thead><tr><?php foreach (array_keys($rows[0]) as $header): ?><th><?= Security::e(self::heading((string)$header)) ?></th><?php endforeach; ?></tr></thead>
@@ -214,7 +216,7 @@ class ReportBuilder extends Model
   </table>
 <?php endif; ?>
 <?php endforeach; ?>
-  <footer class="footer"><?= Security::e(SystemConfig::text('reports.footer_note', 'Generated from live AHPTC database records. Verify figures against approved source documents before statutory filing.')) ?></footer>
+  <footer class="footer"><?= Security::e(SystemConfig::text('reports.footer_note', 'Generated from live AHPTC information. Verify figures against approved source documents before statutory filing.')) ?></footer>
   </main>
 </body>
 </html>
@@ -332,6 +334,7 @@ class ReportBuilder extends Model
              JOIN projects p ON p.id = b.project_id
              WHERE (b.certified_qty > b.quantity OR b.paid_qty > b.certified_qty)"
              . (!empty($filters['project_id']) ? ' AND p.id = ' . (int)$filters['project_id'] : '')
+             . (empty($filters['project_id']) && !empty($filters['project_ids']) && is_array($filters['project_ids']) ? ' AND p.id IN (' . implode(',', array_values(array_filter(array_map('intval', $filters['project_ids'])))) . ')' : '')
              . (!empty($filters['constituency_id']) ? ' AND p.constituency_id = ' . (int)$filters['constituency_id'] : '') .
              "
              ORDER BY p.name, b.section
@@ -479,18 +482,24 @@ class ReportBuilder extends Model
             'title' => self::TYPES[$type]['label'],
             'description' => self::TYPES[$type]['description'],
             'generated_at' => date('Y-m-d H:i:s'),
-            'filters' => $filters,
+            'filters' => self::publicFilters($filters),
             'summary' => $summary,
             'sections' => $sections,
             'row_count' => array_sum(array_map(static fn (array $section): int => count($section['rows'] ?? []), $sections)),
         ];
     }
 
+    private static function publicFilters(array $filters): array
+    {
+        unset($filters['project_ids'], $filters['_scope_role'], $filters['_scope_user_id']);
+        return $filters;
+    }
+
     private static function createRun(array $data): int
     {
         Database::query(
-            'INSERT INTO report_runs (user_id, report_type, format, filters_json, row_count, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [$data['user_id'], $data['report_type'], $data['format'], $data['filters_json'], $data['row_count'], $data['status']]
+            'INSERT INTO report_runs (user_id, report_type, format, filters_json, row_count, status, scope_role, scope_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [$data['user_id'], $data['report_type'], $data['format'], $data['filters_json'], $data['row_count'], $data['status'], $data['scope_role'] ?? null, $data['scope_user_id'] ?? null]
         );
         return (int)Database::lastInsertId();
     }
@@ -502,6 +511,12 @@ class ReportBuilder extends Model
         if (!empty($filters['project_id'])) {
             $where[] = "{$alias}.id = ?";
             $bindings[] = (int)$filters['project_id'];
+        } elseif (!empty($filters['project_ids']) && is_array($filters['project_ids'])) {
+            $ids = array_values(array_filter(array_map('intval', $filters['project_ids']), static fn (int $id): bool => $id > 0));
+            if ($ids !== []) {
+                $where[] = "{$alias}.id IN (" . implode(',', array_fill(0, count($ids), '?')) . ')';
+                array_push($bindings, ...$ids);
+            }
         }
         if (!empty($filters['constituency_id'])) {
             $where[] = "{$alias}.constituency_id = ?";
@@ -521,6 +536,12 @@ class ReportBuilder extends Model
         if (!empty($filters['project_id'])) {
             $where[] = 'ar.project_id = ?';
             $bindings[] = (int)$filters['project_id'];
+        } elseif (!empty($filters['project_ids']) && is_array($filters['project_ids'])) {
+            $ids = array_values(array_filter(array_map('intval', $filters['project_ids']), static fn (int $id): bool => $id > 0));
+            if ($ids !== []) {
+                $where[] = 'ar.project_id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')';
+                array_push($bindings, ...$ids);
+            }
         }
         if (!empty($filters['constituency_id'])) {
             $where[] = 'p.constituency_id = ?';
@@ -538,6 +559,11 @@ class ReportBuilder extends Model
         $where = [];
         if (!empty($filters['project_id'])) {
             $where[] = "{$projectAlias}.id = " . (int)$filters['project_id'];
+        } elseif (!empty($filters['project_ids']) && is_array($filters['project_ids'])) {
+            $ids = array_values(array_filter(array_map('intval', $filters['project_ids']), static fn (int $id): bool => $id > 0));
+            if ($ids !== []) {
+                $where[] = "{$projectAlias}.id IN (" . implode(',', $ids) . ')';
+            }
         }
         if (!empty($filters['constituency_id'])) {
             $where[] = "{$projectAlias}.constituency_id = " . (int)$filters['constituency_id'];
@@ -555,6 +581,11 @@ class ReportBuilder extends Model
         $suffix = '';
         if (!empty($filters['project_id'])) {
             $suffix .= " AND {$projectAlias}.id = " . (int)$filters['project_id'];
+        } elseif (!empty($filters['project_ids']) && is_array($filters['project_ids'])) {
+            $ids = array_values(array_filter(array_map('intval', $filters['project_ids']), static fn (int $id): bool => $id > 0));
+            if ($ids !== []) {
+                $suffix .= " AND {$projectAlias}.id IN (" . implode(',', $ids) . ')';
+            }
         }
         if (!empty($filters['constituency_id'])) {
             $suffix .= " AND {$projectAlias}.constituency_id = " . (int)$filters['constituency_id'];

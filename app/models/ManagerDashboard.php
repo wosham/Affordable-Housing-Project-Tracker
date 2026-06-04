@@ -13,7 +13,7 @@ class ManagerDashboard
             "SELECT DISTINCT p.id
              FROM projects p
              INNER JOIN project_assignments pa ON pa.project_id = p.id
-             WHERE pa.user_id = ?
+             WHERE pa.user_id = ? AND pa.status = 'active'
              ORDER BY p.id ASC",
             [$userId]
         );

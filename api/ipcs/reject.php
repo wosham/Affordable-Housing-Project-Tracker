@@ -30,11 +30,16 @@ if (!$ipc) {
     Response::json(['success' => false, 'message' => 'IPC could not be found.'], 404);
 }
 
+$role = (string)Auth::role();
+if (!ipc_reject_allowed($ipc, $role, (int)Auth::id())) {
+    Response::json(['success' => false, 'message' => 'You do not have access to reject this IPC.'], 403);
+}
+
 if (in_array($ipc['status'], ['paid', 'rejected'], true)) {
     Response::json(['success' => false, 'message' => 'This IPC can no longer be rejected.'], 409);
 }
 
-$step = match (Auth::role()) {
+$step = match ($role) {
     'clerk' => 1,
     'consultant' => 2,
     'manager' => 3,
@@ -51,6 +56,12 @@ try {
     approval_audit('reject', 'ipcs', $ipcId, ['ipc_number' => $ipc['ipc_number'], 'reason' => $reason]);
 
     Notification::push((int)$ipc['contractor_id'], 'ipc_rejected', 'IPC rejected', 'IPC #' . $ipc['ipc_number'] . ' for ' . $ipc['project_name'] . ' was rejected: ' . $reason, 'admin/contractor/ipc-history.php');
+    if ($role === 'consultant') {
+        Notification::pushRole('superadmin', 'ipc_rejected', 'IPC rejected by consultant', 'IPC #' . $ipc['ipc_number'] . ' for ' . $ipc['project_name'] . ' was returned by the consultant.', 'admin/superadmin/ipcs.php?status=rejected');
+    }
+    if ($role === 'manager') {
+        Notification::pushRole('superadmin', 'ipc_rejected', 'IPC rejected by manager', 'IPC #' . $ipc['ipc_number'] . ' for ' . $ipc['project_name'] . ' was rejected by the project manager.', 'admin/superadmin/ipcs.php?status=rejected');
+    }
 
     Database::commit();
 } catch (Throwable) {
@@ -70,11 +81,53 @@ function approval_input(): array
     return $json !== [] ? $json : $_POST;
 }
 
+function ipc_reject_allowed(array $ipc, string $role, int $userId): bool
+{
+    $status = (string)($ipc['status'] ?? '');
+    $projectId = (int)($ipc['project_id'] ?? 0);
+
+    if ($role === 'superadmin') {
+        return true;
+    }
+
+    if ($role === 'clerk') {
+        return $status === 'submitted' && ProjectAssignment::canManageProject($userId, $projectId, $role);
+    }
+
+    if ($role === 'consultant') {
+        $project = Project::findDetailed($projectId);
+        return in_array($status, ['submitted', 'clerk-endorsed'], true)
+            && ((int)($project['consultant_id'] ?? 0) === $userId || ProjectAssignment::canManageProject($userId, $projectId, $role));
+    }
+
+    if ($role === 'manager') {
+        return $status === 'certified' && ProjectAssignment::canManageProject($userId, $projectId, $role);
+    }
+
+    return false;
+}
+
 function ipc_csrf_ok(): bool
 {
     $token = Csrf::fromRequest();
-    return Csrf::verify($token, 'superadmin_approvals')
-        || Csrf::verify($token, 'superadmin_ipcs');
+    foreach ([
+        'superadmin_approvals',
+        'superadmin_ipcs',
+        'manager_ipcs',
+        'manager_ipc_queue',
+        'consultant_ipcs',
+        'consultant_ipc',
+        'consultant_ipc_inbox',
+        'clerk_ipcs',
+        'clerk_ipc_verify',
+        'default',
+    ] as $form) {
+        if (Csrf::verify($token, $form)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function approval_audit(string $action, string $module, int $targetId, array $details = []): void

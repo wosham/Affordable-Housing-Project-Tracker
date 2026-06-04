@@ -77,7 +77,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </div>
   <div class="programme-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Projects</a>
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('api/programme/get-gantt.php?project_id=' . (int)($filters['project_id'] ?? 0))) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-code" aria-hidden="true"></i> API Feed</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('api/programme/get-gantt.php?project_id=' . (int)($filters['project_id'] ?? 0))) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye" aria-hidden="true"></i> Programme Data</a>
   </div>
 </section>
 
@@ -185,7 +185,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <thead><tr><th>Task</th><th>Planned</th><th>Actual</th><th>Progress</th><th>Status</th><th>Dependency</th><th>Actions</th></tr></thead>
       <tbody>
 <?php if ($tasks === []): ?>
-        <tr><td colspan="7"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span><strong class="empty-state__title">No task rows</strong><span class="empty-state__text">No programme records match the selected filters.</span></div></td></tr>
+        <tr><td colspan="7"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span><strong class="empty-state__title">No task rows</strong><span class="empty-state__text">No programme tasks match the selected filters.</span></div></td></tr>
 <?php else: ?>
 <?php foreach ($tasks as $task): ?>
         <tr>

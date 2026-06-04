@@ -24,4 +24,14 @@ class Guard
             Response::redirect($redirectTo ?? Url::to('admin/auth/unauthorised.php'));
         }
     }
+
+    public static function exactRole(string $role, ?string $redirectTo = null): void
+    {
+        self::auth();
+
+        if ((string)Auth::role() !== $role) {
+            $target = $redirectTo ?? RoleAccess::dashboardFor(is_string(Auth::role()) ? Auth::role() : null);
+            Response::redirect(Url::to($target));
+        }
+    }
 }

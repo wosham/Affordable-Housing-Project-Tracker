@@ -1,9 +1,9 @@
 <?php
-// Validator — form/request validation with chainable rules
+
 class Validator
 {
     private array $errors = [];
-    private array $data   = [];
+    private array $data = [];
 
     public function __construct(array $data)
     {
@@ -17,36 +17,76 @@ class Validator
 
     public function required(string $field, string $label = ''): self
     {
-        // TODO: Phase 1 — Check field is present and not empty
+        $value = $this->data[$field] ?? null;
+        if ($value === null || (is_string($value) && trim($value) === '') || (is_array($value) && $value === [])) {
+            $this->errors[$field] = ($label !== '' ? $label : self::label($field)) . ' is required.';
+        }
+
         return $this;
     }
 
     public function email(string $field): self
     {
-        // TODO: Phase 1 — Validate email format
+        $value = trim((string)($this->data[$field] ?? ''));
+        if ($value !== '' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            $this->errors[$field] = self::label($field) . ' must be a valid email address.';
+        }
+
         return $this;
     }
 
     public function min(string $field, int $length): self
     {
-        // TODO: Phase 1 — Minimum string length
+        $value = (string)($this->data[$field] ?? '');
+        if ($value !== '' && mb_strlen($value) < $length) {
+            $this->errors[$field] = self::label($field) . ' must be at least ' . $length . ' characters.';
+        }
+
         return $this;
     }
 
     public function numeric(string $field): self
     {
-        // TODO: Phase 1 — Must be numeric
+        $value = $this->data[$field] ?? null;
+        if ($value !== null && $value !== '' && !is_numeric($value)) {
+            $this->errors[$field] = self::label($field) . ' must be numeric.';
+        }
+
         return $this;
     }
 
     public function inArray(string $field, array $allowed): self
     {
-        // TODO: Phase 1 — Value must be in allowed list
+        $value = $this->data[$field] ?? null;
+        if ($value !== null && $value !== '' && !in_array($value, $allowed, true)) {
+            $this->errors[$field] = self::label($field) . ' is not a valid option.';
+        }
+
         return $this;
     }
 
-    public function passes(): bool  { return empty($this->errors); }
-    public function fails(): bool   { return !$this->passes(); }
-    public function errors(): array { return $this->errors; }
-    public function firstError(): string { return reset($this->errors) ?: ''; }
+    public function passes(): bool
+    {
+        return $this->errors === [];
+    }
+
+    public function fails(): bool
+    {
+        return !$this->passes();
+    }
+
+    public function errors(): array
+    {
+        return $this->errors;
+    }
+
+    public function firstError(): string
+    {
+        return reset($this->errors) ?: '';
+    }
+
+    private static function label(string $field): string
+    {
+        return ucwords(str_replace(['_', '-'], ' ', $field));
+    }
 }

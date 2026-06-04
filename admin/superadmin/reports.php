@@ -122,7 +122,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <div class="card__header">
       <div>
         <h2 class="card__title">Recent Runs</h2>
-        <p class="card__subtitle">Latest generated report records.</p>
+        <p class="card__subtitle">Latest generated reports.</p>
       </div>
     </div>
 <?php if ($recentRuns === []): ?>

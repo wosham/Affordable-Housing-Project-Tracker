@@ -66,7 +66,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="stat-grid stat-grid--4 ipc-stats" aria-label="IPC summary">
-  <?php ipc_stat('fa-file-invoice', $stats['total'] ?? 0, 'Total IPCs', 'All records'); ?>
+  <?php ipc_stat('fa-file-invoice', $stats['total'] ?? 0, 'Total IPCs', 'All IPCs'); ?>
   <?php ipc_stat('fa-hourglass-half', $stats['approval_queue_value'] ?? 0, 'Approval Queue', 'Certified or endorsed', true); ?>
   <?php ipc_stat('fa-circle-check', $stats['approved_unpaid_value'] ?? 0, 'Approved Unpaid', 'Ready for finance', true); ?>
   <?php ipc_stat('fa-money-bill-wave', $stats['net_value'] ?? 0, 'Net Value', 'All IPCs', true); ?>
@@ -85,7 +85,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">IPC Registry</h2>
       <p class="card__subtitle">Search, filter and open a dedicated certificate detail record.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalIpcs)) ?> records</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalIpcs)) ?> IPCs</span>
   </div>
 
   <form class="filter-bar ipc-filter" method="get" action="<?= Security::e(Url::to('admin/superadmin/ipcs.php')) ?>">

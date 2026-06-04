@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(['superadmin']);
+Guard::exactRole('superadmin');
 
 $pageTitle = 'Superadmin Dashboard';
 $pageDescription = 'Executive control dashboard for the Trans-Nzoia Affordable Housing Programme Tracker.';

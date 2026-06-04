@@ -62,7 +62,7 @@
 
   function renderRows(rows) {
     if (!rows || !rows.length) {
-      return '<div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-table" aria-hidden="true"></i></span><strong class="empty-state__title">No records</strong><span class="empty-state__text">This section has no matching data.</span></div>';
+      return '<div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-table" aria-hidden="true"></i></span><strong class="empty-state__title">No data</strong><span class="empty-state__text">This section has no matching data.</span></div>';
     }
 
     var headers = Object.keys(rows[0]);

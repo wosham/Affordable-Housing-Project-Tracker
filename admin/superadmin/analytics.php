@@ -137,7 +137,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
   <div class="analytics-chart-grid">
     <?php analytics_chart_card('projectStatusChart', 'Projects by Status', 'Distribution across planning, active, stalled and completed states.', 'fa-chart-pie', analytics_has_values($chartData['projectStatus']['values'])); ?>
     <?php analytics_chart_card('constituencyUnitsChart', 'Units by Constituency', 'Targeted housing units across Trans-Nzoia constituencies.', 'fa-house-chimney', analytics_has_values($chartData['constituencyUnits']['values'])); ?>
-    <?php analytics_chart_card('completionChart', 'Top Project Completion', 'Highest completion percentages across active project records.', 'fa-bars-progress', analytics_has_values($chartData['completion']['values']), true); ?>
+    <?php analytics_chart_card('completionChart', 'Top Project Completion', 'Highest completion percentages across active projects.', 'fa-bars-progress', analytics_has_values($chartData['completion']['values']), true); ?>
   </div>
 </section>
 
@@ -289,7 +289,7 @@ function analytics_chart_card(string $id, string $title, string $subtitle, strin
       <div class="chart-container<?= !$hasData ? ' is-empty' : '' ?>">
         <canvas id="<?= Security::e($id) ?>"></canvas>
 <?php if (!$hasData): ?>
-        <div class="sa-chart-empty"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i><strong>No data yet</strong><span>This chart will populate as records are added.</span></div>
+        <div class="sa-chart-empty"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i><strong>No data yet</strong><span>This chart will populate as activity is added.</span></div>
 <?php endif; ?>
       </div>
     </article>

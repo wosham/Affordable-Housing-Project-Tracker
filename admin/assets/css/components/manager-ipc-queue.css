@@ -1,0 +1,348 @@
+.manager-ipc-hero,
+.manager-ipc-card,
+.manager-ipc-panel {
+  border-radius: 8px;
+}
+
+.manager-ipc-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.manager-ipc-hero h2 {
+  margin: .35rem 0 .3rem;
+  font-size: 1.35rem;
+}
+
+.manager-ipc-hero p,
+.manager-ipc-table small,
+.manager-ipc-muted,
+.manager-ipc-form-status,
+.manager-ipc-detail__header p {
+  color: var(--admin-muted);
+}
+
+.manager-ipc-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
+.manager-ipc-stats,
+.manager-ipc-tabs {
+  margin-bottom: 1rem;
+}
+
+.manager-ipc-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  padding: .85rem;
+}
+
+.manager-ipc-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: .45rem .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--admin-text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.manager-ipc-tab:hover,
+.manager-ipc-tab.is-active {
+  border-color: var(--admin-primary);
+  background: var(--admin-primary);
+  color: #fff;
+}
+
+.manager-ipc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.manager-ipc-main,
+.manager-ipc-side {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-ipc-filter {
+  grid-template-columns: 1.35fr 1.25fr repeat(4, minmax(130px, 1fr)) auto;
+  align-items: end;
+}
+
+.manager-ipc-table th,
+.manager-ipc-table td {
+  vertical-align: top;
+}
+
+.manager-ipc-table td {
+  min-width: 116px;
+}
+
+.manager-ipc-table td:first-child {
+  min-width: 130px;
+}
+
+.manager-ipc-table td:nth-child(2),
+.manager-ipc-table td:nth-child(3) {
+  min-width: 180px;
+}
+
+.manager-ipc-table .is-money {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.manager-ipc-table small,
+.manager-ipc-muted {
+  display: block;
+  margin-top: .25rem;
+  font-size: .76rem;
+  line-height: 1.4;
+}
+
+.manager-ipc-warning,
+.manager-ipc-signal {
+  color: #991b1b !important;
+  font-weight: 800;
+}
+
+.manager-ipc-mini-list {
+  display: grid;
+  gap: .55rem;
+}
+
+.manager-ipc-mini-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  min-height: 54px;
+  width: 100%;
+  padding: .65rem .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.manager-ipc-mini-list button:hover {
+  border-color: var(--admin-primary);
+  background: #f8fff0;
+}
+
+.manager-ipc-mini-list span {
+  display: grid;
+  gap: .2rem;
+}
+
+.manager-ipc-mini-list em {
+  color: var(--admin-primary);
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.manager-ipc-modal[hidden],
+.manager-ipc-detail[hidden] {
+  display: none;
+}
+
+.manager-ipc-modal,
+.manager-ipc-detail {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, .55);
+}
+
+.manager-ipc-modal__panel,
+.manager-ipc-detail__panel {
+  width: min(640px, 100%);
+  max-height: min(90vh, 820px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .24);
+}
+
+.manager-ipc-detail__panel {
+  width: min(980px, 100%);
+}
+
+.manager-ipc-modal__header,
+.manager-ipc-modal__footer,
+.manager-ipc-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.manager-ipc-modal__header h2,
+.manager-ipc-detail__header h2 {
+  margin: .25rem 0 0;
+  font-size: 1.18rem;
+}
+
+.manager-ipc-modal__body,
+.manager-ipc-detail__body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.manager-ipc-modal__footer {
+  border-top: 1px solid var(--admin-border);
+  border-bottom: 0;
+}
+
+.manager-ipc-form-status[data-state="success"] {
+  color: #166534;
+}
+
+.manager-ipc-form-status[data-state="error"] {
+  color: #991b1b;
+}
+
+.manager-ipc-form-status[data-state="loading"] {
+  color: var(--admin-primary);
+}
+
+.manager-ipc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .6rem;
+}
+
+.manager-ipc-detail-grid span {
+  display: grid;
+  gap: .2rem;
+  padding: .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.manager-ipc-detail-grid small {
+  color: var(--admin-muted);
+  font-weight: 700;
+}
+
+.manager-ipc-detail-grid strong {
+  color: var(--admin-text);
+}
+
+.manager-ipc-detail__body h3 {
+  margin: 0 0 .55rem;
+  font-size: .95rem;
+}
+
+.manager-ipc-line-list,
+.manager-ipc-timeline {
+  display: grid;
+  gap: .55rem;
+}
+
+.manager-ipc-line,
+.manager-ipc-time {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .75rem;
+  align-items: start;
+  padding: .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.manager-ipc-line small,
+.manager-ipc-time small,
+.manager-ipc-time p {
+  display: block;
+  margin: .2rem 0 0;
+  color: var(--admin-muted);
+}
+
+.manager-ipc-line em,
+.manager-ipc-time em {
+  color: var(--admin-primary);
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.manager-ipc-warnings {
+  display: grid;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manager-ipc-warnings li {
+  padding: .65rem .75rem;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+  .manager-ipc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-ipc-side {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .manager-ipc-filter {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 840px) {
+  .manager-ipc-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .manager-ipc-hero__actions {
+    justify-content: flex-start;
+  }
+
+  .manager-ipc-filter,
+  .manager-ipc-side,
+  .manager-ipc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-ipc-modal,
+  .manager-ipc-detail {
+    align-items: stretch;
+  }
+}

@@ -1,0 +1,340 @@
+.manager-milestones-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-milestone-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manager-milestone-hero h2 {
+  margin: .35rem 0 .25rem;
+  font-size: 1.55rem;
+}
+
+.manager-milestone-hero p {
+  max-width: 740px;
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.manager-milestone-hero__actions,
+.manager-milestone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.manager-milestone-hero__actions {
+  justify-content: flex-end;
+}
+
+.manager-milestone-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.manager-milestone-main,
+.manager-milestone-side {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-milestone-filter {
+  margin-bottom: 1rem;
+}
+
+.manager-milestone-table td {
+  vertical-align: middle;
+}
+
+.manager-milestone-table td small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.manager-milestone-status,
+.manager-milestone-priority {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  min-height: 24px;
+  padding: .22rem .55rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.manager-milestone-status--pending {
+  background: #f2f5f8;
+  color: #405064;
+}
+
+.manager-milestone-status--current {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.manager-milestone-status--done {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.manager-milestone-priority {
+  margin-top: .35rem;
+  background: #eef2f7;
+  color: #475569;
+}
+
+.manager-milestone-priority--high {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.manager-milestone-priority--critical {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.manager-milestone-progress {
+  width: min(160px, 100%);
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.manager-milestone-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-primary);
+}
+
+.manager-milestone-table .is-overdue {
+  color: #b91c1c;
+}
+
+.manager-milestone-table .is-due-soon {
+  color: #a16207;
+}
+
+.manager-milestone-panel {
+  display: grid;
+  gap: .75rem;
+}
+
+.manager-milestone-followup {
+  display: grid;
+  gap: .85rem;
+}
+
+.manager-milestone-panel .card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.manager-milestone-mini-list {
+  display: grid;
+  gap: .6rem;
+}
+
+.manager-milestone-mini-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.manager-milestone-mini-item strong,
+.manager-milestone-mini-item small {
+  display: block;
+}
+
+.manager-milestone-mini-item small {
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.manager-milestone-project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .7rem;
+}
+
+.manager-milestone-project-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 66px;
+  padding: .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.manager-milestone-project-card strong,
+.manager-milestone-project-card small {
+  display: block;
+}
+
+.manager-milestone-project-card small {
+  margin-top: .25rem;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.manager-milestone-modal[hidden] {
+  display: none;
+}
+
+.manager-milestone-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1160;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--admin-overlay);
+  backdrop-filter: blur(2px);
+}
+
+.manager-milestone-modal__panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(900px, 100%);
+  max-height: min(86vh, 820px);
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-lg);
+}
+
+.manager-milestone-modal__header,
+.manager-milestone-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .9rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.manager-milestone-modal__footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--admin-border);
+  border-bottom: 0;
+}
+
+.manager-milestone-modal__header h2 {
+  margin: .25rem 0 0;
+  font-size: 1.22rem;
+}
+
+.manager-milestone-modal__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: .75rem;
+  overflow: auto;
+  padding: 1rem;
+  background: linear-gradient(#fff, #fff) padding-box, var(--admin-bg);
+}
+
+.manager-milestone-modal__body .form-field {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.manager-milestone-modal__body .form-label {
+  color: var(--admin-text);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.manager-milestone-modal__body .form-input,
+.manager-milestone-modal__body .form-select,
+.manager-milestone-modal__body .form-textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.manager-milestone-modal__body .form-textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.manager-milestone-modal__body .form-field--wide,
+.manager-milestone-form-status {
+  grid-column: 1 / -1;
+}
+
+.manager-milestone-form-status {
+  min-height: 1.2rem;
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-weight: 700;
+}
+
+.manager-milestone-form-status[data-state="error"] {
+  color: #b91c1c;
+}
+
+.manager-milestone-form-status[data-state="success"] {
+  color: #166534;
+}
+
+@media (max-width: 1100px) {
+  .manager-milestone-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .manager-milestone-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manager-milestone-hero__actions,
+  .manager-milestone-hero__actions .btn {
+    width: 100%;
+  }
+
+  .manager-milestone-modal {
+    align-items: stretch;
+    padding: .5rem;
+  }
+
+  .manager-milestone-modal__panel {
+    max-height: calc(100vh - 1rem);
+  }
+
+  .manager-milestone-modal__body {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-milestone-modal__footer {
+    flex-direction: column-reverse;
+  }
+
+  .manager-milestone-modal__footer .btn {
+    width: 100%;
+  }
+}

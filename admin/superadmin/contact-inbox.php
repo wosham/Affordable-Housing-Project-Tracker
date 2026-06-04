@@ -58,11 +58,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <?php contact_inbox_stat('fa-envelope', $summary['total'] ?? 0, 'Total Messages', 'All public submissions'); ?>
   <?php contact_inbox_stat('fa-envelope-open-text', $summary['unread'] ?? 0, 'Unread', 'Needs attention'); ?>
   <?php contact_inbox_stat('fa-reply', $summary['replied'] ?? 0, 'Replied', 'Response recorded'); ?>
-  <?php contact_inbox_stat('fa-box-archive', $summary['archived'] ?? 0, 'Archived', 'Closed records'); ?>
+  <?php contact_inbox_stat('fa-box-archive', $summary['archived'] ?? 0, 'Archived', 'Closed messages'); ?>
   <?php contact_inbox_stat('fa-paperclip', $summary['with_attachments'] ?? 0, 'Attachments', 'Files included'); ?>
   <?php contact_inbox_stat('fa-calendar-day', $summary['today'] ?? 0, 'Today', 'New today'); ?>
   <?php contact_inbox_stat('fa-calendar-week', $summary['this_week'] ?? 0, 'This Week', 'Last 7 days'); ?>
-  <?php contact_inbox_stat('fa-eye', $summary['read_messages'] ?? 0, 'Read', 'Opened records'); ?>
+  <?php contact_inbox_stat('fa-eye', $summary['read_messages'] ?? 0, 'Read', 'Opened messages'); ?>
 </section>
 
 <section class="card contact-inbox-card">
@@ -71,7 +71,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">Message Registry</h2>
       <p class="card__subtitle">Filter public enquiries and open a message to manage status, assignment and response notes.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalMessages)) ?> records</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalMessages)) ?> messages</span>
   </div>
 
   <form class="filter-bar contact-inbox-filter" method="get" action="<?= Security::e(Url::to('admin/superadmin/contact-inbox.php')) ?>">

@@ -237,7 +237,8 @@ CREATE TABLE IF NOT EXISTS `projects` (
     FOREIGN KEY (`category_id`)     REFERENCES `project_categories`(`id`),
     FOREIGN KEY (`constituency_id`) REFERENCES `constituencies`(`id`),
     INDEX `idx_status`   (`status`),
-    INDEX `idx_featured` (`is_featured`)
+    INDEX `idx_featured` (`is_featured`),
+    INDEX `idx_projects_consultant_status` (`consultant_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -268,28 +269,100 @@ CREATE TABLE IF NOT EXISTS `project_assignments` (
     `project_id`  INT UNSIGNED NOT NULL,
     `user_id`     INT UNSIGNED NOT NULL,
     `role`        VARCHAR(60)  NOT NULL,
+    `assignment_type` VARCHAR(40) NOT NULL DEFAULT 'site',
+    `scope`       VARCHAR(80)  NOT NULL DEFAULT 'general',
+    `status`      VARCHAR(30)  NOT NULL DEFAULT 'active',
+    `start_date`  DATE NULL,
+    `end_date`    DATE NULL,
+    `is_primary`  TINYINT(1) NOT NULL DEFAULT 0,
+    `notes`       TEXT NULL,
+    `revoked_by`  INT UNSIGNED NULL,
+    `revoked_at`  DATETIME NULL,
+    `updated_by`  INT UNSIGNED NULL,
+    `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `assigned_by` INT UNSIGNED NOT NULL,
     `assigned_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`user_id`)    REFERENCES `users`(`id`)    ON DELETE CASCADE,
     UNIQUE KEY `uq_project_user` (`project_id`, `user_id`),
-    INDEX `idx_project_assignments_user_project` (`user_id`, `project_id`)
+    INDEX `idx_project_assignments_user_project` (`user_id`, `project_id`),
+    INDEX `idx_project_assignments_user_project_status` (`user_id`, `project_id`, `status`),
+    INDEX `idx_project_assignments_project_role_status` (`project_id`, `role`, `status`),
+    INDEX `idx_project_assignments_user_status` (`user_id`, `status`),
+    INDEX `idx_assignments_project_user_status` (`project_id`, `user_id`, `status`),
+    INDEX `idx_project_assignments_status_dates` (`status`, `start_date`, `end_date`),
+    INDEX `idx_project_assignments_primary` (`project_id`, `role`, `is_primary`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 13B. MANAGER PROJECT MONITORING NOTES
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `manager_project_notes` (
+    `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `project_id` INT UNSIGNED NOT NULL,
+    `manager_id` INT UNSIGNED NOT NULL,
+    `note_type` VARCHAR(40) NOT NULL DEFAULT 'monitoring',
+    `title`      VARCHAR(180) NOT NULL,
+    `body`       TEXT NULL,
+    `severity`   VARCHAR(30) NOT NULL DEFAULT 'normal',
+    `status`     VARCHAR(30) NOT NULL DEFAULT 'open',
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`manager_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_manager_project_notes_project_status` (`project_id`, `status`),
+    INDEX `idx_manager_project_notes_manager_created` (`manager_id`, `created_at`),
+    INDEX `idx_manager_project_notes_severity` (`severity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 14. MILESTONES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `milestones` (
-    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `project_id`  INT UNSIGNED NOT NULL,
-    `label`       VARCHAR(200) NOT NULL,
-    `target_date` DATE NULL,
-    `actual_date` DATE NULL,
-    `status`      ENUM('pending','current','done') DEFAULT 'pending',
-    `sequence`    SMALLINT UNSIGNED DEFAULT 0,
+    `id`               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `project_id`       INT UNSIGNED NOT NULL,
+    `label`            VARCHAR(200) NOT NULL,
+    `description`      TEXT NULL,
+    `target_date`      DATE NULL,
+    `actual_date`      DATE NULL,
+    `status`           ENUM('pending','current','done') DEFAULT 'pending',
+    `progress_percent` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `priority`         VARCHAR(20) NOT NULL DEFAULT 'normal',
+    `sequence`         SMALLINT UNSIGNED DEFAULT 0,
+    `updated_by`       INT UNSIGNED NULL,
+    `completed_by`     INT UNSIGNED NULL,
+    `notes`            TEXT NULL,
+    `created_at`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`completed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
     INDEX `idx_project_seq` (`project_id`, `sequence`),
-    INDEX `idx_milestones_project_status_target` (`project_id`, `status`, `target_date`)
+    INDEX `idx_milestones_project_status` (`project_id`, `status`),
+    INDEX `idx_milestones_target_date` (`target_date`),
+    INDEX `idx_milestones_priority` (`priority`),
+    INDEX `idx_milestones_updated_by` (`updated_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `milestone_updates` (
+    `id`                   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `milestone_id`         INT UNSIGNED NOT NULL,
+    `project_id`           INT UNSIGNED NOT NULL,
+    `user_id`              INT UNSIGNED NULL,
+    `old_status`           VARCHAR(30) NULL,
+    `new_status`           VARCHAR(30) NULL,
+    `old_target_date`      DATE NULL,
+    `new_target_date`      DATE NULL,
+    `old_progress_percent` TINYINT UNSIGNED NULL,
+    `new_progress_percent` TINYINT UNSIGNED NULL,
+    `note`                 TEXT NULL,
+    `created_at`           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`milestone_id`) REFERENCES `milestones`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_milestone_updates_milestone` (`milestone_id`, `created_at`),
+    INDEX `idx_milestone_updates_project` (`project_id`, `created_at`),
+    INDEX `idx_milestone_updates_user` (`user_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -302,7 +375,17 @@ CREATE TABLE IF NOT EXISTS `subcontractors` (
     `scope_of_work`  TEXT NULL,
     `contract_value` DECIMAL(15,2) NULL,
     `status`         VARCHAR(40)  DEFAULT 'active',
+    `contact_person` VARCHAR(150) NULL,
+    `phone`          VARCHAR(60) NULL,
+    `email`          VARCHAR(180) NULL,
+    `compliance_status` ENUM('pending','compliant','issue','expired') DEFAULT 'pending',
+    `risk_status`    ENUM('normal','watch','high','critical') DEFAULT 'normal',
+    `performance_note` TEXT NULL,
+    `updated_by`     INT UNSIGNED NULL,
+    `updated_at`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_subcontractors_project_status` (`project_id`, `status`),
+    INDEX `idx_subcontractors_compliance` (`compliance_status`, `risk_status`),
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -322,7 +405,8 @@ CREATE TABLE IF NOT EXISTS `documents` (
     `is_confidential` TINYINT(1)   DEFAULT 0,
     `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`),
+    INDEX `idx_documents_project_created` (`project_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -341,6 +425,13 @@ CREATE TABLE IF NOT EXISTS `boq_items` (
     `certified_qty` DECIMAL(12,3) DEFAULT 0,
     `paid_qty`      DECIMAL(12,3) DEFAULT 0,
     `status`        VARCHAR(40)  DEFAULT 'active',
+    `review_status` VARCHAR(30)  DEFAULT 'pending',
+    `risk_status`   VARCHAR(30)  DEFAULT 'normal',
+    `manager_note`  TEXT NULL,
+    `last_reviewed_by` INT UNSIGNED NULL,
+    `last_reviewed_at` DATETIME NULL,
+    `certified_updated_by` INT UNSIGNED NULL,
+    `paid_updated_by` INT UNSIGNED NULL,
     `updated_by`    INT UNSIGNED NULL,
     `last_certified_at` DATETIME NULL,
     `last_paid_at`  DATETIME NULL,
@@ -351,7 +442,34 @@ CREATE TABLE IF NOT EXISTS `boq_items` (
     INDEX `idx_boq_project` (`project_id`),
     INDEX `idx_boq_project_section` (`project_id`, `section`),
     INDEX `idx_boq_project_status` (`project_id`, `status`),
+    INDEX `idx_boq_project_review` (`project_id`, `review_status`),
+    INDEX `idx_boq_project_risk` (`project_id`, `risk_status`),
+    INDEX `idx_boq_project_item_no` (`project_id`, `item_no`),
+    INDEX `idx_boq_reviewed_by` (`last_reviewed_by`),
     INDEX `idx_boq_item_no` (`item_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `boq_review_updates` (
+    `id`                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `boq_item_id`       INT UNSIGNED NOT NULL,
+    `project_id`        INT UNSIGNED NOT NULL,
+    `user_id`           INT UNSIGNED NULL,
+    `old_certified_qty` DECIMAL(12,3) NULL,
+    `new_certified_qty` DECIMAL(12,3) NULL,
+    `old_paid_qty`      DECIMAL(12,3) NULL,
+    `new_paid_qty`      DECIMAL(12,3) NULL,
+    `old_review_status` VARCHAR(30) NULL,
+    `new_review_status` VARCHAR(30) NULL,
+    `old_risk_status`   VARCHAR(30) NULL,
+    `new_risk_status`   VARCHAR(30) NULL,
+    `note`              TEXT NULL,
+    `created_at`        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`boq_item_id`) REFERENCES `boq_items`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_boq_review_updates_item` (`boq_item_id`, `created_at`),
+    INDEX `idx_boq_review_updates_project` (`project_id`, `created_at`),
+    INDEX `idx_boq_review_updates_user` (`user_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -383,7 +501,9 @@ CREATE TABLE IF NOT EXISTS `programme_tasks` (
     INDEX `idx_programme_project_dates` (`project_id`, `planned_start`, `planned_end`),
     INDEX `idx_programme_assigned_to` (`assigned_to`),
     INDEX `idx_programme_dependency` (`depends_on_task_id`),
-    INDEX `idx_programme_project_status_end` (`project_id`, `status`, `end_date`)
+    INDEX `idx_programme_project_status_end` (`project_id`, `status`, `end_date`),
+    INDEX `idx_programme_project_critical_end` (`project_id`, `critical_path`, `planned_end`),
+    INDEX `idx_programme_project_assignee_status` (`project_id`, `assigned_to`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -438,7 +558,8 @@ CREATE TABLE IF NOT EXISTS `material_approvals` (
     `notes`          TEXT NULL,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
-    FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`)
+    FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
+    INDEX `idx_material_approvals_project_status_date` (`project_id`, `status`, `submitted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -508,7 +629,15 @@ CREATE TABLE IF NOT EXISTS `site_meeting_minutes` (
     `action_items_json` TEXT NULL,
     `document_path`    VARCHAR(255) NULL,
     `recorded_by`      INT UNSIGNED NOT NULL,
+    `status`           ENUM('draft','recorded','reviewed','closed') DEFAULT 'recorded',
+    `action_status`    ENUM('none','open','in-progress','completed','overdue') DEFAULT 'none',
+    `updated_by`       INT UNSIGNED NULL,
+    `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `reviewed_at`      DATETIME NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_smm_project_date` (`project_id`, `meeting_date`),
+    INDEX `idx_smm_status` (`status`, `meeting_date`),
+    INDEX `idx_smm_action_status` (`action_status`, `meeting_date`),
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -526,7 +655,13 @@ CREATE TABLE IF NOT EXISTS `community_liaison` (
     `resolution`      TEXT NULL,
     `follow_up_date`  DATE NULL,
     `recorded_by`     INT UNSIGNED NOT NULL,
+    `status`          ENUM('open','follow-up','resolved','closed') DEFAULT 'open',
+    `updated_by`      INT UNSIGNED NULL,
+    `updated_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `closed_at`       DATETIME NULL,
     `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_cl_project_date` (`project_id`, `log_date`),
+    INDEX `idx_cl_status_followup` (`status`, `follow_up_date`),
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -545,7 +680,16 @@ CREATE TABLE IF NOT EXISTS `hs_incidents` (
     `corrective_action` TEXT NULL,
     `reported_by`      INT UNSIGNED NOT NULL,
     `severity`         ENUM('low','medium','high','critical') DEFAULT 'medium',
+    `status`           ENUM('open','investigating','action-pending','resolved','closed') DEFAULT 'open',
+    `follow_up_date`   DATE NULL,
+    `closed_at`        DATETIME NULL,
+    `updated_by`       INT UNSIGNED NULL,
+    `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `attachment_path`  VARCHAR(255) NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_hs_project_date` (`project_id`, `incident_date`),
+    INDEX `idx_hs_status_severity` (`status`, `severity`),
+    INDEX `idx_hs_followup` (`follow_up_date`, `status`),
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`reported_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -582,7 +726,8 @@ CREATE TABLE IF NOT EXISTS `quality_tests` (
     `document_path`    VARCHAR(255) NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`tested_by`)  REFERENCES `users`(`id`)
+    FOREIGN KEY (`tested_by`)  REFERENCES `users`(`id`),
+    INDEX `idx_quality_tests_project_result_date` (`project_id`, `pass_fail`, `test_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -600,7 +745,8 @@ CREATE TABLE IF NOT EXISTS `inspection_test_plans` (
     `document_path`    VARCHAR(255) NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`inspected_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`inspected_by`) REFERENCES `users`(`id`),
+    INDEX `idx_itp_project_date` (`project_id`, `inspection_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -621,7 +767,8 @@ CREATE TABLE IF NOT EXISTS `non_conformance_reports` (
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`raised_by`)  REFERENCES `users`(`id`),
-    FOREIGN KEY (`closed_by`)  REFERENCES `users`(`id`)
+    FOREIGN KEY (`closed_by`)  REFERENCES `users`(`id`),
+    INDEX `idx_ncr_project_status_date` (`project_id`, `status`, `raised_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -642,7 +789,8 @@ CREATE TABLE IF NOT EXISTS `shop_drawings` (
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
-    FOREIGN KEY (`reviewed_by`)  REFERENCES `users`(`id`)
+    FOREIGN KEY (`reviewed_by`)  REFERENCES `users`(`id`),
+    INDEX `idx_shop_drawings_project_status_date` (`project_id`, `status`, `submitted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -664,7 +812,8 @@ CREATE TABLE IF NOT EXISTS `defects` (
     `created_at`  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`raised_by`)   REFERENCES `users`(`id`),
-    FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`),
+    INDEX `idx_defects_project_status_date` (`project_id`, `status`, `raised_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -683,6 +832,8 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     `status`           ENUM('draft','submitted','clerk-endorsed','certified','endorsed','approved','rejected','paid') DEFAULT 'draft',
     `submitted_at`     DATETIME NULL,
     `certified_at`     DATETIME NULL,
+    `certified_by`      INT UNSIGNED NULL,
+    `certification_comment` TEXT NULL,
     `approved_at`      DATETIME NULL,
     `approved_by`      INT UNSIGNED NULL,
     `rejected_by`      INT UNSIGNED NULL,
@@ -698,6 +849,8 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     UNIQUE KEY `uq_project_ipc_no` (`project_id`, `ipc_number`),
     INDEX `idx_ipcs_status` (`status`),
     INDEX `idx_ipcs_project_status` (`project_id`, `status`),
+    INDEX `idx_ipcs_project_status_submitted` (`project_id`, `status`, `submitted_at`),
+    INDEX `idx_ipcs_project_status_certified` (`project_id`, `status`, `certified_at`),
     INDEX `idx_ipcs_contractor_status` (`contractor_id`, `status`),
     INDEX `idx_ipcs_submitted_at` (`submitted_at`),
     INDEX `idx_ipcs_approved_at` (`approved_at`),
@@ -719,6 +872,7 @@ CREATE TABLE IF NOT EXISTS `ipc_lines` (
     FOREIGN KEY (`ipc_id`)      REFERENCES `ipcs`(`id`)      ON DELETE CASCADE,
     FOREIGN KEY (`boq_item_id`) REFERENCES `boq_items`(`id`) ON DELETE SET NULL,
     INDEX `idx_ipc_lines_ipc` (`ipc_id`),
+    INDEX `idx_ipc_lines_ipc_boq` (`ipc_id`, `boq_item_id`),
     INDEX `idx_ipc_lines_boq` (`boq_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -736,6 +890,7 @@ CREATE TABLE IF NOT EXISTS `ipc_approvals` (
     FOREIGN KEY (`ipc_id`)    REFERENCES `ipcs`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`action_by`) REFERENCES `users`(`id`),
     INDEX `idx_ipc_approvals_ipc_step` (`ipc_id`, `step`),
+    INDEX `idx_ipc_approvals_ipc_step_actioned` (`ipc_id`, `step`, `actioned_at`),
     INDEX `idx_ipc_approvals_action` (`action`),
     INDEX `idx_ipc_approvals_actioned_at` (`actioned_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -758,7 +913,8 @@ CREATE TABLE IF NOT EXISTS `variations` (
     `created_at`          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
-    FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`)
+    FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
+    INDEX `idx_variations_project_status_created` (`project_id`, `status`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -776,7 +932,18 @@ CREATE TABLE IF NOT EXISTS `eot_requests` (
     `granted_days`        SMALLINT UNSIGNED NULL,
     `approved_by`         INT UNSIGNED NULL,
     `approved_at`         DATETIME NULL,
+    `manager_recommendation` ENUM('pending','approve','partial','reject','clarification') DEFAULT 'pending',
+    `manager_recommended_days` SMALLINT UNSIGNED NULL,
+    `manager_review_note` TEXT NULL,
+    `manager_reviewed_by` INT UNSIGNED NULL,
+    `manager_reviewed_at` DATETIME NULL,
+    `delay_category`      VARCHAR(80) NULL,
+    `impact_summary`      TEXT NULL,
+    `updated_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `created_at`          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_eot_project_status` (`project_id`, `status`),
+    INDEX `idx_eot_project_status_created` (`project_id`, `status`, `created_at`),
+    INDEX `idx_eot_manager_review` (`manager_recommendation`, `manager_reviewed_at`),
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`)
@@ -793,7 +960,14 @@ CREATE TABLE IF NOT EXISTS `liquidated_damages` (
     `total_ld`          DECIMAL(15,2) DEFAULT 0,
     `applied_to_ipc_id` INT UNSIGNED NULL,
     `notes`             TEXT NULL,
+    `status`            ENUM('draft','pending','applied','suspended','waived') DEFAULT 'draft',
+    `calculated_by`     INT UNSIGNED NULL,
+    `updated_by`        INT UNSIGNED NULL,
+    `updated_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `applied_at`        DATETIME NULL,
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_ld_project_status` (`project_id`, `status`),
+    INDEX `idx_ld_ipc` (`applied_to_ipc_id`),
     FOREIGN KEY (`project_id`)        REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`applied_to_ipc_id`) REFERENCES `ipcs`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -869,7 +1043,8 @@ CREATE TABLE IF NOT EXISTS `attendance_gateways` (
     `notes`       TEXT NULL,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`opened_by`)  REFERENCES `users`(`id`),
-    UNIQUE KEY `uq_project_date` (`project_id`, `date`)
+    UNIQUE KEY `uq_project_date` (`project_id`, `date`),
+    INDEX `idx_gateways_project_date_open` (`project_id`, `date`, `is_open`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -891,7 +1066,8 @@ CREATE TABLE IF NOT EXISTS `attendance_records` (
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`)            ON DELETE CASCADE,
     FOREIGN KEY (`gateway_id`) REFERENCES `attendance_gateways`(`id`) ON DELETE CASCADE,
     UNIQUE KEY `uq_user_date` (`user_id`, `date`),
-    INDEX `idx_attendance_project_date_status` (`project_id`, `date`, `status`)
+    INDEX `idx_attendance_project_date_status` (`project_id`, `date`, `status`),
+    INDEX `idx_attendance_date_user` (`date`, `user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1422,9 +1598,12 @@ CREATE TABLE IF NOT EXISTS `report_runs` (
     `filters_json` JSON NULL,
     `row_count`    INT UNSIGNED DEFAULT 0,
     `status`       ENUM('generated','failed') DEFAULT 'generated',
+    `scope_role`   VARCHAR(40) NULL,
+    `scope_user_id` INT UNSIGNED NULL,
     `created_at`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_report_runs_user_created` (`user_id`, `created_at`),
     INDEX `idx_report_runs_type_created` (`report_type`, `created_at`),
+    INDEX `idx_report_runs_scope` (`scope_role`, `scope_user_id`, `created_at`),
     CONSTRAINT `fk_report_runs_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

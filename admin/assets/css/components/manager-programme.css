@@ -1,0 +1,74 @@
+.manager-programme-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-programme-page .programme-hero,
+.manager-programme-page .programme-project-strip,
+.manager-programme-page .programme-board,
+.manager-programme-page .programme-table-card {
+  border-radius: 8px;
+}
+
+.manager-programme-hero {
+  margin-bottom: 0;
+}
+
+.manager-programme-project-strip {
+  margin-bottom: 0;
+}
+
+.manager-programme-page .programme-stats {
+  margin-bottom: 0;
+}
+
+.manager-programme-page .programme-board,
+.manager-programme-page .programme-table-card {
+  overflow: hidden;
+}
+
+.manager-programme-page .programme-project-meta span,
+.manager-programme-page .card__subtitle {
+  color: var(--admin-muted, #64748b);
+}
+
+.manager-programme-page .gantt-row {
+  background: #fff;
+}
+
+.manager-programme-page .gantt-row:hover {
+  border-color: var(--admin-primary, #183d03);
+}
+
+.manager-programme-page .programme-table td {
+  vertical-align: top;
+}
+
+.manager-programme-page .programme-table td:last-child {
+  white-space: nowrap;
+}
+
+.manager-programme-page .programme-modal {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.manager-programme-page .programme-modal form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(90vh - 62px);
+}
+
+.manager-programme-page .programme-modal .modal__body {
+  overflow: auto;
+}
+
+.manager-programme-page .checkbox-card {
+  border-radius: 8px;
+}
+
+@media (max-width: 760px) {
+  .manager-programme-page .programme-modal {
+    width: min(100%, calc(100vw - 20px));
+  }
+}

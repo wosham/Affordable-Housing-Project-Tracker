@@ -398,7 +398,7 @@ function render_project_form(array $old, array $errors, array $categories, array
     <div class="card__header">
       <div>
         <h2 class="card__title">Project Identity</h2>
-        <p class="card__subtitle">Core public and administrative details used across dashboards and APIs.</p>
+        <p class="card__subtitle">Core public and administrative details used across dashboards and project pages.</p>
       </div>
     </div>
     <div class="form-grid form-grid--2">
@@ -408,7 +408,7 @@ function render_project_form(array $old, array $errors, array $categories, array
       </label>
       <label class="form-field"> <span class="form-label">Slug</span>
         <input class="form-input <?= isset($errors['slug']) ? 'is-error' : '' ?>" name="slug" value="<?= Security::e($old['slug']) ?>" placeholder="auto-generated if empty">
-        <?= field_error($errors, 'slug') ?><span class="form-hint">Used in public links and APIs.</span>
+        <?= field_error($errors, 'slug') ?><span class="form-hint">Used in public links and project pages.</span>
       </label>
       <label class="form-field"> <span class="form-label">Category</span>
         <select class="form-select <?= isset($errors['category_id']) ? 'is-error' : '' ?>" name="category_id" required>

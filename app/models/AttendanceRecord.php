@@ -94,6 +94,11 @@ class AttendanceRecord extends Model
         );
     }
 
+    public static function detailedSqlForManager(): string
+    {
+        return self::selectSql();
+    }
+
     private static function selectSql(): string
     {
         return 'SELECT ar.*, p.name AS project_name, p.slug AS project_slug,

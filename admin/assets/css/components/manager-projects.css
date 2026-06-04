@@ -1,0 +1,202 @@
+.manager-projects-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.manager-projects-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manager-projects-hero h2 {
+  margin: .35rem 0 .25rem;
+  font-size: 1.55rem;
+}
+
+.manager-projects-hero p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.manager-projects-hero__actions,
+.manager-project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.manager-projects-hero__actions {
+  justify-content: flex-end;
+}
+
+.manager-project-filter {
+  margin-bottom: 1rem;
+}
+
+.manager-project-table td {
+  vertical-align: middle;
+}
+
+.manager-project-table td small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.manager-project-progress {
+  width: min(180px, 100%);
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.manager-project-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-primary);
+}
+
+.manager-project-drawer[hidden] {
+  display: none;
+}
+
+.manager-project-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 1120;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--admin-overlay);
+}
+
+.manager-project-drawer__panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(860px, 100vw);
+  height: 100%;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-lg);
+}
+
+.manager-project-drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.manager-project-drawer__header h2 {
+  margin: .25rem 0;
+}
+
+.manager-project-drawer__header p {
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.manager-project-drawer__body {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  overflow: auto;
+  padding: 1rem;
+  background: var(--admin-bg);
+}
+
+.manager-project-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.manager-project-detail-card {
+  display: grid;
+  gap: .25rem;
+  padding: .85rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.manager-project-detail-card strong {
+  font-size: 1.2rem;
+}
+
+.manager-project-detail-card span {
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.manager-project-section {
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.manager-project-section h3 {
+  margin: 0 0 .75rem;
+  font-size: 1rem;
+}
+
+.manager-project-list {
+  display: grid;
+  gap: .5rem;
+}
+
+.manager-project-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .65rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+}
+
+.manager-project-list__item small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+}
+
+.manager-project-note-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.manager-project-note-form .form-field--wide,
+.manager-project-note-form .form-actions {
+  grid-column: 1 / -1;
+}
+
+.manager-project-note-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .manager-projects-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manager-projects-hero__actions,
+  .manager-projects-hero__actions .btn {
+    width: 100%;
+  }
+
+  .manager-project-detail-grid,
+  .manager-project-note-form {
+    grid-template-columns: 1fr;
+  }
+}
