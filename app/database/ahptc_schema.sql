@@ -492,6 +492,10 @@ CREATE TABLE IF NOT EXISTS `programme_tasks` (
     `baseline_start`      DATE NULL,
     `baseline_end`        DATE NULL,
     `notes`               TEXT NULL,
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
     `updated_by`          INT UNSIGNED NULL,
     `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -503,7 +507,8 @@ CREATE TABLE IF NOT EXISTS `programme_tasks` (
     INDEX `idx_programme_dependency` (`depends_on_task_id`),
     INDEX `idx_programme_project_status_end` (`project_id`, `status`, `end_date`),
     INDEX `idx_programme_project_critical_end` (`project_id`, `critical_path`, `planned_end`),
-    INDEX `idx_programme_project_assignee_status` (`project_id`, `assigned_to`, `status`)
+    INDEX `idx_programme_project_assignee_status` (`project_id`, `assigned_to`, `status`),
+    INDEX `idx_programme_consultant_review` (`project_id`, `consultant_review_status`, `planned_end`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -559,7 +564,8 @@ CREATE TABLE IF NOT EXISTS `material_approvals` (
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
-    INDEX `idx_material_approvals_project_status_date` (`project_id`, `status`, `submitted_date`)
+    INDEX `idx_material_approvals_project_status_date` (`project_id`, `status`, `submitted_date`),
+    INDEX `idx_material_status_date` (`status`, `submitted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -785,12 +791,15 @@ CREATE TABLE IF NOT EXISTS `shop_drawings` (
     `status`         ENUM('under-review','approved','rejected','resubmit') DEFAULT 'under-review',
     `reviewed_by`    INT UNSIGNED NULL,
     `review_date`    DATE NULL,
+    `review_note`    TEXT NULL,
     `document_path`  VARCHAR(255) NULL,
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`reviewed_by`)  REFERENCES `users`(`id`),
-    INDEX `idx_shop_drawings_project_status_date` (`project_id`, `status`, `submitted_date`)
+    INDEX `idx_shop_drawings_project_status_date` (`project_id`, `status`, `submitted_date`),
+    INDEX `idx_shop_drawings_status_date` (`status`, `submitted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -908,13 +917,23 @@ CREATE TABLE IF NOT EXISTS `variations` (
     `amount`              DECIMAL(15,2) DEFAULT 0,
     `impact_on_time_days` SMALLINT     DEFAULT 0,
     `status`              ENUM('pending','approved','rejected') DEFAULT 'pending',
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
+    `consultant_recommended_amount` DECIMAL(15,2) NULL,
+    `consultant_time_impact_days` SMALLINT UNSIGNED NULL,
+    `consultant_cost_impact_status` VARCHAR(30) NOT NULL DEFAULT 'moderate',
+    `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
     `approved_by`         INT UNSIGNED NULL,
     `approved_at`         DATETIME NULL,
     `created_at`          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
-    INDEX `idx_variations_project_status_created` (`project_id`, `status`, `created_at`)
+    INDEX `idx_variations_project_status_created` (`project_id`, `status`, `created_at`),
+    INDEX `idx_variations_consultant_review` (`project_id`, `consultant_review_status`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -939,11 +958,19 @@ CREATE TABLE IF NOT EXISTS `eot_requests` (
     `manager_reviewed_at` DATETIME NULL,
     `delay_category`      VARCHAR(80) NULL,
     `impact_summary`      TEXT NULL,
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
+    `consultant_recommended_days` SMALLINT UNSIGNED NULL,
+    `consultant_delay_category` VARCHAR(80) NULL,
+    `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
     `updated_at`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `created_at`          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_eot_project_status` (`project_id`, `status`),
     INDEX `idx_eot_project_status_created` (`project_id`, `status`, `created_at`),
     INDEX `idx_eot_manager_review` (`manager_recommendation`, `manager_reviewed_at`),
+    INDEX `idx_eot_consultant_review` (`project_id`, `consultant_review_status`, `created_at`),
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`)
