@@ -1,0 +1,690 @@
+.contractor-project-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.contractor-project-page .card {
+  border-radius: 8px;
+}
+
+.contractor-project-hero,
+.contractor-project-selector,
+.contractor-project-profile,
+.contractor-project-stat {
+  overflow: hidden;
+}
+
+.contractor-project-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.contractor-project-hero h2 {
+  margin: .35rem 0 .25rem;
+}
+
+.contractor-project-hero p,
+.contractor-project-selector label,
+.contractor-project-profile p,
+.contractor-project-list-item small,
+.contractor-timeline-item span,
+.contractor-timeline-item p {
+  color: var(--admin-text-muted);
+}
+
+.contractor-project-actions,
+.contractor-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+
+.contractor-project-selector {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .85rem 1rem;
+}
+
+.contractor-project-selector label {
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: .75rem;
+}
+
+.contractor-project-selector select,
+.contractor-progress-form input,
+.contractor-progress-form select,
+.contractor-progress-form textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  padding: .65rem .75rem;
+  font: inherit;
+  color: var(--admin-text);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.contractor-project-selector select:focus,
+.contractor-progress-form input:focus,
+.contractor-progress-form select:focus,
+.contractor-progress-form textarea:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, .22);
+  outline: none;
+}
+
+.contractor-progress-form textarea::placeholder,
+.contractor-progress-form input::placeholder {
+  color: color-mix(in srgb, var(--admin-text-muted) 78%, #fff);
+  font-weight: 650;
+}
+
+.contractor-project-selector select {
+  max-width: 420px;
+}
+
+.contractor-project-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.contractor-project-grid--overview,
+.contractor-project-grid--main {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  align-items: start;
+}
+
+.contractor-project-profile {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.contractor-project-progress-ring {
+  --progress: 0;
+  width: 148px;
+  height: 148px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #fff 58%, transparent 59%),
+    conic-gradient(var(--admin-primary) calc(var(--progress) * 1%), var(--admin-lime-soft) 0);
+  text-align: center;
+}
+
+.contractor-project-progress-ring strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.contractor-project-progress-ring span {
+  color: var(--admin-text-muted);
+  font-size: .8rem;
+}
+
+.contractor-project-meta,
+.contractor-contact-list,
+.contractor-submission-grid {
+  display: grid;
+  gap: .55rem;
+}
+
+.contractor-project-meta {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.contractor-project-meta span,
+.contractor-contact-list span,
+.contractor-submission-grid a {
+  display: grid;
+  gap: .12rem;
+  padding: .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.contractor-project-meta strong,
+.contractor-contact-list strong,
+.contractor-submission-grid strong {
+  color: var(--admin-text);
+}
+
+.contractor-project-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: .9rem;
+}
+
+.contractor-project-stat {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 104px;
+  padding: 1rem;
+}
+
+.contractor-project-stat > span {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--admin-lime-soft);
+  color: var(--admin-primary);
+}
+
+.contractor-project-stat div {
+  min-width: 0;
+}
+
+.contractor-project-stat strong {
+  display: block;
+  font-size: clamp(1.02rem, 1.25vw, 1.25rem);
+  overflow-wrap: anywhere;
+  line-height: 1.14;
+}
+
+.contractor-project-stat small,
+.contractor-project-stat em {
+  display: block;
+}
+
+.contractor-project-stat em {
+  color: var(--admin-text-muted);
+  font-style: normal;
+  font-size: .78rem;
+}
+
+.contractor-project-list,
+.contractor-timeline {
+  display: grid;
+  gap: .6rem;
+}
+
+.contractor-project-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .78rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--admin-text);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.contractor-project-list-item:hover {
+  border-color: var(--admin-border-strong);
+  background: var(--admin-surface-muted);
+}
+
+.contractor-project-list-item > span {
+  min-width: 0;
+}
+
+.contractor-project-list-item strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.contractor-project-list-item em {
+  display: block;
+  color: var(--admin-primary);
+  font-style: normal;
+  font-weight: 850;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.contractor-project-list-item > span:last-child {
+  flex: 0 0 auto;
+  max-width: 128px;
+}
+
+.contractor-project-list-item small {
+  line-height: 1.35;
+}
+
+.contractor-project-list-item > span:last-child small {
+  text-align: right;
+  white-space: normal;
+}
+
+.contractor-timeline-item {
+  padding: .85rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.contractor-timeline-item strong,
+.contractor-timeline-item span,
+.contractor-timeline-item p,
+.contractor-timeline-item a {
+  display: block;
+}
+
+.contractor-timeline-item p {
+  margin: .4rem 0;
+}
+
+.contractor-timeline-item a {
+  width: fit-content;
+  color: var(--admin-primary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.contractor-timeline-item a:hover {
+  text-decoration: underline;
+}
+
+.contractor-submission-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.contractor-progress-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.contractor-progress-form label {
+  display: grid;
+  gap: .35rem;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.contractor-progress-form label > span,
+.contractor-progress-form label:not(.contractor-upload-box) {
+  min-width: 0;
+}
+
+.contractor-progress-form textarea {
+  resize: vertical;
+  min-height: 104px;
+  line-height: 1.45;
+}
+
+.contractor-progress-control {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: .9rem;
+  align-items: end;
+  padding: .85rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-soft);
+}
+
+.contractor-progress-control input[type="range"] {
+  height: 38px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--admin-primary);
+}
+
+.contractor-progress-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-progress-control input[type="range"]::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -6px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--admin-primary);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .25);
+  -webkit-appearance: none;
+}
+
+.contractor-progress-control input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-progress-control input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--admin-primary);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .25);
+}
+
+.contractor-upload-box,
+.contractor-evidence-picker {
+  padding: 1rem;
+  border: 1px dashed var(--admin-border-strong);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.contractor-evidence-picker {
+  display: grid;
+  gap: .9rem;
+}
+
+.contractor-upload-box {
+  cursor: pointer;
+}
+
+.contractor-upload-box span,
+.contractor-evidence-picker__label {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  color: var(--admin-primary);
+  font-weight: 900;
+}
+
+.contractor-upload-box small,
+.contractor-evidence-picker p,
+.contractor-evidence-preview small,
+.contractor-media-modal p,
+.contractor-media-modal footer span {
+  color: var(--admin-text-muted);
+}
+
+.contractor-evidence-picker p {
+  margin: .25rem 0 0;
+  font-weight: 600;
+}
+
+.contractor-evidence-picker__actions,
+.contractor-media-modal footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contractor-upload-box:hover,
+.contractor-upload-box.has-file,
+.contractor-evidence-picker.has-file {
+  border-color: var(--admin-primary);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(163, 230, 53, .22);
+}
+
+.contractor-upload-box input[type="file"] {
+  margin-top: .55rem;
+  min-height: 0;
+  padding: .55rem;
+  background: #fff;
+}
+
+.contractor-evidence-preview {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  gap: .75rem;
+  align-items: center;
+  padding: .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.contractor-evidence-preview[hidden] {
+  display: none;
+}
+
+.contractor-evidence-preview img {
+  width: 72px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-evidence-preview strong,
+.contractor-evidence-preview small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contractor-media-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, .62);
+}
+
+.contractor-media-overlay[hidden] {
+  display: none;
+}
+
+.contractor-media-modal {
+  width: min(1040px, calc(100vw - 2rem));
+  max-height: min(760px, calc(100vh - 2rem));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+}
+
+.contractor-media-modal header,
+.contractor-media-toolbar,
+.contractor-media-modal footer {
+  padding: 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.contractor-media-modal header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.contractor-media-modal h2 {
+  margin: .35rem 0 .15rem;
+}
+
+.contractor-media-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .8rem;
+  align-items: end;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-media-toolbar label {
+  display: grid;
+  gap: .35rem;
+  font-weight: 850;
+  color: var(--admin-text);
+}
+
+.contractor-media-toolbar input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: .65rem .75rem;
+  font: inherit;
+}
+
+.contractor-media-toolbar input:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, .22);
+  outline: 0;
+}
+
+.contractor-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .75rem;
+  min-height: 260px;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.contractor-media-card {
+  display: grid;
+  gap: .5rem;
+  min-width: 0;
+  padding: .6rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.contractor-media-card:hover,
+.contractor-media-card:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.contractor-media-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-media-card strong,
+.contractor-media-card small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contractor-media-card small {
+  color: var(--admin-text-muted);
+}
+
+.contractor-media-modal footer {
+  border-top: 1px solid var(--admin-border);
+  border-bottom: 0;
+}
+
+.contractor-progress-warning {
+  padding: .8rem;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 700;
+}
+
+.contractor-progress-form-card .card__header {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.contractor-progress-form-card .badge {
+  max-width: min(360px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contractor-toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 2rem));
+  padding: .85rem 1rem;
+  border-radius: 8px;
+  background: var(--admin-primary);
+  color: #fff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, .2);
+}
+
+.contractor-toast.is-error {
+  background: #b91c1c;
+}
+
+@media (max-width: 1180px) {
+  .contractor-project-grid--overview,
+  .contractor-project-grid--main {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-project-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .contractor-project-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .contractor-project-hero,
+  .contractor-project-selector,
+  .contractor-project-profile {
+    display: block;
+  }
+
+  .contractor-project-actions,
+  .contractor-form-actions {
+    justify-content: flex-start;
+    margin-top: 1rem;
+  }
+
+  .contractor-project-progress-ring {
+    margin-bottom: 1rem;
+  }
+
+  .contractor-project-meta,
+  .contractor-project-stats,
+  .contractor-submission-grid,
+  .contractor-progress-control {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-project-list-item {
+    align-items: flex-start;
+  }
+
+  .contractor-project-list-item > span:last-child {
+    max-width: 96px;
+  }
+}

@@ -194,6 +194,11 @@ class MediaLibrary extends Model
             $bindings[] = self::normaliseFolder((string)$filters['folder']);
         }
 
+        if (!empty($filters['uploaded_by'])) {
+            $where[] = 'ml.uploaded_by = ?';
+            $bindings[] = (int)$filters['uploaded_by'];
+        }
+
         if (!empty($filters['type'])) {
             $type = (string)$filters['type'];
             if ($type === 'image') {

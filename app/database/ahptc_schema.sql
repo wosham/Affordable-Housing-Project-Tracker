@@ -238,6 +238,7 @@ CREATE TABLE IF NOT EXISTS `projects` (
     FOREIGN KEY (`constituency_id`) REFERENCES `constituencies`(`id`),
     INDEX `idx_status`   (`status`),
     INDEX `idx_featured` (`is_featured`),
+    INDEX `idx_projects_contractor_status` (`contractor_id`, `status`),
     INDEX `idx_projects_consultant_status` (`consultant_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -365,6 +366,34 @@ CREATE TABLE IF NOT EXISTS `milestone_updates` (
     INDEX `idx_milestone_updates_user` (`user_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `project_progress_updates` (
+    `id`                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `project_id`        INT UNSIGNED NOT NULL,
+    `submitted_by`      INT UNSIGNED NOT NULL,
+    `old_progress`      TINYINT UNSIGNED NULL,
+    `new_progress`      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `current_milestone` VARCHAR(255) NULL,
+    `note`              TEXT NULL,
+    `photo_path`        VARCHAR(255) NULL,
+    `media_id`          INT UNSIGNED NULL,
+    `weather_note`      VARCHAR(180) NULL,
+    `work_summary`      TEXT NULL,
+    `blockers`          TEXT NULL,
+    `status`            VARCHAR(30) NOT NULL DEFAULT 'submitted',
+    `reviewed_by`       INT UNSIGNED NULL,
+    `reviewed_at`       DATETIME NULL,
+    `review_note`       TEXT NULL,
+    `created_at`        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`reviewed_by`)  REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_progress_project_created` (`project_id`, `created_at`),
+    INDEX `idx_progress_user_created` (`submitted_by`, `created_at`),
+    INDEX `idx_progress_status_created` (`status`, `created_at`),
+    INDEX `idx_progress_media` (`media_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- 15. SUBCONTRACTORS
 -- ============================================================
@@ -386,7 +415,8 @@ CREATE TABLE IF NOT EXISTS `subcontractors` (
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_subcontractors_project_status` (`project_id`, `status`),
     INDEX `idx_subcontractors_compliance` (`compliance_status`, `risk_status`),
-    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    INDEX `idx_equipment_project_dates` (`project_id`, `date_on_site`, `date_off_site`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -403,10 +433,17 @@ CREATE TABLE IF NOT EXISTS `documents` (
     `version`         VARCHAR(20)  DEFAULT '1.0',
     `description`     TEXT NULL,
     `is_confidential` TINYINT(1)   DEFAULT 0,
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
     `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`),
-    INDEX `idx_documents_project_created` (`project_id`, `created_at`)
+    INDEX `idx_documents_project_created` (`project_id`, `created_at`),
+    INDEX `idx_documents_consultant_review` (`project_id`, `consultant_review_status`, `created_at`),
+    INDEX `idx_documents_category_review` (`category`, `consultant_review_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -544,7 +581,8 @@ CREATE TABLE IF NOT EXISTS `material_deliveries` (
     `approved`         TINYINT(1)   DEFAULT 0,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`received_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`received_by`) REFERENCES `users`(`id`),
+    INDEX `idx_material_deliveries_project_date` (`project_id`, `delivery_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -565,6 +603,7 @@ CREATE TABLE IF NOT EXISTS `material_approvals` (
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
     INDEX `idx_material_approvals_project_status_date` (`project_id`, `status`, `submitted_date`),
+    INDEX `idx_material_project_user_status` (`project_id`, `submitted_by`, `status`),
     INDEX `idx_material_status_date` (`status`, `submitted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -582,7 +621,8 @@ CREATE TABLE IF NOT EXISTS `labour_register` (
     `recorded_by`      INT UNSIGNED NOT NULL,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`),
-    UNIQUE KEY `uq_project_date` (`project_id`, `diary_date`)
+    UNIQUE KEY `uq_project_date` (`project_id`, `diary_date`),
+    INDEX `idx_labour_project_date` (`project_id`, `diary_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -592,16 +632,24 @@ CREATE TABLE IF NOT EXISTS `site_diaries` (
     `id`            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `project_id`    INT UNSIGNED NOT NULL,
     `diary_date`    DATE         NOT NULL,
+    `report_title`  VARCHAR(180) NULL,
+    `weather_summary` VARCHAR(180) NULL,
     `work_done`     TEXT NULL,
     `issues_raised` TEXT NULL,
     `next_day_plan` TEXT NULL,
     `recorded_by`   INT UNSIGNED NOT NULL,
     `approved_by`   INT UNSIGNED NULL,
     `approved_at`   DATETIME     NULL,
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`),
-    UNIQUE KEY `uq_project_date` (`project_id`, `diary_date`)
+    UNIQUE KEY `uq_project_date` (`project_id`, `diary_date`),
+    INDEX `idx_site_diaries_consultant_review` (`project_id`, `consultant_review_status`, `diary_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -730,10 +778,18 @@ CREATE TABLE IF NOT EXISTS `quality_tests` (
     `lab_ref`          VARCHAR(80)  NULL,
     `tested_by`        INT UNSIGNED NOT NULL,
     `document_path`    VARCHAR(255) NULL,
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
+    `consultant_severity` VARCHAR(30) NOT NULL DEFAULT 'minor',
+    `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`tested_by`)  REFERENCES `users`(`id`),
-    INDEX `idx_quality_tests_project_result_date` (`project_id`, `pass_fail`, `test_date`)
+    INDEX `idx_quality_tests_project_result_date` (`project_id`, `pass_fail`, `test_date`),
+    INDEX `idx_quality_consultant_review` (`project_id`, `consultant_review_status`, `test_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -749,10 +805,18 @@ CREATE TABLE IF NOT EXISTS `inspection_test_plans` (
     `outcome`          VARCHAR(100) NULL,
     `witness_required` TINYINT(1)   DEFAULT 0,
     `document_path`    VARCHAR(255) NULL,
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
+    `consultant_severity` VARCHAR(30) NOT NULL DEFAULT 'minor',
+    `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`inspected_by`) REFERENCES `users`(`id`),
-    INDEX `idx_itp_project_date` (`project_id`, `inspection_date`)
+    INDEX `idx_itp_project_date` (`project_id`, `inspection_date`),
+    INDEX `idx_itp_consultant_review` (`project_id`, `consultant_review_status`, `inspection_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -770,11 +834,19 @@ CREATE TABLE IF NOT EXISTS `non_conformance_reports` (
     `closed_by`         INT UNSIGNED NULL,
     `closed_date`       DATE NULL,
     `status`            ENUM('open','in-progress','closed') DEFAULT 'open',
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
+    `consultant_severity` VARCHAR(30) NOT NULL DEFAULT 'minor',
+    `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`raised_by`)  REFERENCES `users`(`id`),
     FOREIGN KEY (`closed_by`)  REFERENCES `users`(`id`),
-    INDEX `idx_ncr_project_status_date` (`project_id`, `status`, `raised_date`)
+    INDEX `idx_ncr_project_status_date` (`project_id`, `status`, `raised_date`),
+    INDEX `idx_ncr_consultant_review` (`project_id`, `consultant_review_status`, `raised_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -799,6 +871,7 @@ CREATE TABLE IF NOT EXISTS `shop_drawings` (
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`reviewed_by`)  REFERENCES `users`(`id`),
     INDEX `idx_shop_drawings_project_status_date` (`project_id`, `status`, `submitted_date`),
+    INDEX `idx_shop_project_user_status` (`project_id`, `submitted_by`, `status`),
     INDEX `idx_shop_drawings_status_date` (`status`, `submitted_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -818,11 +891,19 @@ CREATE TABLE IF NOT EXISTS `defects` (
     `due_date`    DATE NULL,
     `closed_date` DATE NULL,
     `status`      ENUM('open','in-progress','resolved','closed') DEFAULT 'open',
+    `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `consultant_review_note` TEXT NULL,
+    `consultant_reviewed_by` INT UNSIGNED NULL,
+    `consultant_reviewed_at` DATETIME NULL,
+    `consultant_severity` VARCHAR(30) NOT NULL DEFAULT 'minor',
+    `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
     `created_at`  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`raised_by`)   REFERENCES `users`(`id`),
     FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`),
-    INDEX `idx_defects_project_status_date` (`project_id`, `status`, `raised_date`)
+    INDEX `idx_defects_project_status_date` (`project_id`, `status`, `raised_date`),
+    INDEX `idx_defects_consultant_review` (`project_id`, `consultant_review_status`, `raised_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -833,12 +914,15 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     `project_id`       INT UNSIGNED NOT NULL,
     `contractor_id`    INT UNSIGNED NOT NULL,
     `ipc_number`       SMALLINT UNSIGNED NOT NULL,
+    `contractor_reference` VARCHAR(100) NULL,
     `period_from`      DATE         NOT NULL,
     `period_to`        DATE         NOT NULL,
     `gross_amount`     DECIMAL(15,2) DEFAULT 0,
     `retention_amount` DECIMAL(15,2) DEFAULT 0,
     `net_amount`       DECIMAL(15,2) DEFAULT 0,
+    `declaration_accepted` TINYINT(1) NOT NULL DEFAULT 0,
     `status`           ENUM('draft','submitted','clerk-endorsed','certified','endorsed','approved','rejected','paid') DEFAULT 'draft',
+    `current_stage`    VARCHAR(60) NOT NULL DEFAULT 'contractor_submission',
     `submitted_at`     DATETIME NULL,
     `certified_at`     DATETIME NULL,
     `certified_by`      INT UNSIGNED NULL,
@@ -861,9 +945,23 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     INDEX `idx_ipcs_project_status_submitted` (`project_id`, `status`, `submitted_at`),
     INDEX `idx_ipcs_project_status_certified` (`project_id`, `status`, `certified_at`),
     INDEX `idx_ipcs_contractor_status` (`contractor_id`, `status`),
+    INDEX `idx_ipcs_contractor_stage` (`contractor_id`, `current_stage`),
     INDEX `idx_ipcs_submitted_at` (`submitted_at`),
     INDEX `idx_ipcs_approved_at` (`approved_at`),
     INDEX `idx_ipcs_paid_at` (`paid_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ipc_attachments` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `ipc_id`      INT UNSIGNED NOT NULL,
+    `media_id`    INT UNSIGNED NULL,
+    `path`        VARCHAR(255) NULL,
+    `title`       VARCHAR(180) NULL,
+    `uploaded_by` INT UNSIGNED NOT NULL,
+    `created_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_ipc_attachments_ipc` (`ipc_id`),
+    INDEX `idx_ipc_attachments_media` (`media_id`),
+    INDEX `idx_ipc_attachments_user` (`uploaded_by`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -933,6 +1031,7 @@ CREATE TABLE IF NOT EXISTS `variations` (
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
     INDEX `idx_variations_project_status_created` (`project_id`, `status`, `created_at`),
+    INDEX `idx_variations_project_user_status` (`project_id`, `submitted_by`, `status`),
     INDEX `idx_variations_consultant_review` (`project_id`, `consultant_review_status`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -969,6 +1068,7 @@ CREATE TABLE IF NOT EXISTS `eot_requests` (
     `created_at`          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_eot_project_status` (`project_id`, `status`),
     INDEX `idx_eot_project_status_created` (`project_id`, `status`, `created_at`),
+    INDEX `idx_eot_project_user_status` (`project_id`, `submitted_by`, `status`),
     INDEX `idx_eot_manager_review` (`manager_recommendation`, `manager_reviewed_at`),
     INDEX `idx_eot_consultant_review` (`project_id`, `consultant_review_status`, `created_at`),
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
@@ -1015,7 +1115,8 @@ CREATE TABLE IF NOT EXISTS `payments` (
     `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`ipc_id`)       REFERENCES `ipcs`(`id`)     ON DELETE CASCADE,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`),
+    INDEX `idx_payments_project_date` (`project_id`, `payment_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1053,7 +1154,8 @@ CREATE TABLE IF NOT EXISTS `rfis` (
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`raised_by`)    REFERENCES `users`(`id`),
-    FOREIGN KEY (`responded_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`responded_by`) REFERENCES `users`(`id`),
+    INDEX `idx_rfis_project_user_status` (`project_id`, `raised_by`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

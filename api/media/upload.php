@@ -4,8 +4,8 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
 ApiMiddleware::handle([
     'methods' => ['POST'],
-    'roles' => ['superadmin'],
-    'csrf_form' => $_POST['csrf_form'] ?? 'cms_editor',
+    'roles' => ['superadmin', 'contractor'],
+    'csrf_form' => $_POST['csrf_form'] ?? (((string)Auth::role() === 'contractor') ? 'contractor_progress' : 'cms_editor'),
 ]);
 
 if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
@@ -24,14 +24,19 @@ if ((int)$file['size'] > $maxBytes) {
 }
 
 $original = (string)($file['name'] ?? '');
-$allowed = MediaLibrary::allowedExtensions();
+$role = (string)Auth::role();
+$allowed = $role === 'contractor' ? ['jpg', 'jpeg', 'png', 'webp'] : MediaLibrary::allowedExtensions();
 if (!Security::extensionAllowed($original, $allowed)) {
     Response::json(['success' => false, 'message' => 'This file type is not allowed in the media library.'], 422);
 }
 
 $tmpPath = (string)($file['tmp_name'] ?? '');
 $imageInfo = @getimagesize($tmpPath);
-$folder = MediaLibrary::normaliseFolder((string)($_POST['folder'] ?? 'cms'));
+$folder = $role === 'contractor' ? 'site-photos' : MediaLibrary::normaliseFolder((string)($_POST['folder'] ?? 'cms'));
+
+if ($role === 'contractor' && !$imageInfo) {
+    Response::json(['success' => false, 'message' => 'Upload a valid JPG, PNG or WebP site photo.'], 422);
+}
 
 $root = dirname(__DIR__, 2);
 $uploadDir = $root . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $folder;
@@ -41,7 +46,7 @@ if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)
 
 $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
 $baseName = strtolower(pathinfo($original, PATHINFO_FILENAME));
-$baseName = preg_replace('/[^a-z0-9_-]+/', '-', $baseName) ?: 'cms-image';
+$baseName = preg_replace('/[^a-z0-9_-]+/', '-', $baseName) ?: ($role === 'contractor' ? 'site-evidence' : 'cms-image');
 $filename = $baseName . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
 $destination = $uploadDir . DIRECTORY_SEPARATOR . $filename;
 
@@ -54,6 +59,7 @@ $mime = (string)($imageInfo['mime'] ?? mime_content_type($destination) ?: 'appli
 $altText = Security::cleanString((string)($_POST['alt_text'] ?? pathinfo($original, PATHINFO_FILENAME)));
 $title = Security::cleanString((string)($_POST['title'] ?? MediaLibrary::titleFromFilename(pathinfo($original, PATHINFO_FILENAME))));
 $caption = Security::cleanString((string)($_POST['caption'] ?? ''));
+$source = $role === 'contractor' ? 'contractor_progress' : 'upload';
 
 Database::query(
     'INSERT INTO media_library
@@ -74,7 +80,7 @@ Database::query(
         $caption,
         (int)Auth::id(),
         $folder,
-        'upload',
+        $source,
     ]
 );
 

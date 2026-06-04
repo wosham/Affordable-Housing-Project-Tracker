@@ -1,11 +1,299 @@
-/* Contractor Dashboard — Role-specific styles
-   TODO: Phase 3 — Full implementation */
-.contractor-sidebar { background: #6a1a00; color: #fff; }
-.contractor-sidebar .nav-link { color: rgba(255,255,255,.8); }
-.contractor-sidebar .nav-link.active,
-.contractor-sidebar .nav-link:hover { color: #ffeaa7; background: rgba(255,255,255,.1); }
+.contractor-dashboard-page {
+  display: grid;
+  gap: 1rem;
+}
 
-/* IPC submission wizard steps */
-.ipc-wizard-steps { display: flex; gap: 0; counter-reset: step; }
-.ipc-wizard-steps .step { flex: 1; text-align: center; padding: .75rem; position: relative; }
-.ipc-wizard-steps .step.active { border-bottom: 3px solid var(--admin-lime); }
+.contractor-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.contractor-hero h2 {
+  margin: .35rem 0 .25rem;
+  font-size: 1.55rem;
+}
+
+.contractor-hero p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--admin-text-muted);
+}
+
+.contractor-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+
+.contractor-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .9rem;
+}
+
+.contractor-stat {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  min-height: 112px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.contractor-stat:hover,
+.contractor-stat:focus {
+  transform: translateY(-2px);
+  border-color: var(--admin-border-strong);
+  box-shadow: var(--admin-shadow-md);
+  outline: none;
+}
+
+.contractor-stat__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 8px;
+  background: var(--admin-lime-soft);
+  color: var(--admin-primary);
+}
+
+.contractor-stat__copy {
+  display: grid;
+  min-width: 0;
+  gap: .08rem;
+}
+
+.contractor-stat__copy strong {
+  font-size: clamp(1.05rem, 1.35vw, 1.45rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.contractor-stat__copy span {
+  font-weight: 800;
+}
+
+.contractor-stat__copy small {
+  color: var(--admin-text-muted);
+}
+
+.contractor-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.contractor-grid--main {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.contractor-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+.contractor-grid--two {
+  grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+  align-items: start;
+}
+
+.contractor-side-stack {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.contractor-project-table td {
+  vertical-align: middle;
+}
+
+.contractor-project-table td small,
+.contractor-list-item small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+}
+
+.contractor-progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--admin-primary);
+}
+
+.contractor-programme-ring {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 150px;
+  height: 150px;
+  margin: .4rem auto 1rem;
+  border: 10px solid var(--admin-lime-soft);
+  border-radius: 50%;
+  background: #fff;
+  text-align: center;
+}
+
+.contractor-programme-ring strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.contractor-programme-ring span {
+  max-width: 96px;
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+  line-height: 1.25;
+}
+
+.contractor-mini-grid,
+.contractor-commercial-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+}
+
+.contractor-mini-grid span,
+.contractor-mini-grid a,
+.contractor-commercial-grid a {
+  display: grid;
+  gap: .1rem;
+  padding: .72rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  font-size: .8rem;
+  text-decoration: none;
+}
+
+.contractor-mini-grid a:hover,
+.contractor-commercial-grid a:hover {
+  border-color: var(--admin-border-strong);
+  background: #fff;
+}
+
+.contractor-mini-grid strong,
+.contractor-commercial-grid strong {
+  color: var(--admin-text);
+  font-size: 1.12rem;
+  overflow-wrap: anywhere;
+}
+
+.contractor-mini-grid--stacked {
+  grid-template-columns: 1fr;
+}
+
+.contractor-action-list,
+.contractor-list {
+  display: grid;
+  align-content: start;
+  gap: .55rem;
+}
+
+.contractor-grid--three > .card,
+.contractor-grid--two > .card {
+  align-self: start;
+  min-height: 0;
+}
+
+.contractor-grid .empty-state--compact {
+  min-height: 86px;
+  padding: 1rem;
+}
+
+.contractor-action-list a,
+.contractor-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--admin-text);
+  text-decoration: none;
+}
+
+.contractor-action-list a {
+  justify-content: flex-start;
+  font-weight: 800;
+}
+
+.contractor-action-list a:hover,
+.contractor-list-item:hover {
+  border-color: var(--admin-border-strong);
+  background: var(--admin-surface-muted);
+}
+
+.contractor-list-item > span {
+  min-width: 0;
+}
+
+.contractor-list-item strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contractor-list-item em {
+  display: block;
+  color: var(--admin-primary);
+  font-style: normal;
+  font-weight: 850;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.contractor-commercial-grid a span {
+  color: var(--admin-text-muted);
+}
+
+@media (max-width: 1180px) {
+  .contractor-stat-grid,
+  .contractor-grid--three,
+  .contractor-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contractor-grid--main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .contractor-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contractor-hero__actions,
+  .contractor-stat-grid,
+  .contractor-grid--three,
+  .contractor-grid--two,
+  .contractor-mini-grid,
+  .contractor-commercial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-hero__actions {
+    justify-content: flex-start;
+  }
+}

@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  const RETENTION_RATE = 0.05;
+
   function qs(selector, root) {
     return (root || document).querySelector(selector);
   }
@@ -10,90 +12,93 @@
   }
 
   function number(value) {
-    var parsed = parseFloat(String(value || '').replace(/,/g, ''));
+    const parsed = parseFloat(String(value || '').replace(/,/g, ''));
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
   function money(value) {
-    return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function request(url, options) {
-    if (window.AHPTC && window.AHPTC.request) {
-      return window.AHPTC.request(url, options);
-    }
-    return fetch(url, options).then(function (response) {
-      return response.json();
-    });
+  function csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') || '' : '';
   }
 
   function setStatus(form, message, state) {
-    var status = qs('[data-ipc-status]', form) || qs('[data-form-status]', form);
+    const status = qs('[data-ipc-status]', form) || qs('[data-form-status]', form);
     if (!status) return;
     status.textContent = message || '';
     status.dataset.state = state || '';
   }
 
+  function linePayload(row) {
+    const qtyInput = qs('[name$="[qty_this_period]"]', row);
+    const qty = number(qtyInput && qtyInput.value);
+    const rate = number(row.dataset.rate);
+    const remaining = number(row.dataset.remaining);
+    const hiddenId = qs('[name$="[boq_item_id]"]', row);
+    const hiddenDescription = qs('[name$="[description]"]', row);
+    return {
+      boq_item_id: hiddenId ? hiddenId.value : '',
+      description: hiddenDescription ? hiddenDescription.value : '',
+      qty_this_period: qty,
+      remaining: remaining,
+      rate: rate,
+      amount: qty * rate
+    };
+  }
+
   function collectLines(form) {
-    return qsa('[data-ipc-line]', form).map(function (row) {
-      return {
-        boq_item_id: qs('[name$="[boq_item_id]"]', row) ? qs('[name$="[boq_item_id]"]', row).value : '',
-        description: qs('[name$="[description]"]', row) ? qs('[name$="[description]"]', row).value : '',
-        qty_this_period: qs('[name$="[qty_this_period]"]', row) ? qs('[name$="[qty_this_period]"]', row).value : '',
-        cumulative_qty: qs('[name$="[cumulative_qty]"]', row) ? qs('[name$="[cumulative_qty]"]', row).value : '',
-        rate: qs('[name$="[rate]"]', row) ? qs('[name$="[rate]"]', row).value : '',
-        amount: qs('[name$="[amount]"]', row) ? qs('[name$="[amount]"]', row).value : ''
-      };
-    }).filter(function (line) {
-      return line.description || number(line.amount) > 0 || number(line.qty_this_period) > 0;
+    return qsa('[data-ipc-line]', form).map(linePayload).filter(function (line) {
+      return line.boq_item_id && line.qty_this_period > 0;
     });
   }
 
   function recalc(form) {
-    var gross = 0;
+    let gross = 0;
+    let warnings = 0;
     qsa('[data-ipc-line]', form).forEach(function (row) {
-      var qty = number((qs('[name$="[qty_this_period]"]', row) || {}).value);
-      var rate = number((qs('[name$="[rate]"]', row) || {}).value);
-      var amountField = qs('[name$="[amount]"]', row);
-      var amount = amountField && amountField.value !== '' ? number(amountField.value) : qty * rate;
-      if (amountField && amountField.value === '') amountField.value = amount ? amount.toFixed(2) : '';
+      const line = linePayload(row);
+      const amount = line.qty_this_period * line.rate;
+      const amountNode = qs('[data-ipc-line-amount]', row);
+      const remainingNode = qs('[data-ipc-remaining]', row);
+      row.classList.toggle('is-warning', line.qty_this_period > line.remaining && line.qty_this_period > 0);
+      if (line.qty_this_period > line.remaining && line.qty_this_period > 0) warnings += 1;
+      if (amountNode) amountNode.textContent = 'KES ' + money(amount);
+      if (remainingNode) remainingNode.textContent = Math.max(0, line.remaining - line.qty_this_period).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
       gross += amount;
     });
 
-    var grossField = qs('[name="gross_amount"]', form);
-    var retentionField = qs('[name="retention_amount"]', form);
-    var netField = qs('[name="net_amount"]', form);
-    if (grossField && gross > 0) grossField.value = gross.toFixed(2);
-    var retention = number(retentionField && retentionField.value);
-    if (netField) netField.value = Math.max(0, number(grossField && grossField.value) - retention).toFixed(2);
+    const retention = gross * RETENTION_RATE;
+    const net = Math.max(0, gross - retention);
+    qsa('[data-ipc-total]', form).forEach(function (node) { node.textContent = money(gross); });
+    qsa('[data-ipc-retention]', form).forEach(function (node) { node.textContent = money(retention); });
+    qsa('[data-ipc-net]', form).forEach(function (node) { node.textContent = money(net); });
 
-    qsa('[data-ipc-total]', form).forEach(function (node) {
-      node.textContent = money(number(grossField && grossField.value));
-    });
-    qsa('[data-ipc-net]', form).forEach(function (node) {
-      node.textContent = money(number(netField && netField.value));
-    });
-  }
-
-  function addLine(form) {
-    var template = qs('template[data-ipc-line-template]', form);
-    var list = qs('[data-ipc-lines]', form);
-    if (!template || !list) return;
-    var index = qsa('[data-ipc-line]', list).length;
-    var html = template.innerHTML.replace(/__INDEX__/g, String(index));
-    var wrapper = document.createElement('div');
-    wrapper.innerHTML = html.trim();
-    list.appendChild(wrapper.firstElementChild);
+    if (warnings > 0) {
+      setStatus(form, warnings + ' line(s) exceed remaining BOQ quantity.', 'error');
+    } else if (collectLines(form).length > 0) {
+      setStatus(form, 'Claim totals are ready for review.', 'success');
+    } else {
+      setStatus(form, '', '');
+    }
   }
 
   function payload(form) {
-    var data = new FormData(form);
-    var body = {};
+    const data = new FormData(form);
+    const body = {};
     data.forEach(function (value, key) {
-      if (key.indexOf('lines[') === 0) return;
+      if (key.indexOf('lines[') === 0 || key === 'project_selector') return;
       body[key] = value;
     });
-    body.lines = collectLines(form);
+    body.declaration_accepted = data.get('declaration_accepted') === '1' ? '1' : '0';
+    body.lines = collectLines(form).map(function (line) {
+      return {
+        boq_item_id: line.boq_item_id,
+        qty_this_period: line.qty_this_period
+      };
+    });
     return body;
   }
 
@@ -101,46 +106,74 @@
     if (form.dataset.ipcReady === '1') return;
     form.dataset.ipcReady = '1';
 
-    form.addEventListener('input', function (event) {
-      if (event.target.closest('[data-ipc-line]') || ['gross_amount', 'retention_amount'].indexOf(event.target.name) !== -1) {
-        recalc(form);
-      }
-    });
-
-    form.addEventListener('click', function (event) {
-      var add = event.target.closest('[data-ipc-add-line]');
-      var remove = event.target.closest('[data-ipc-remove-line]');
-      if (add) {
-        event.preventDefault();
-        addLine(form);
-        recalc(form);
-      }
-      if (remove) {
-        event.preventDefault();
-        var row = remove.closest('[data-ipc-line]');
-        if (row) row.remove();
-        recalc(form);
-      }
-    });
-
-    form.addEventListener('submit', function (event) {
-      if (form.hasAttribute('data-ipc-native-submit')) return;
-      event.preventDefault();
-      var button = event.submitter || qs('[type="submit"]', form);
-      if (button) button.disabled = true;
-      setStatus(form, 'Submitting IPC...', 'loading');
-      request(form.getAttribute('action') || 'api/ipcs/submit.php', {
-        method: 'POST',
-        body: payload(form)
-      }).then(function (result) {
-        if (!result.success) throw new Error(result.message || 'IPC could not be submitted.');
-        setStatus(form, result.message || 'IPC submitted.', 'success');
-        form.dispatchEvent(new CustomEvent('ipc:submitted', { detail: result, bubbles: true }));
-      }).catch(function (error) {
-        setStatus(form, error.message || 'IPC could not be submitted.', 'error');
-      }).finally(function () {
-        if (button) button.disabled = false;
+    const projectJump = qs('[data-project-jump]', form);
+    if (projectJump) {
+      projectJump.addEventListener('change', function () {
+        if (projectJump.value) window.location.href = projectJump.value;
       });
+    }
+
+    form.addEventListener('input', function (event) {
+      if (event.target.closest('[data-ipc-line]')) {
+        recalc(form);
+      }
+    });
+
+    form.addEventListener('change', function (event) {
+      if (event.target.closest('[data-ipc-line]')) {
+        recalc(form);
+      }
+    });
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      const button = event.submitter || qs('[type="submit"]', form);
+      const oldText = button ? button.innerHTML : '';
+      const body = payload(form);
+      if (!body.period_from || !body.period_to) {
+        setStatus(form, 'Choose the IPC claim period.', 'error');
+        return;
+      }
+      if (body.declaration_accepted !== '1') {
+        setStatus(form, 'Accept the contractor declaration before submitting.', 'error');
+        return;
+      }
+      if (!body.lines.length) {
+        setStatus(form, 'Enter at least one BOQ quantity for this claim.', 'error');
+        return;
+      }
+
+      try {
+        if (button) {
+          button.disabled = true;
+          button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Submitting';
+        }
+        setStatus(form, 'Submitting IPC...', 'loading');
+        const response = await fetch(form.getAttribute('action') || 'api/ipcs/submit.php', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken()
+          },
+          body: JSON.stringify(body)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.success === false) {
+          throw new Error(result.message || 'IPC could not be submitted.');
+        }
+        setStatus(form, result.message || 'IPC submitted.', 'success');
+        window.setTimeout(function () {
+          window.location.href = result.redirect || 'ipc-history.php';
+        }, 800);
+      } catch (error) {
+        setStatus(form, error.message || 'IPC could not be submitted.', 'error');
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.innerHTML = oldText;
+        }
+      }
     });
 
     recalc(form);

@@ -4,7 +4,7 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
 ApiMiddleware::handle([
     'methods' => ['GET'],
-    'roles' => ['superadmin'],
+    'roles' => ['superadmin', 'contractor'],
     'csrf' => false,
 ]);
 
@@ -15,6 +15,12 @@ $filters = [
     'type' => (string)($_GET['type'] ?? ''),
     'q' => (string)($_GET['q'] ?? ''),
 ];
+
+if ((string)Auth::role() === 'contractor') {
+    $filters['folder'] = 'site-photos';
+    $filters['type'] = 'image';
+    $filters['uploaded_by'] = (int)Auth::id();
+}
 
 $total = MediaLibrary::count($filters);
 $items = MediaLibrary::query($filters, $perPage, ($page - 1) * $perPage);

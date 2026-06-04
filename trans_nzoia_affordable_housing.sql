@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 04, 2026 at 09:43 AM
+-- Generation Time: Jun 04, 2026 at 08:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -204,7 +204,13 @@ INSERT INTO `audit_logs` (`id`, `user_id`, `actor_role`, `action`, `module`, `ta
 (72, 8, 'consultant', 'login', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\",\"role\":\"consultant\"}', '192.168.100.17', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'c1a9759e610d3ebabc40ad116a83dcadaa1ee771138ef3ea8aaf12e05c5de659', '{\"referer\":\"http://192.168.100.3/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 06:23:14'),
 (73, 1, 'superadmin', 'login', 'auth', 1, '{\"email\":\"joseph.r.wenani@gmail.com\",\"role\":\"superadmin\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'd91862e308bfac95b166e7804490a73f5323bcff20067d7cee92b8d1b7dc492e', '{\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 07:26:45'),
 (74, 1, 'superadmin', 'logout', 'auth', 1, '{\"email\":\"joseph.r.wenani@gmail.com\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'GET', '/Trans-Nzoia-Affordable-Housing/admin/logout.php', 'info', 'fa0c28d8c316ef4e8b3a13803b1c83ee8e1352873202831f12c9ccddd8642d0a', '{\"session\":\"cimkb5bqlkbs86trlbb5riacjh\",\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/superadmin/dashboard.php\"}', '2026-06-04 07:40:51'),
-(75, 8, 'consultant', 'login', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\",\"role\":\"consultant\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'b6196cb555a363af61e903fc9c7ea746a993fad67e42826df7c2dde6bb4a8294', '{\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 07:41:23');
+(75, 8, 'consultant', 'login', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\",\"role\":\"consultant\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'b6196cb555a363af61e903fc9c7ea746a993fad67e42826df7c2dde6bb4a8294', '{\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 07:41:23'),
+(76, 8, 'consultant', 'login', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\",\"role\":\"consultant\"}', '192.168.100.17', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'c1a9759e610d3ebabc40ad116a83dcadaa1ee771138ef3ea8aaf12e05c5de659', '{\"referer\":\"http://192.168.100.3/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 11:37:03'),
+(77, 8, 'consultant', 'logout', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\"}', '192.168.100.17', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'GET', '/Trans-Nzoia-Affordable-Housing/admin/logout.php', 'info', '850d2b950d9abf76e4053e991086851ab28e7d81be83a3ff4aa074b0fa506446', '{\"session\":\"s65ustqvpt4mle98g6nr917dra\",\"referer\":\"http://192.168.100.3/Trans-Nzoia-Affordable-Housing/admin/consultant/site-reports.php\"}', '2026-06-04 12:19:51'),
+(78, 11, 'contractor', 'login', 'auth', 11, '{\"email\":\"david.barasa.ahp@gmail.com\",\"role\":\"contractor\"}', '192.168.100.17', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', '99e19250b2938a20872612645332f8bb0f62c226bde6150aa94c1baf78528f00', '{\"referer\":\"http://192.168.100.3/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 12:20:28'),
+(79, 8, 'consultant', 'login', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\",\"role\":\"consultant\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'b6196cb555a363af61e903fc9c7ea746a993fad67e42826df7c2dde6bb4a8294', '{\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 16:39:00'),
+(80, 8, 'consultant', 'logout', 'auth', 8, '{\"email\":\"consultant.teddy.ahp@gmail.com\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'GET', '/Trans-Nzoia-Affordable-Housing/admin/logout.php', 'info', '8e731dfd5043e3d3b41c6b10ba16d67e10b06001015933f898a4c64c09019012', '{\"session\":\"6d343vhi8t6078p7an1tmpnjds\",\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/consultant/dashboard.php\"}', '2026-06-04 16:39:30'),
+(81, 11, 'contractor', 'login', 'auth', 11, '{\"email\":\"david.barasa.ahp@gmail.com\",\"role\":\"contractor\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', 'POST', '/Trans-Nzoia-Affordable-Housing/admin/api/login.php', 'info', 'bbf9211a71a4d90aae1162f885db3394190328c31c56a1aab7ca3c7e7de1fa8e', '{\"referer\":\"http://localhost/Trans-Nzoia-Affordable-Housing/admin/login.php\"}', '2026-06-04 16:39:49');
 
 -- --------------------------------------------------------
 
@@ -851,8 +857,25 @@ CREATE TABLE `defects` (
   `due_date` date DEFAULT NULL,
   `closed_date` date DEFAULT NULL,
   `status` enum('open','in-progress','resolved','closed') DEFAULT 'open',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `consultant_review_status` varchar(30) NOT NULL DEFAULT 'pending',
+  `consultant_review_note` text DEFAULT NULL,
+  `consultant_reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `consultant_reviewed_at` datetime DEFAULT NULL,
+  `consultant_severity` varchar(30) NOT NULL DEFAULT 'minor',
+  `consultant_documents_checked` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `defects`
+--
+
+INSERT INTO `defects` (`id`, `project_id`, `raised_by`, `raised_date`, `location`, `description`, `severity`, `photo_path`, `assigned_to`, `due_date`, `closed_date`, `status`, `created_at`, `consultant_review_status`, `consultant_review_note`, `consultant_reviewed_by`, `consultant_reviewed_at`, `consultant_severity`, `consultant_documents_checked`, `updated_at`) VALUES
+(1, 15, 12, '2026-05-30', 'Block A corridor', 'Cracked plaster at window reveal.', 'minor', NULL, 11, '2026-06-11', NULL, 'open', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(2, 24, 12, '2026-05-29', 'External drainage line', 'Ponding near inspection chamber.', 'major', NULL, 11, '2026-06-12', NULL, 'in-progress', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(3, 25, 12, '2026-05-28', 'Sample room', 'Door frame alignment requires adjustment.', 'minor', NULL, 11, '2026-06-13', NULL, 'resolved', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(4, 26, 12, '2026-05-27', 'Roof edge', 'Incomplete flashing termination.', 'major', NULL, 11, '2026-06-14', NULL, 'open', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49');
 
 -- --------------------------------------------------------
 
@@ -871,8 +894,23 @@ CREATE TABLE `documents` (
   `version` varchar(20) DEFAULT '1.0',
   `description` text DEFAULT NULL,
   `is_confidential` tinyint(1) DEFAULT 0,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `consultant_review_status` varchar(30) NOT NULL DEFAULT 'pending',
+  `consultant_review_note` text DEFAULT NULL,
+  `consultant_reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `consultant_reviewed_at` datetime DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `documents`
+--
+
+INSERT INTO `documents` (`id`, `project_id`, `uploaded_by`, `category`, `filename`, `original_name`, `size`, `version`, `description`, `is_confidential`, `created_at`, `consultant_review_status`, `consultant_review_note`, `consultant_reviewed_by`, `consultant_reviewed_at`, `updated_at`) VALUES
+(1, 15, 9, 'drawing', 'uploads/documents/structural-ground-floor-column-layout.pdf', 'Structural ground floor column layout.pdf', 684240, '1.2', 'Current structural layout for ground floor column setting out.', 0, '2026-06-04 12:04:26', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:26'),
+(2, 24, 9, 'shop-drawing', 'uploads/documents/roof-truss-fabrication-submission.pdf', 'Roof truss fabrication submission.pdf', 512880, '1.0', 'Contractor shop drawing package for consultant review.', 0, '2026-06-04 12:04:26', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:26'),
+(3, 25, 9, 'spec', 'uploads/documents/finishes-and-material-specification.pdf', 'Finishes and material specification.pdf', 438900, '2.0', 'Specification extract covering finishes, samples and workmanship tolerances.', 0, '2026-06-04 12:04:27', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:27'),
+(4, 26, 9, 'report', 'uploads/documents/monthly-progress-narrative.pdf', 'Monthly progress narrative.pdf', 360420, '1.0', 'Progress narrative covering programme, quality and site coordination items.', 0, '2026-06-04 12:04:27', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:27');
 
 -- --------------------------------------------------------
 
@@ -1254,8 +1292,25 @@ CREATE TABLE `inspection_test_plans` (
   `outcome` varchar(100) DEFAULT NULL,
   `witness_required` tinyint(1) DEFAULT 0,
   `document_path` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `consultant_review_status` varchar(30) NOT NULL DEFAULT 'pending',
+  `consultant_review_note` text DEFAULT NULL,
+  `consultant_reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `consultant_reviewed_at` datetime DEFAULT NULL,
+  `consultant_severity` varchar(30) NOT NULL DEFAULT 'minor',
+  `consultant_documents_checked` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `inspection_test_plans`
+--
+
+INSERT INTO `inspection_test_plans` (`id`, `project_id`, `activity`, `hold_point`, `inspection_date`, `inspected_by`, `outcome`, `witness_required`, `document_path`, `created_at`, `consultant_review_status`, `consultant_review_note`, `consultant_reviewed_by`, `consultant_reviewed_at`, `consultant_severity`, `consultant_documents_checked`, `updated_at`) VALUES
+(1, 15, 'Foundation reinforcement inspection', 'Hold before concrete pour', '2026-06-05', 8, 'accepted', 1, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(2, 24, 'Roof truss alignment inspection', 'Witness installation setting out', '2026-06-04', 8, NULL, 1, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(3, 25, 'Drainage trench inspection', 'Check invert levels before backfill', '2026-06-05', 8, 'returned', 1, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(4, 26, 'Internal finishes sample room', 'Review workmanship benchmark', '2026-06-06', 8, 'accepted', 0, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49');
 
 -- --------------------------------------------------------
 
@@ -1268,12 +1323,15 @@ CREATE TABLE `ipcs` (
   `project_id` int(10) UNSIGNED NOT NULL,
   `contractor_id` int(10) UNSIGNED NOT NULL,
   `ipc_number` smallint(5) UNSIGNED NOT NULL,
+  `contractor_reference` varchar(100) DEFAULT NULL,
   `period_from` date NOT NULL,
   `period_to` date NOT NULL,
   `gross_amount` decimal(15,2) DEFAULT 0.00,
   `retention_amount` decimal(15,2) DEFAULT 0.00,
   `net_amount` decimal(15,2) DEFAULT 0.00,
+  `declaration_accepted` tinyint(1) NOT NULL DEFAULT 0,
   `status` enum('draft','submitted','clerk-endorsed','certified','endorsed','approved','rejected','paid') DEFAULT 'draft',
+  `current_stage` varchar(60) NOT NULL DEFAULT 'contractor_submission',
   `submitted_at` datetime DEFAULT NULL,
   `certified_at` datetime DEFAULT NULL,
   `certified_by` int(10) UNSIGNED DEFAULT NULL,
@@ -1292,13 +1350,13 @@ CREATE TABLE `ipcs` (
 -- Dumping data for table `ipcs`
 --
 
-INSERT INTO `ipcs` (`id`, `project_id`, `contractor_id`, `ipc_number`, `period_from`, `period_to`, `gross_amount`, `retention_amount`, `net_amount`, `status`, `submitted_at`, `certified_at`, `certified_by`, `certification_comment`, `approved_at`, `approved_by`, `rejected_by`, `rejected_at`, `rejection_reason`, `paid_at`, `created_at`, `updated_at`) VALUES
-(1, 15, 1, 1, '2026-05-01', '2026-05-31', 4200000.00, 210000.00, 3990000.00, 'certified', '2026-05-21 11:01:58', '2026-05-25 11:01:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-02 09:01:58', '2026-06-02 09:04:26'),
-(2, 24, 1, 2, '2026-05-01', '2026-05-31', 5050000.00, 252500.00, 4797500.00, 'endorsed', '2026-05-18 11:01:58', '2026-05-23 11:01:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-02 09:01:58', '2026-06-02 09:04:26'),
-(3, 25, 1, 3, '2026-05-01', '2026-05-31', 5900000.00, 295000.00, 5605000.00, 'approved', '2026-05-15 11:01:58', '2026-05-21 11:01:58', NULL, NULL, '2026-05-31 11:01:58', 1, NULL, NULL, NULL, NULL, '2026-06-02 09:01:58', '2026-06-02 09:04:26'),
-(4, 15, 11, 41, '2026-04-01', '2026-04-30', 4398000.00, 219900.00, 4178100.00, 'clerk-endorsed', '2026-05-23 08:27:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-04 05:27:03', '2026-06-04 05:42:26'),
-(5, 24, 11, 42, '2026-05-01', '2026-05-31', 4398000.00, 219900.00, 4178100.00, 'submitted', '2026-05-24 08:27:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-04 05:27:03', '2026-06-04 05:42:26'),
-(6, 25, 11, 43, '2026-06-01', '2026-06-30', 4398000.00, 219900.00, 4178100.00, 'certified', '2026-05-25 08:27:03', '2026-05-25 07:27:03', 8, 'Certified after review of quantities, amounts and supporting records.', NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-04 05:27:03', '2026-06-04 05:42:26');
+INSERT INTO `ipcs` (`id`, `project_id`, `contractor_id`, `ipc_number`, `contractor_reference`, `period_from`, `period_to`, `gross_amount`, `retention_amount`, `net_amount`, `declaration_accepted`, `status`, `current_stage`, `submitted_at`, `certified_at`, `certified_by`, `certification_comment`, `approved_at`, `approved_by`, `rejected_by`, `rejected_at`, `rejection_reason`, `paid_at`, `created_at`, `updated_at`) VALUES
+(1, 15, 1, 1, NULL, '2026-05-01', '2026-05-31', 4200000.00, 210000.00, 3990000.00, 0, 'certified', 'contractor_submission', '2026-05-21 11:01:58', '2026-05-25 11:01:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-02 09:01:58', '2026-06-02 09:04:26'),
+(2, 24, 1, 2, NULL, '2026-05-01', '2026-05-31', 5050000.00, 252500.00, 4797500.00, 0, 'endorsed', 'contractor_submission', '2026-05-18 11:01:58', '2026-05-23 11:01:58', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-02 09:01:58', '2026-06-02 09:04:26'),
+(3, 25, 1, 3, NULL, '2026-05-01', '2026-05-31', 5900000.00, 295000.00, 5605000.00, 0, 'approved', 'contractor_submission', '2026-05-15 11:01:58', '2026-05-21 11:01:58', NULL, NULL, '2026-05-31 11:01:58', 1, NULL, NULL, NULL, NULL, '2026-06-02 09:01:58', '2026-06-02 09:04:26'),
+(4, 15, 11, 41, NULL, '2026-04-01', '2026-04-30', 4398000.00, 219900.00, 4178100.00, 0, 'clerk-endorsed', 'contractor_submission', '2026-05-23 08:27:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-04 05:27:03', '2026-06-04 05:42:26'),
+(5, 24, 11, 42, NULL, '2026-05-01', '2026-05-31', 4398000.00, 219900.00, 4178100.00, 0, 'submitted', 'contractor_submission', '2026-05-24 08:27:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-04 05:27:03', '2026-06-04 05:42:26'),
+(6, 25, 11, 43, NULL, '2026-06-01', '2026-06-30', 4398000.00, 219900.00, 4178100.00, 0, 'certified', 'contractor_submission', '2026-05-25 08:27:03', '2026-05-25 07:27:03', 8, 'Certified after review of quantities, amounts and supporting records.', NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-04 05:27:03', '2026-06-04 05:42:26');
 
 -- --------------------------------------------------------
 
@@ -1334,6 +1392,14 @@ INSERT INTO `ipc_approvals` (`id`, `ipc_id`, `step`, `action_by`, `action`, `com
 (11, 5, 1, 12, 'endorsed', 'Site verification completed and quantities checked against site records.', '2026-06-04 08:27:03'),
 (12, 6, 1, 12, 'endorsed', 'Site verification completed and quantities checked against site records.', '2026-06-04 08:27:03'),
 (13, 6, 2, 8, 'certified', 'Certified after review of quantities, amounts and supporting records.', '2026-06-04 08:27:03');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ipc_attachments`
+--
+-- Error reading structure for table trans_nzoia_affordable_housing.ipc_attachments: #1932 - Table &#039;trans_nzoia_affordable_housing.ipc_attachments&#039; doesn&#039;t exist in engine
+-- Error reading data for table trans_nzoia_affordable_housing.ipc_attachments: #1064 - You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near &#039;FROM `trans_nzoia_affordable_housing`.`ipc_attachments`&#039; at line 1
 
 -- --------------------------------------------------------
 
@@ -2109,8 +2175,25 @@ CREATE TABLE `non_conformance_reports` (
   `closed_by` int(10) UNSIGNED DEFAULT NULL,
   `closed_date` date DEFAULT NULL,
   `status` enum('open','in-progress','closed') DEFAULT 'open',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `consultant_review_status` varchar(30) NOT NULL DEFAULT 'pending',
+  `consultant_review_note` text DEFAULT NULL,
+  `consultant_reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `consultant_reviewed_at` datetime DEFAULT NULL,
+  `consultant_severity` varchar(30) NOT NULL DEFAULT 'minor',
+  `consultant_documents_checked` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `non_conformance_reports`
+--
+
+INSERT INTO `non_conformance_reports` (`id`, `project_id`, `raised_by`, `raised_date`, `description`, `severity`, `root_cause`, `corrective_action`, `closed_by`, `closed_date`, `status`, `created_at`, `consultant_review_status`, `consultant_review_note`, `consultant_reviewed_by`, `consultant_reviewed_at`, `consultant_severity`, `consultant_documents_checked`, `updated_at`) VALUES
+(1, 15, 12, '2026-05-26', 'Honeycombing observed on column face requiring repair method statement.', 'major', 'Poor vibration during concrete placement.', 'Submit repair method and inspect before cover-up.', NULL, NULL, 'open', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(2, 24, 12, '2026-05-25', 'Incorrect block bond observed in sample walling bay.', 'minor', 'Workmanship control gap.', 'Rework affected bay and brief masonry crew.', NULL, NULL, 'in-progress', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(3, 25, 12, '2026-05-24', 'Drainage pipe bedding below specified thickness.', 'major', 'Material placement not verified before pipe laying.', 'Expose section and reinstate bedding.', NULL, NULL, 'open', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(4, 26, 12, '2026-05-23', 'Unapproved paint sample used in one room.', 'minor', 'Material control issue.', 'Remove sample and submit approved finish board.', NULL, NULL, 'closed', '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49');
 
 -- --------------------------------------------------------
 
@@ -2419,6 +2502,33 @@ CREATE TABLE `project_channels` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `project_progress_updates`
+--
+
+CREATE TABLE `project_progress_updates` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `project_id` int(10) UNSIGNED NOT NULL,
+  `submitted_by` int(10) UNSIGNED NOT NULL,
+  `old_progress` tinyint(3) UNSIGNED DEFAULT NULL,
+  `new_progress` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+  `current_milestone` varchar(255) DEFAULT NULL,
+  `note` text DEFAULT NULL,
+  `photo_path` varchar(255) DEFAULT NULL,
+  `media_id` int(10) UNSIGNED DEFAULT NULL,
+  `weather_note` varchar(180) DEFAULT NULL,
+  `work_summary` text DEFAULT NULL,
+  `blockers` text DEFAULT NULL,
+  `status` varchar(30) NOT NULL DEFAULT 'submitted',
+  `reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `reviewed_at` datetime DEFAULT NULL,
+  `review_note` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `quality_tests`
 --
 
@@ -2433,8 +2543,25 @@ CREATE TABLE `quality_tests` (
   `lab_ref` varchar(80) DEFAULT NULL,
   `tested_by` int(10) UNSIGNED NOT NULL,
   `document_path` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `consultant_review_status` varchar(30) NOT NULL DEFAULT 'pending',
+  `consultant_review_note` text DEFAULT NULL,
+  `consultant_reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `consultant_reviewed_at` datetime DEFAULT NULL,
+  `consultant_severity` varchar(30) NOT NULL DEFAULT 'minor',
+  `consultant_documents_checked` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quality_tests`
+--
+
+INSERT INTO `quality_tests` (`id`, `project_id`, `test_type`, `test_date`, `location_on_site`, `result`, `pass_fail`, `lab_ref`, `tested_by`, `document_path`, `created_at`, `consultant_review_status`, `consultant_review_note`, `consultant_reviewed_by`, `consultant_reviewed_at`, `consultant_severity`, `consultant_documents_checked`, `updated_at`) VALUES
+(1, 15, 'Concrete cube strength', '2026-06-01', 'Ground floor columns', '28-day strength within specification', 'pass', 'QT-STR-101', 12, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(2, 24, 'Compaction density', '2026-05-31', 'Access road subbase', 'Density below target in one section', 'fail', 'QT-CIV-102', 12, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(3, 25, 'Slump test', '2026-05-30', 'Block A slab pour', 'Awaiting laboratory confirmation', 'pending', 'QT-CON-103', 12, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49'),
+(4, 26, 'Waterproofing test', '2026-05-29', 'Wet areas sample room', 'No leakage observed', 'pass', 'QT-FIN-104', 12, NULL, '2026-06-04 11:25:49', 'pending', NULL, NULL, NULL, 'minor', 0, '2026-06-04 11:25:49');
 
 -- --------------------------------------------------------
 
@@ -2598,8 +2725,25 @@ CREATE TABLE `site_diaries` (
   `recorded_by` int(10) UNSIGNED NOT NULL,
   `approved_by` int(10) UNSIGNED DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `consultant_review_status` varchar(30) NOT NULL DEFAULT 'pending',
+  `consultant_review_note` text DEFAULT NULL,
+  `consultant_reviewed_by` int(10) UNSIGNED DEFAULT NULL,
+  `consultant_reviewed_at` datetime DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `report_title` varchar(180) DEFAULT NULL,
+  `weather_summary` varchar(180) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `site_diaries`
+--
+
+INSERT INTO `site_diaries` (`id`, `project_id`, `diary_date`, `work_done`, `issues_raised`, `next_day_plan`, `recorded_by`, `approved_by`, `approved_at`, `created_at`, `consultant_review_status`, `consultant_review_note`, `consultant_reviewed_by`, `consultant_reviewed_at`, `updated_at`, `report_title`, `weather_summary`) VALUES
+(1, 15, '2026-06-02', 'Excavation trimming, blinding preparation and reinforcement checks continued at active blocks.', 'Access route softened after rain; contractor instructed to maintain safe access.', 'Complete reinforcement inspection request and prepare concrete delivery plan.', 12, NULL, NULL, '2026-06-04 12:04:26', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:26', 'Foundation and substructure works', 'Cloudy morning with light afternoon showers'),
+(2, 24, '2026-06-01', 'Masonry walling continued alongside conduit routing and setting out checks.', 'Minor rework required where conduit conflicted with wall chase depth.', 'Close rework points and submit updated inspection request.', 12, NULL, NULL, '2026-06-04 12:04:26', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:26', 'Walling and services coordination', 'Clear and dry conditions'),
+(3, 25, '2026-05-31', 'Drainage trench excavation and pipe bedding preparation advanced near the inspection chamber line.', 'Bedding thickness needs confirmation before backfilling.', 'Hold backfill until levels and bedding are jointly checked.', 12, NULL, NULL, '2026-06-04 12:04:27', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:27', 'Drainage and external works', 'Warm afternoon with no rainfall'),
+(4, 26, '2026-05-30', 'Sample room skim coat, door frame adjustment and paint sample comparison were reviewed.', 'Finish sample board needs final consultant sign-off.', 'Submit updated finish board and protect completed samples.', 12, NULL, NULL, '2026-06-04 12:04:27', 'pending', NULL, NULL, NULL, '2026-06-04 12:04:27', 'Finishes sample room', 'Dry conditions');
 
 -- --------------------------------------------------------
 
@@ -3028,10 +3172,10 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `phone`, `job_title`, `department`, `bio`, `password_hash`, `avatar`, `is_public`, `role_id`, `status`, `assigned_projects_json`, `last_login`, `created_at`, `updated_at`) VALUES
 (1, 'Moses', 'Owour', 'joseph.r.wenani@gmail.com', '+254 727698196', 'Software Engineer', 'National Govt', 'Hello Testing Profile to se if it works Okay', '$2y$10$//QTwlUNCGmipc8CeBRyuOl/FUUaFh0etF4HIiVjs1qtx1aMc7ZmC', 'uploads/profiles/profile-20260527090936-39e56b9b.png', 1, 1, 'active', NULL, '2026-06-04 10:26:45', '2026-05-26 10:22:43', '2026-06-04 07:26:45'),
-(8, 'Teddy', 'Mwangi', 'consultant.teddy.ahp@gmail.com', '+254712345102', 'Supervising Consultant', 'Technical Review', NULL, '$2y$10$.LfI1mftrUzBGHIhhv1FROYoojdxpvej7hc1hSCroiUgtnr4g9Cmq', NULL, 1, 3, 'active', NULL, '2026-06-04 10:41:23', '2026-06-03 15:50:04', '2026-06-04 07:41:23'),
+(8, 'Teddy', 'Mwangi', 'consultant.teddy.ahp@gmail.com', '+254712345102', 'Supervising Consultant', 'Technical Review', NULL, '$2y$10$.LfI1mftrUzBGHIhhv1FROYoojdxpvej7hc1hSCroiUgtnr4g9Cmq', NULL, 1, 3, 'active', NULL, '2026-06-04 19:39:00', '2026-06-03 15:50:04', '2026-06-04 16:39:00'),
 (9, 'Annet', 'Tasha', 'annet.tasha.ahp@gmail.com', '+254712345107', 'Programme Manager', 'Delivery Unit', NULL, '$2y$10$7Hmo09elaeDAgTDFn.ajM.ostqILo1PiLuWTTmhzk2zvDVg6FSnSO', NULL, 1, 2, 'active', NULL, NULL, '2026-06-04 05:40:28', '2026-06-04 06:11:19'),
 (10, 'Patrick', 'Wekesa', 'patrick.wekesa.ahp@gmail.com', '+254712345101', 'Project Manager', 'Delivery Unit', NULL, '$2y$10$JwnANWL1CszNZpPJx9XUZuFs5fu9IDCdJgiT3E7bIfDKcixA3pZhq', NULL, 1, 2, 'active', NULL, NULL, '2026-06-04 05:42:25', '2026-06-04 06:11:18'),
-(11, 'David', 'Barasa', 'david.barasa.ahp@gmail.com', '+254712345103', 'Contractor Representative', 'Construction', NULL, '$2y$10$T./9DHpGlfoaQ0Z68uBLgOOnTCciCn2xqJjXjdspNQcuCDoK/gqmi', NULL, 1, 4, 'active', NULL, NULL, '2026-06-04 05:42:25', '2026-06-04 06:11:18'),
+(11, 'David', 'Barasa', 'david.barasa.ahp@gmail.com', '+254712345103', 'Contractor Representative', 'Construction', NULL, '$2y$10$T./9DHpGlfoaQ0Z68uBLgOOnTCciCn2xqJjXjdspNQcuCDoK/gqmi', NULL, 1, 4, 'active', NULL, '2026-06-04 19:39:49', '2026-06-04 05:42:25', '2026-06-04 16:39:49'),
 (12, 'Lilian', 'Naliaka', 'lilian.naliaka.ahp@gmail.com', '+254712345104', 'Clerk of Works', 'Site Operations', NULL, '$2y$10$rNfCUVx8yRseYAA56CYFyuOzMerS8ZevcGGxCo/e0ahhxRU8vncua', NULL, 1, 5, 'active', NULL, NULL, '2026-06-04 05:42:25', '2026-06-04 06:11:18'),
 (13, 'Grace', 'Kiptoo', 'grace.kiptoo.ahp@gmail.com', '+254712345105', 'Finance Officer', 'Finance', NULL, '$2y$10$Q.LLjkSDjCGjbdx3IRA0hOBQJmap48ATntvjPm6Cw9PWejxS.R0Wi', NULL, 1, 6, 'active', NULL, NULL, '2026-06-04 05:42:26', '2026-06-04 06:11:19'),
 (14, 'Brian', 'Wafula', 'brian.wafula.ahp@gmail.com', '+254712345106', 'Site Intern', 'Technical Support', NULL, '$2y$10$mPW1WcVV9fX7kF0qW9QYwOJKVKRjpFiJSESUBR/kMd3CQjCXjLwta', NULL, 1, 7, 'active', NULL, NULL, '2026-06-04 05:42:26', '2026-06-04 06:11:19'),
@@ -3320,7 +3464,12 @@ INSERT INTO `_migrations` (`id`, `migration`, `ran_at`) VALUES
 (134, '133_consultant_technical_reviews', '2026-06-04 06:57:37'),
 (135, '134_consultant_technical_visible_text_cleanup', '2026-06-04 07:00:17'),
 (136, '135_consultant_programme_assignee_cleanup', '2026-06-04 07:16:06'),
-(137, '136_consultant_contract_decisions', '2026-06-04 07:34:34');
+(137, '136_consultant_contract_decisions', '2026-06-04 07:34:34'),
+(138, '137_consultant_quality_centre', '2026-06-04 11:25:49'),
+(139, '138_consultant_documents_reports', '2026-06-04 12:04:27'),
+(140, '139_contractor_dashboard_indexes', '2026-06-04 12:36:31'),
+(141, '140_contractor_project_progress', '2026-06-04 12:53:22'),
+(142, '141_contractor_progress_media_reference', '2026-06-04 17:10:18');
 
 --
 -- Indexes for dumped tables
@@ -3483,7 +3632,8 @@ ALTER TABLE `defects`
   ADD PRIMARY KEY (`id`),
   ADD KEY `raised_by` (`raised_by`),
   ADD KEY `assigned_to` (`assigned_to`),
-  ADD KEY `idx_defects_project_status_date` (`project_id`,`status`,`raised_date`);
+  ADD KEY `idx_defects_project_status_date` (`project_id`,`status`,`raised_date`),
+  ADD KEY `idx_defects_consultant_review` (`project_id`,`consultant_review_status`,`raised_date`);
 
 --
 -- Indexes for table `documents`
@@ -3491,7 +3641,9 @@ ALTER TABLE `defects`
 ALTER TABLE `documents`
   ADD PRIMARY KEY (`id`),
   ADD KEY `uploaded_by` (`uploaded_by`),
-  ADD KEY `idx_documents_project_created` (`project_id`,`created_at`);
+  ADD KEY `idx_documents_project_created` (`project_id`,`created_at`),
+  ADD KEY `idx_documents_consultant_review` (`project_id`,`consultant_review_status`,`created_at`),
+  ADD KEY `idx_documents_category_review` (`category`,`consultant_review_status`);
 
 --
 -- Indexes for table `email_logs`
@@ -3522,14 +3674,15 @@ ALTER TABLE `eot_requests`
   ADD KEY `idx_eot_project_status` (`project_id`,`status`),
   ADD KEY `idx_eot_manager_review` (`manager_recommendation`,`manager_reviewed_at`),
   ADD KEY `idx_eot_project_status_created` (`project_id`,`status`,`created_at`),
-  ADD KEY `idx_eot_consultant_review` (`project_id`,`consultant_review_status`,`created_at`);
+  ADD KEY `idx_eot_consultant_review` (`project_id`,`consultant_review_status`,`created_at`),
+  ADD KEY `idx_eot_project_user_status` (`project_id`,`submitted_by`,`status`);
 
 --
 -- Indexes for table `equipment_register`
 --
 ALTER TABLE `equipment_register`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `project_id` (`project_id`);
+  ADD KEY `idx_equipment_project_dates` (`project_id`,`date_on_site`,`date_off_site`);
 
 --
 -- Indexes for table `faq_categories`
@@ -3598,7 +3751,8 @@ ALTER TABLE `hs_incidents`
 ALTER TABLE `inspection_test_plans`
   ADD PRIMARY KEY (`id`),
   ADD KEY `inspected_by` (`inspected_by`),
-  ADD KEY `idx_itp_project_date` (`project_id`,`inspection_date`);
+  ADD KEY `idx_itp_project_date` (`project_id`,`inspection_date`),
+  ADD KEY `idx_itp_consultant_review` (`project_id`,`consultant_review_status`,`inspection_date`);
 
 --
 -- Indexes for table `ipcs`
@@ -3641,7 +3795,8 @@ ALTER TABLE `ipc_lines`
 ALTER TABLE `labour_register`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_project_date` (`project_id`,`diary_date`),
-  ADD KEY `recorded_by` (`recorded_by`);
+  ADD KEY `recorded_by` (`recorded_by`),
+  ADD KEY `idx_labour_project_date` (`project_id`,`diary_date`);
 
 --
 -- Indexes for table `leadership_profiles`
@@ -3683,15 +3838,16 @@ ALTER TABLE `material_approvals`
   ADD KEY `submitted_by` (`submitted_by`),
   ADD KEY `approved_by` (`approved_by`),
   ADD KEY `idx_material_approvals_project_status_date` (`project_id`,`status`,`submitted_date`),
-  ADD KEY `idx_material_status_date` (`status`,`submitted_date`);
+  ADD KEY `idx_material_status_date` (`status`,`submitted_date`),
+  ADD KEY `idx_material_project_user_status` (`project_id`,`submitted_by`,`status`);
 
 --
 -- Indexes for table `material_deliveries`
 --
 ALTER TABLE `material_deliveries`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `project_id` (`project_id`),
-  ADD KEY `received_by` (`received_by`);
+  ADD KEY `received_by` (`received_by`),
+  ADD KEY `idx_material_deliveries_project_date` (`project_id`,`delivery_date`);
 
 --
 -- Indexes for table `media_library`
@@ -3825,7 +3981,8 @@ ALTER TABLE `non_conformance_reports`
   ADD PRIMARY KEY (`id`),
   ADD KEY `raised_by` (`raised_by`),
   ADD KEY `closed_by` (`closed_by`),
-  ADD KEY `idx_ncr_project_status_date` (`project_id`,`status`,`raised_date`);
+  ADD KEY `idx_ncr_project_status_date` (`project_id`,`status`,`raised_date`),
+  ADD KEY `idx_ncr_consultant_review` (`project_id`,`consultant_review_status`,`raised_date`);
 
 --
 -- Indexes for table `notifications`
@@ -3856,8 +4013,8 @@ ALTER TABLE `password_resets`
 ALTER TABLE `payments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `ipc_id` (`ipc_id`),
-  ADD KEY `project_id` (`project_id`),
-  ADD KEY `processed_by` (`processed_by`);
+  ADD KEY `processed_by` (`processed_by`),
+  ADD KEY `idx_payments_project_date` (`project_id`,`payment_date`);
 
 --
 -- Indexes for table `programme_tasks`
@@ -3884,7 +4041,8 @@ ALTER TABLE `projects`
   ADD KEY `constituency_id` (`constituency_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_featured` (`is_featured`),
-  ADD KEY `idx_projects_consultant_status` (`consultant_id`,`status`);
+  ADD KEY `idx_projects_consultant_status` (`consultant_id`,`status`),
+  ADD KEY `idx_projects_contractor_status` (`contractor_id`,`status`);
 
 --
 -- Indexes for table `project_assignments`
@@ -3916,12 +4074,24 @@ ALTER TABLE `project_channels`
   ADD KEY `created_by` (`created_by`);
 
 --
+-- Indexes for table `project_progress_updates`
+--
+ALTER TABLE `project_progress_updates`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `reviewed_by` (`reviewed_by`),
+  ADD KEY `idx_progress_project_created` (`project_id`,`created_at`),
+  ADD KEY `idx_progress_user_created` (`submitted_by`,`created_at`),
+  ADD KEY `idx_progress_status_created` (`status`,`created_at`),
+  ADD KEY `idx_progress_media` (`media_id`);
+
+--
 -- Indexes for table `quality_tests`
 --
 ALTER TABLE `quality_tests`
   ADD PRIMARY KEY (`id`),
   ADD KEY `tested_by` (`tested_by`),
-  ADD KEY `idx_quality_tests_project_result_date` (`project_id`,`pass_fail`,`test_date`);
+  ADD KEY `idx_quality_tests_project_result_date` (`project_id`,`pass_fail`,`test_date`),
+  ADD KEY `idx_quality_consultant_review` (`project_id`,`consultant_review_status`,`test_date`);
 
 --
 -- Indexes for table `report_runs`
@@ -3945,9 +4115,9 @@ ALTER TABLE `retention`
 --
 ALTER TABLE `rfis`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `project_id` (`project_id`),
   ADD KEY `raised_by` (`raised_by`),
-  ADD KEY `responded_by` (`responded_by`);
+  ADD KEY `responded_by` (`responded_by`),
+  ADD KEY `idx_rfis_project_user_status` (`project_id`,`raised_by`,`status`);
 
 --
 -- Indexes for table `roles`
@@ -3964,7 +4134,8 @@ ALTER TABLE `shop_drawings`
   ADD KEY `submitted_by` (`submitted_by`),
   ADD KEY `reviewed_by` (`reviewed_by`),
   ADD KEY `idx_shop_drawings_project_status_date` (`project_id`,`status`,`submitted_date`),
-  ADD KEY `idx_shop_drawings_status_date` (`status`,`submitted_date`);
+  ADD KEY `idx_shop_drawings_status_date` (`status`,`submitted_date`),
+  ADD KEY `idx_shop_project_user_status` (`project_id`,`submitted_by`,`status`);
 
 --
 -- Indexes for table `site_diaries`
@@ -3972,7 +4143,8 @@ ALTER TABLE `shop_drawings`
 ALTER TABLE `site_diaries`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_project_date` (`project_id`,`diary_date`),
-  ADD KEY `recorded_by` (`recorded_by`);
+  ADD KEY `recorded_by` (`recorded_by`),
+  ADD KEY `idx_site_diaries_consultant_review` (`project_id`,`consultant_review_status`,`diary_date`);
 
 --
 -- Indexes for table `site_meeting_minutes`
@@ -4105,7 +4277,8 @@ ALTER TABLE `variations`
   ADD KEY `approved_by` (`approved_by`),
   ADD KEY `idx_variations_status` (`status`),
   ADD KEY `idx_variations_project_status_created` (`project_id`,`status`,`created_at`),
-  ADD KEY `idx_variations_consultant_review` (`project_id`,`consultant_review_status`,`created_at`);
+  ADD KEY `idx_variations_consultant_review` (`project_id`,`consultant_review_status`,`created_at`),
+  ADD KEY `idx_variations_project_user_status` (`project_id`,`submitted_by`,`status`);
 
 --
 -- Indexes for table `wards`
@@ -4155,7 +4328,7 @@ ALTER TABLE `attendance_records`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `boq_items`
@@ -4227,13 +4400,13 @@ ALTER TABLE `contractors`
 -- AUTO_INCREMENT for table `defects`
 --
 ALTER TABLE `defects`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `email_logs`
@@ -4305,7 +4478,7 @@ ALTER TABLE `hs_incidents`
 -- AUTO_INCREMENT for table `inspection_test_plans`
 --
 ALTER TABLE `inspection_test_plans`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `ipcs`
@@ -4455,7 +4628,7 @@ ALTER TABLE `news_tags`
 -- AUTO_INCREMENT for table `non_conformance_reports`
 --
 ALTER TABLE `non_conformance_reports`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -4506,10 +4679,16 @@ ALTER TABLE `project_channels`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `project_progress_updates`
+--
+ALTER TABLE `project_progress_updates`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `quality_tests`
 --
 ALTER TABLE `quality_tests`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `report_runs`
@@ -4545,7 +4724,7 @@ ALTER TABLE `shop_drawings`
 -- AUTO_INCREMENT for table `site_diaries`
 --
 ALTER TABLE `site_diaries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `site_meeting_minutes`
@@ -4653,7 +4832,7 @@ ALTER TABLE `weather_logs`
 -- AUTO_INCREMENT for table `_migrations`
 --
 ALTER TABLE `_migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=138;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
 
 --
 -- Constraints for dumped tables
@@ -4991,6 +5170,15 @@ ALTER TABLE `project_assignments`
 ALTER TABLE `project_channels`
   ADD CONSTRAINT `project_channels_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `project_channels_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `project_progress_updates`
+--
+ALTER TABLE `project_progress_updates`
+  ADD CONSTRAINT `fk_progress_media` FOREIGN KEY (`media_id`) REFERENCES `media_library` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `project_progress_updates_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `project_progress_updates_ibfk_2` FOREIGN KEY (`submitted_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `project_progress_updates_ibfk_3` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `quality_tests`
