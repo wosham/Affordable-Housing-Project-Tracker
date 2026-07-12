@@ -29,14 +29,16 @@ class StakeholderEngagementPath extends Model
     public static function savePath(array $input, ?int $id = null): int
     {
         $title = Security::cleanString((string)($input['title'] ?? ''));
+        $slug = StakeholderGroup::slug((string)($input['slug'] ?? $title));
+        self::ensureUniqueSlug($slug, $id);
         $data = [
-            'slug' => StakeholderGroup::slug((string)($input['slug'] ?? $title)),
+            'slug' => $slug,
             'title' => $title,
             'icon' => Security::cleanString((string)($input['icon'] ?? '')),
             'description' => trim((string)($input['description'] ?? '')),
             'steps_json' => self::jsonLines((string)($input['steps'] ?? '')),
             'button_label' => Security::cleanString((string)($input['button_label'] ?? '')),
-            'button_url' => Security::cleanString((string)($input['button_url'] ?? '')),
+            'button_url' => self::nullableUrl($input['button_url'] ?? null),
             'tone' => Security::cleanString((string)($input['tone'] ?? 'standard')),
             'status' => strtolower((string)($input['status'] ?? 'published')) === 'draft' ? 'draft' : 'published',
             'sort_order' => max(0, Security::cleanInt($input['sort_order'] ?? 0)),
@@ -65,5 +67,31 @@ class StakeholderEngagementPath extends Model
     {
         $lines = array_values(array_filter(array_map('trim', preg_split('/\R+/', $value) ?: [])));
         return json_encode($lines, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    private static function nullableUrl(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('#^(?:https?://|mailto:|tel:|/)#i', $value) === 1) {
+            return $value;
+        }
+
+        throw new RuntimeException('Engagement button URL must be http, https, mailto, tel or an internal path.');
+    }
+
+    private static function ensureUniqueSlug(string $slug, ?int $id = null): void
+    {
+        $existing = Database::fetch(
+            'SELECT id FROM stakeholder_engagement_paths WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1',
+            [$slug, $id, $id]
+        );
+
+        if ($existing) {
+            throw new RuntimeException('This engagement path slug is already in use.');
+        }
     }
 }

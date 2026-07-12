@@ -44,7 +44,7 @@
   }
   function validatePassword(val) {
     if (!val) return 'Password is required.';
-    if (val.length < 6) return 'Password must be at least 6 characters.';
+    if (val.length < 8) return 'Password must be at least 8 characters.';
     return '';
   }
   function setFieldState(inputId, errId, msg) {

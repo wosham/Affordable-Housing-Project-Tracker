@@ -4,10 +4,7 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
 ApiMiddleware::handle(['methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false]);
 
-$csrf = Csrf::fromRequest();
-if (!Csrf::verify($csrf, 'manager_contract_controls') && !Csrf::verify($csrf, 'default')) {
-    Response::json(['success' => false, 'message' => 'CSRF token mismatch. Please refresh the page and try again.'], 419);
-}
+ApiCsrf::requireAny(ApiCsrf::forms('manager_contract_controls'));
 
 $input = $_POST ?: Security::jsonInput();
 $userId = (int)Auth::id();

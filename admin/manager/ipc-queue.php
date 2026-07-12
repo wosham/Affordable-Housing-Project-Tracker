@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -54,7 +54,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> Payment certificates</span>
     <h2>IPC Queue</h2>
-    <p>Endorse certified payment certificates, reject items that need correction and track IPC movement.</p>
+    <p>Endorse certified certificates for your assigned projects, reject items that need correction, and track IPC movement.</p>
   </div>
   <div class="manager-ipc-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Projects</a>
@@ -64,14 +64,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="stat-grid stat-grid--4 manager-ipc-stats" aria-label="IPC summary">
-  <?php manager_ipc_stat('fa-clipboard-check', $stats['ready'], 'Ready for Endorsement', format_money($stats['ready_value'])); ?>
-  <?php manager_ipc_stat('fa-route', $stats['incoming'], 'Incoming', 'With clerk or consultant'); ?>
-  <?php manager_ipc_stat('fa-circle-check', $stats['endorsed'], 'Endorsed', 'Sent to final approval'); ?>
-  <?php manager_ipc_stat('fa-ban', $stats['rejected'], 'Rejected', 'Returned for correction'); ?>
-  <?php manager_ipc_stat('fa-money-bill-wave', format_money($stats['net_value']), 'Net Value', 'Assigned IPCs'); ?>
-  <?php manager_ipc_stat('fa-triangle-exclamation', $stats['high_value'], 'High Value', 'Needs close review'); ?>
-  <?php manager_ipc_stat('fa-folder-open', count($projects), 'Assigned Projects', 'Current portfolio'); ?>
-  <?php manager_ipc_stat('fa-signal', $stats['total'], 'Total IPCs', 'Visible to manager'); ?>
+  <?php manager_ipc_stat('fa-clipboard-check', $stats['ready'], 'Ready for Endorsement', format_money($stats['ready_value']), manager_ipc_page_url($filters, ['view' => 'ready', 'page' => 1])); ?>
+  <?php manager_ipc_stat('fa-route', $stats['incoming'], 'Incoming', 'With clerk or consultant', manager_ipc_page_url($filters, ['view' => 'incoming', 'page' => 1])); ?>
+  <?php manager_ipc_stat('fa-circle-check', $stats['endorsed'], 'Endorsed', 'Sent to final approval', manager_ipc_page_url($filters, ['view' => 'endorsed', 'page' => 1])); ?>
+  <?php manager_ipc_stat('fa-ban', $stats['rejected'], 'Rejected', 'Returned for correction', manager_ipc_page_url($filters, ['view' => 'rejected', 'page' => 1])); ?>
+  <?php manager_ipc_stat('fa-money-bill-wave', format_money($stats['net_value']), 'Net Value', 'Assigned IPCs', manager_ipc_page_url($filters, ['view' => 'all', 'page' => 1])); ?>
+  <?php manager_ipc_stat('fa-triangle-exclamation', $stats['high_value'], 'High Value', 'Needs close review', manager_ipc_page_url($filters, ['view' => 'all', 'high_value' => 1, 'page' => 1])); ?>
+  <?php manager_ipc_stat('fa-folder-open', count($projects), 'Assigned Projects', 'Current portfolio', Url::to('admin/manager/projects.php')); ?>
+  <?php manager_ipc_stat('fa-signal', $stats['total'], 'Total IPCs', 'Visible to manager', manager_ipc_page_url($filters, ['view' => 'all', 'page' => 1])); ?>
 </section>
 
 <section class="card manager-ipc-tabs" aria-label="IPC views">
@@ -119,12 +119,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
               <td class="is-money"><strong><?= Security::e(format_money($ipc['net_amount'])) ?></strong></td>
               <td><span class="badge <?= Security::e($ipc['status_badge']) ?>"><?= Security::e($ipc['status_label']) ?></span><?php if ($ipc['warning_count'] > 0): ?><small class="manager-ipc-warning"><?= (int)$ipc['warning_count'] ?> warning(s)</small><?php endif; ?></td>
               <td><span class="manager-ipc-muted"><?= Security::e($ipc['last_action_label']) ?></span></td>
-              <td><div class="data-table__actions">
+              <td><div class="manager-table-actions data-table__actions">
                 <button class="btn btn--icon btn--outline" type="button" data-ipc-detail data-id="<?= (int)$ipc['id'] ?>" title="View details" aria-label="View details"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
 <?php if ($ipc['is_ready_for_manager']): ?>
                 <button class="btn btn--icon btn--success" type="button" data-ipc-decision="endorse" data-id="<?= (int)$ipc['id'] ?>" data-title="IPC #<?= Security::e($ipc['ipc_number']) ?>" data-summary="<?= Security::e($ipc['project_name'] . ' - ' . format_money($ipc['net_amount'])) ?>" title="Endorse IPC" aria-label="Endorse IPC"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
                 <button class="btn btn--icon btn--danger" type="button" data-ipc-decision="reject" data-id="<?= (int)$ipc['id'] ?>" data-title="IPC #<?= Security::e($ipc['ipc_number']) ?>" data-summary="<?= Security::e($ipc['project_name']) ?>" title="Reject IPC" aria-label="Reject IPC"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 <?php endif; ?>
+                <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/boq.php?project_id=' . (int)$ipc['project_id'])) ?>" title="BOQ" aria-label="BOQ"><i class="fa-solid fa-list-check" aria-hidden="true"></i></a>
               </div></td>
             </tr>
 <?php endforeach; endif; ?>
@@ -132,12 +133,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </table>
       </div>
 
-<?php if ($totalPages > 1): ?>
       <nav class="pagination" aria-label="IPC pagination">
-        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> IPCs</p>
-        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_ipc_page_url($filters, ['page' => max(1, $page - 1)])) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_ipc_page_url($filters, ['page' => min($totalPages, $page + 1)])) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> IPCs (<?= (int)$perPage ?> per page)</p>
+        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_ipc_page_url($filters, ['page' => max(1, $page - 1)])) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_ipc_page_url($filters, ['page' => min($totalPages, $page + 1)])) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
       </nav>
-<?php endif; ?>
     </section>
   </div>
 
@@ -185,13 +184,15 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function manager_ipc_stat(string $icon, mixed $value, string $label, string $trend): void
+function manager_ipc_stat(string $icon, mixed $value, string $label, string $trend, ?string $href = null): void
 {
+    $tag = $href ? 'a' : 'article';
+    $attr = $href ? ' href="' . Security::e($href) . '"' : '';
 ?>
-  <article class="stat-widget">
+  <<?= $tag ?> class="stat-widget<?= $href ? ' stat-widget--link' : '' ?>"<?= $attr ?>>
     <span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span>
     <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(is_numeric($value) ? format_number($value) : (string)$value) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span>
-  </article>
+  </<?= $tag ?>>
 <?php
 }
 

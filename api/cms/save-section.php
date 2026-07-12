@@ -60,7 +60,12 @@ function cms_section_clean_content(array $content): array
             continue;
         }
 
-        $clean[$key] = $key === 'body'
+        if (is_array($value)) {
+            $clean[$key] = cms_section_clean_content($value);
+            continue;
+        }
+
+        $clean[$key] = str_contains($key, 'body') || str_contains($key, 'html')
             ? cms_section_clean_html((string)$value)
             : Security::cleanString(trim((string)$value));
     }

@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $userId = (int)(Auth::id() ?? 0);
 $role = (string)(Auth::role() ?? '');
@@ -12,7 +12,7 @@ $filters = [
     'risk' => trim((string)($_GET['risk'] ?? '')),
 ];
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
-$limit = 15;
+$limit = 10;
 $offset = ($page - 1) * $limit;
 
 $projects = ConsultantTechnicalReview::projects($userId, $role);
@@ -20,10 +20,12 @@ $summary = ConsultantTechnicalReview::boqSummary($userId, $role, $filters);
 $items = ConsultantTechnicalReview::boqItems($userId, $role, $filters, $limit, $offset);
 $total = ConsultantTechnicalReview::boqCount($userId, $role, $filters);
 $pages = max(1, (int)ceil($total / $limit));
+$riskItems = ConsultantTechnicalReview::boqRiskItems($userId, $role, $filters, 8);
 
 $pageTitle = 'BOQ Review';
 $pageDescription = 'Review BOQ quantities, certification signals and cost risks for assigned projects.';
 $adminRole = 'consultant';
+$csrfForm = 'consultant_technical';
 $contentClass = 'consultant-technical-page';
 $componentCss = ['consultant-technical'];
 $pageScripts = ['consultant-technical'];
@@ -103,7 +105,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </thead>
         <tbody>
           <?php if ($items === []): ?>
-            <tr><td colspan="7"><div class="technical-empty">No BOQ items found.</div></td></tr>
+            <tr><td colspan="7"><div class="empty-state"><strong class="empty-state__title">No BOQ items found</strong><span class="empty-state__text">Adjust filters or wait for BOQ data on your assigned projects.</span></div></td></tr>
           <?php endif; ?>
           <?php foreach ($items as $item): ?>
             <?php
@@ -153,19 +155,21 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </article>
 
   <aside class="technical-card card">
-    <h2>Attention list</h2>
-    <p>Items with quantity or payment risk appear first.</p>
+    <h2>Portfolio attention list</h2>
+    <p>Elevated risk items across your assigned projects (not limited to this page).</p>
     <div class="technical-side-list">
-      <?php foreach (array_slice(array_filter($items, static fn ($item): bool => in_array((string)($item['risk_status'] ?? 'normal'), ['watch', 'high', 'critical'], true)), 0, 6) as $item): ?>
-        <div class="technical-side-item">
-          <strong><?= Security::e($item['item_no']) ?> - <?= Security::e($item['section']) ?></strong>
-          <span><?= Security::e($item['project_name']) ?> / <?= Security::e(status_label($item['risk_status'])) ?></span>
-        </div>
-      <?php endforeach; ?>
-      <?php if ($summary['risks'] <= 0): ?>
-        <div class="technical-empty">No risk items in the current view.</div>
-      <?php endif; ?>
+      <?php if ($riskItems === []): ?>
+        <div class="empty-state empty-state--compact"><strong class="empty-state__title">No risk items</strong><span class="empty-state__text">Watch / high / critical BOQ items will appear here.</span></div>
+      <?php else: foreach ($riskItems as $item): ?>
+        <a class="technical-side-item technical-side-item--link" href="<?= Security::e(Url::to('admin/consultant/boq-review.php?project_id=' . (int)($item['project_id'] ?? 0) . '&q=' . rawurlencode((string)($item['item_no'] ?? '')))) ?>">
+          <strong><?= Security::e($item['item_no']) ?> · <?= Security::e($item['section'] ?: 'General') ?></strong>
+          <span><?= Security::e($item['project_name']) ?> · <?= Security::e(status_label($item['risk_status'] ?? 'watch')) ?> risk</span>
+        </a>
+      <?php endforeach; endif; ?>
     </div>
+    <?php if ((int)$summary['risks'] > 0): ?>
+      <a class="btn btn--outline btn--sm" href="<?= Security::e(Url::to('admin/consultant/boq-review.php?risk=high')) ?>">View high-risk filter</a>
+    <?php endif; ?>
   </aside>
 </section>
 
@@ -186,13 +190,22 @@ function technical_action(string $type, int $id, string $action, string $label, 
 
 function technical_pagination(int $page, int $pages, int $total, int $limit): void
 {
-    echo '<div class="pagination"><span>Showing ' . format_number(min($total, (($page - 1) * $limit) + 1)) . '-' . format_number(min($total, $page * $limit)) . ' of ' . format_number($total) . '</span><div>';
+    if ($total <= 0) {
+        return;
+    }
+    $from = min($total, (($page - 1) * $limit) + 1);
+    $to = min($total, $page * $limit);
+    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number($to) . ' of ' . format_number($total) . '</span><div>';
     $query = $_GET;
-    $query['page'] = max(1, $page - 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left"></i></a>';
-    echo '<span class="btn btn--sm btn--primary">' . $page . '</span>';
-    $query['page'] = min($pages, $page + 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right"></i></a></div></div>';
+    $prev = max(1, $page - 1);
+    $next = min($pages, $page + 1);
+    $query['page'] = $prev;
+    $prevClass = $page <= 1 ? ' btn--disabled is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $prevClass . '" href="?' . Security::e(http_build_query($query)) . '"' . ($page <= 1 ? ' aria-disabled="true"' : '') . '><i class="fa-solid fa-chevron-left"></i></a>';
+    echo '<span class="btn btn--sm btn--primary">' . $page . ' / ' . $pages . '</span>';
+    $query['page'] = $next;
+    $nextClass = $page >= $pages ? ' btn--disabled is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $nextClass . '" href="?' . Security::e(http_build_query($query)) . '"' . ($page >= $pages ? ' aria-disabled="true"' : '') . '><i class="fa-solid fa-chevron-right"></i></a></div></div>';
 }
 
 function technical_modal(): void

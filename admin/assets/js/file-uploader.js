@@ -30,11 +30,20 @@
 
   function validate(file, mode, maxSize) {
     if (!file) return 'Choose a file first.';
-    if (file.size > maxSize) return 'File is too large.';
+    if (file.size > maxSize) {
+      var mb = Math.round(maxSize / (1024 * 1024));
+      return 'File is too large (max ' + mb + ' MB).';
+    }
 
     var allowed = mode === 'document' ? defaults.documentTypes : defaults.imageTypes.concat(defaults.documentTypes);
     if (mode === 'image') allowed = defaults.imageTypes;
-    if (allowed.indexOf(file.type) === -1) return 'This file type is not allowed.';
+
+    // Some browsers leave type empty for known extensions — allow by extension fallback.
+    if (file.type && allowed.indexOf(file.type) === -1) {
+      var name = (file.name || '').toLowerCase();
+      var okExt = /\.(jpe?g|png|webp|gif|pdf|docx?|xlsx?)$/i.test(name);
+      if (!okExt) return 'This file type is not allowed.';
+    }
 
     return '';
   }
@@ -42,8 +51,14 @@
   function preview(root, file) {
     var image = qs('[data-upload-preview]', root);
     var name = qs('[data-upload-name]', root);
-    if (name) name.textContent = file ? file.name : '';
-    if (!image || !file || !file.type || file.type.indexOf('image/') !== 0) return;
+    if (name) name.textContent = file ? file.name : 'No file selected';
+    if (!image) return;
+
+    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+      image.removeAttribute('src');
+      image.hidden = true;
+      return;
+    }
 
     var reader = new FileReader();
     reader.onload = function () {
@@ -59,17 +74,25 @@
 
     var mode = root.getAttribute('data-upload-mode') || (input.getAttribute('accept') === 'image/*' ? 'image' : 'any');
     var maxSize = parseInt(root.getAttribute('data-upload-max') || '', 10) || defaults.maxSize;
+    var picker = qs('[data-upload-picker]', root);
 
     function handleFile(file) {
       var error = validate(file, mode, maxSize);
       if (error) {
         input.value = '';
+        preview(root, null);
         setStatus(root, error, 'error');
         return;
       }
 
       preview(root, file);
       setStatus(root, 'Ready to upload.', 'ready');
+    }
+
+    if (picker) {
+      picker.addEventListener('click', function () {
+        input.click();
+      });
     }
 
     input.addEventListener('change', function () {

@@ -22,10 +22,31 @@
 }
 
 .manager-projects-hero__actions,
-.manager-project-actions {
+.manager-project-actions,
+.manager-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem;
+}
+
+.manager-table-actions {
+  justify-content: flex-start;
+  max-width: 220px;
+}
+
+.manager-table-actions .btn--icon {
+  flex: 0 0 auto;
+}
+
+.manager-project-deep-links {
   display: flex;
   flex-wrap: wrap;
   gap: .5rem;
+}
+
+.manager-project-deep-links .btn {
+  text-decoration: none;
 }
 
 .manager-projects-hero__actions {
@@ -193,6 +214,10 @@
   .manager-projects-hero__actions,
   .manager-projects-hero__actions .btn {
     width: 100%;
+  }
+
+  .manager-table-actions {
+    max-width: none;
   }
 
   .manager-project-detail-grid,

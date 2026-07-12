@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
 
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $pageTitle = 'CMS Pages';
 $pageDescription = 'Manage editable public pages, templates, SEO and publishing state.';
@@ -252,14 +252,16 @@ function cms_ensure_page_registry(): void
             $section['sort_order'] = $section['sort_order'] ?? (($index + 1) * 10);
             CmsSection::upsert($pageId, $section + ['content' => cms_default_section_content($section)]);
         }
+
+        cms_retire_legacy_sections($pageId, $slug);
     }
 }
 
 function cms_page_blueprints(): array
 {
     return [
-        'home' => ['template' => 'landing', 'route_path' => 'index.php', 'hero_image' => 'uploads/heroes/hero-main.jpg', 'sections' => cms_sections(['hero', 'ticker', 'stats', 'about', 'projects', 'map', 'news', 'gallery', 'cta'])],
-        'about' => ['template' => 'content', 'route_path' => 'about.php', 'hero_image' => 'uploads/gallery/maili-tatu-2.jpg', 'sections' => cms_sections(['hero', 'overview', 'pillars', 'timeline', 'legal_framework', 'partners', 'faq_teaser', 'leadership_contact', 'apply_cta'])],
+        'home' => ['template' => 'landing', 'route_path' => 'index.php', 'hero_image' => 'uploads/heroes/hero-main.jpg', 'sections' => cms_sections(['home_hero', 'featured_projects', 'constituency_coverage', 'ground_reports', 'ecitizen_cta'])],
+        'about' => ['template' => 'content', 'route_path' => 'about.php', 'hero_image' => 'uploads/gallery/maili-tatu-2.jpg', 'sections' => cms_sections(['about_hero', 'programme_overview', 'core_commitments', 'programme_history', 'legal_framework', 'partners_teaser', 'faq_teaser', 'leadership_contact', 'apply_cta'])],
         'projects' => [
             'template' => 'listing',
             'route_path' => 'projects.php',
@@ -267,7 +269,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'All Projects | Trans-Nzoia County Affordable Housing Tracker',
             'seo_description' => 'Browse all affordable housing projects in Trans-Nzoia County with live construction progress, contractor details and unit counts across all 5 constituencies.',
             'seo_keywords' => 'Trans-Nzoia affordable housing projects, AHP Kenya, Maili Tatu estate, Matunda estate, Saboti housing, Cherangany housing',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/projects.php',
+            'canonical_url' => Url::canonical('projects.php'),
             'sections' => cms_sections(['projects_hero', 'projects_filters', 'projects_listing']),
         ],
         'project-detail' => [
@@ -276,7 +278,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'Project Detail | Trans-Nzoia County Affordable Housing Tracker',
             'seo_description' => 'Detailed construction progress, contractor information, milestones and site photos for affordable housing projects in Trans-Nzoia County.',
             'seo_keywords' => 'Trans-Nzoia AHP project detail, affordable housing Kenya, construction progress',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/project-detail.php',
+            'canonical_url' => Url::canonical('project-detail.php'),
             'sections' => cms_sections(['project_detail_labels', 'project_detail_overview', 'project_detail_sidebar', 'project_detail_apply_cta', 'project_detail_not_found']),
         ],
         'constituencies' => [
@@ -286,7 +288,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'Constituencies | Trans-Nzoia County Affordable Housing Tracker',
             'seo_description' => 'Explore affordable housing coverage across all 5 constituencies in Trans-Nzoia County - Saboti, Cherangany, Endebess, Kiminini and Kwanza.',
             'seo_keywords' => 'Trans-Nzoia constituencies, Saboti housing, Cherangany AHP, Endebess housing, Kiminini housing, Kwanza housing',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/constituencies.php',
+            'canonical_url' => Url::canonical('constituencies.php'),
             'sections' => cms_sections(['constituencies_hero', 'constituencies_map', 'constituencies_progress', 'constituencies_grid', 'constituencies_apply_cta']),
         ],
         'constituency-detail' => [
@@ -295,7 +297,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'Constituency Detail | Trans-Nzoia County Affordable Housing Tracker',
             'seo_description' => 'Detailed affordable housing information for Trans-Nzoia constituencies, including live projects, progress, wards and local facts.',
             'seo_keywords' => 'Trans-Nzoia constituency housing, AHP Kenya, affordable housing projects',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/constituency-detail.php',
+            'canonical_url' => Url::canonical('constituency-detail.php'),
             'sections' => cms_sections(['constituency_detail_labels', 'constituency_detail_facts', 'constituency_detail_related', 'constituency_detail_apply_cta']),
         ],
         'news' => [
@@ -304,7 +306,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'News & Updates | Trans-Nzoia County AHP Tracker',
             'seo_description' => 'Latest news, official announcements, construction progress reports, and community updates from the Trans-Nzoia County Affordable Housing Programme.',
             'seo_keywords' => 'Trans-Nzoia housing news, AHP announcements, affordable housing Kenya, county housing updates',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/news.php',
+            'canonical_url' => Url::canonical('news.php'),
             'sections' => cms_sections(['news_hero', 'news_mosaic', 'news_featured', 'news_filters', 'news_listing', 'news_cta']),
         ],
         'news-article' => [
@@ -313,7 +315,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'News Article | Trans-Nzoia County AHP Tracker',
             'seo_description' => 'Read official Trans-Nzoia Affordable Housing Programme news, announcements, reports and updates.',
             'seo_keywords' => 'Trans-Nzoia housing news, affordable housing, AHP reports',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/news-article.php',
+            'canonical_url' => Url::canonical('news-article.php'),
             'sections' => cms_sections(['news_article_labels', 'news_article_sidebar', 'news_article_downloads', 'news_article_not_found']),
         ],
         'gallery' => [
@@ -323,12 +325,12 @@ function cms_page_blueprints(): array
             'seo_title' => 'Photo Gallery | Trans-Nzoia County AHP Tracker',
             'seo_description' => 'Photo and video documentation of Trans-Nzoia Affordable Housing Programme construction progress, ceremonies, community engagements and site activity.',
             'seo_keywords' => 'Trans-Nzoia affordable housing gallery, AHP Kenya photos, construction progress videos',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/gallery.php',
+            'canonical_url' => Url::canonical('gallery.php'),
             'sections' => cms_sections(['gallery_hero', 'gallery_highlights', 'gallery_archive', 'gallery_site_progress', 'gallery_videos', 'gallery_empty_states']),
         ],
-        'faq' => ['template' => 'content', 'route_path' => 'faq.php', 'sections' => cms_sections(['hero', 'popular_intro', 'faq_listing_intro', 'contact_cta'])],
+        'faq' => ['template' => 'content', 'route_path' => 'faq.php', 'sections' => cms_sections(['faq_hero', 'faq_popular', 'faq_library', 'faq_contact_cta'])],
         'leadership' => ['template' => 'content', 'route_path' => 'leadership.php', 'sections' => cms_sections(['leadership_hero', 'leadership_org_chart', 'leadership_national', 'leadership_spotlight', 'leadership_contractors', 'leadership_quotes', 'leadership_partners', 'leadership_contact_cta'])],
-        'stakeholders' => ['template' => 'content', 'route_path' => 'stakeholders.php', 'sections' => cms_sections(['hero', 'ecosystem', 'categories', 'roles', 'timeline', 'voices', 'partners', 'engagement_cta'])],
+        'stakeholders' => ['template' => 'content', 'route_path' => 'stakeholders.php', 'sections' => cms_sections(['stakeholders_hero', 'stakeholders_ecosystem', 'stakeholders_pillars', 'stakeholders_mandates', 'stakeholders_milestones', 'stakeholders_voices', 'stakeholders_formal_partners'])],
         'contact' => [
             'template' => 'contact',
             'route_path' => 'contact.php',
@@ -336,7 +338,7 @@ function cms_page_blueprints(): array
             'seo_title' => 'Contact Us | Trans-Nzoia AHP Tracker',
             'seo_description' => 'Contact the Trans-Nzoia Affordable Housing Programme team by phone, email, office visit or online enquiry form.',
             'seo_keywords' => 'Trans-Nzoia affordable housing contact, AHP Kenya office, Kitale housing desk, housing enquiry Kenya',
-            'canonical_url' => 'https://housing.transnzoia.go.ke/contact.php',
+            'canonical_url' => Url::canonical('contact.php'),
             'sections' => cms_sections(['contact_hero', 'contact_quick_cards', 'contact_form', 'contact_office', 'contact_departments', 'contact_faq_banner']),
         ],
         'privacy' => ['template' => 'legal', 'route_path' => 'legal/privacy.php', 'sections' => cms_legal_sections('Privacy Policy')],
@@ -348,6 +350,36 @@ function cms_page_blueprints(): array
         'offline' => ['template' => 'system', 'route_path' => 'offline.php', 'sections' => cms_sections(['hero', 'offline_notice'])],
         'sitemap' => ['template' => 'system', 'route_path' => 'sitemap.php', 'sections' => cms_sections(['hero', 'link_groups'])],
     ];
+}
+
+function cms_retire_legacy_sections(int $pageId, string $slug): void
+{
+    $retired = cms_retired_section_keys($slug);
+    if ($retired === []) {
+        return;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($retired), '?'));
+    Database::query(
+        "UPDATE cms_sections
+         SET is_visible = 0, updated_by = ?
+         WHERE page_id = ?
+           AND section_key IN ({$placeholders})",
+        array_merge([(int)Auth::id(), $pageId], $retired)
+    );
+}
+
+function cms_retired_section_keys(string $slug): array
+{
+    return match ($slug) {
+        'home' => ['hero', 'ticker', 'stats', 'about', 'projects', 'map', 'news', 'gallery', 'cta', 'kpis', 'news_intro', 'apply_cta'],
+        'about' => ['hero', 'overview', 'pillars', 'timeline', 'partners'],
+        'faq' => ['hero', 'popular_intro', 'faq_listing_intro', 'contact_cta'],
+        'leadership' => ['hero', 'org_chain', 'national_intro', 'director_spotlight', 'contractors_intro', 'quotes_intro', 'partners_intro', 'contact_cta'],
+        'stakeholders' => ['hero', 'ecosystem', 'categories', 'roles', 'timeline', 'voices', 'partners', 'engagement_cta'],
+        'contact' => ['hero', 'quick_contact', 'form_intro', 'office_info', 'departments_intro', 'faq_banner'],
+        default => [],
+    };
 }
 
 function cms_sections(array $keys): array

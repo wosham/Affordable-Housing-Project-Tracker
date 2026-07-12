@@ -1,1099 +1,457 @@
-﻿<?php
+<?php
+require_once __DIR__ . '/app/core/bootstrap.php';
+
 $basePath = '';
 $activePage = 'stakeholders';
-$pageTitle = 'Programme Stakeholders | Trans-Nzoia AHP Tracker';
-$pageDescription = 'Explore all stakeholders of the Trans-Nzoia Affordable Housing Programme â€” government agencies, contractors, financiers, oversight bodies, and the communities being served.';
-$pageKeywords = 'Trans-Nzoia affordable housing stakeholders, AHP Kenya partners, State Department Housing, NEMA, NCA, Boma Yangu, community beneficiaries';
-$pageAuthor = 'Trans-Nzoia County Government â€” Department of Land, Housing & Physical Planning';
+
+$cmsPage = CmsLoader::page('stakeholders');
+$hero = CmsLoader::content($cmsPage, 'stakeholders_hero', [
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Affordable housing programme site visit in Trans-Nzoia County',
+    'eyebrow' => 'Programme Ecosystem',
+    'title' => 'Everyone Who Makes It Happen',
+    'subtitle' => 'Explore the institutions, partners, community channels and oversight bodies supporting the Affordable Housing Programme in Trans-Nzoia County.',
+    'scroll_label' => 'Explore the Ecosystem',
+]);
+$ecosystem = CmsLoader::content($cmsPage, 'stakeholders_ecosystem', [
+    'eyebrow' => 'Ecosystem Overview',
+    'title' => 'The Programme Web',
+    'subtitle' => 'Select any stakeholder category to see its public role and active partners.',
+    'hub_label' => 'Trans-Nzoia AHP',
+    'empty_text' => 'Stakeholder groups will appear here once published.',
+]);
+$pillars = CmsLoader::content($cmsPage, 'stakeholders_pillars', [
+    'eyebrow' => 'Stakeholder Groups',
+    'title' => 'Programme Delivery Pillars',
+    'subtitle' => 'Every stakeholder belongs to a public accountability group with clear responsibilities.',
+    'empty_text' => 'No stakeholder groups have been published yet.',
+]);
+$mandates = CmsLoader::content($cmsPage, 'stakeholders_mandates', [
+    'eyebrow' => 'Mandates & Accountabilities',
+    'title' => 'Who Does What?',
+    'subtitle' => 'Open each group to understand its mandate, responsibilities and reporting lines.',
+]);
+$milestoneCopy = CmsLoader::content($cmsPage, 'stakeholders_milestones', [
+    'eyebrow' => 'Programme Journey',
+    'title' => 'Stakeholder Engagement Milestones',
+    'subtitle' => 'A public timeline of stakeholder engagement and programme coordination.',
+    'empty_text' => 'Stakeholder milestones will appear here once published.',
+]);
+$voiceCopy = CmsLoader::content($cmsPage, 'stakeholders_voices', [
+    'eyebrow' => 'Community Voice',
+    'title' => 'The People Behind the Programme',
+    'subtitle' => 'Published community and beneficiary voices appear here.',
+    'empty_text' => 'Community voices will appear here once published.',
+]);
+$partnerCopy = CmsLoader::content($cmsPage, 'stakeholders_formal_partners', [
+    'eyebrow' => 'Formal Partnerships',
+    'title' => 'Institutional Partners',
+    'subtitle' => 'Published formal partners and public institutions supporting the programme.',
+    'empty_text' => 'Formal partners will appear here once published.',
+]);
+
+$groups = StakeholderGroup::published();
+$stakeholders = Stakeholder::ordered(['status' => 'published', 'featured_on_stakeholders' => 1]);
+$milestones = StakeholderMilestone::ordered(['status' => 'published']);
+$voices = StakeholderTestimonial::ordered(['status' => 'published']);
+$partners = Stakeholder::formalPartners(18);
+$stats = Stakeholder::stats();
+
+$stakeholdersByGroup = [];
+foreach ($stakeholders as $stakeholder) {
+    $stakeholdersByGroup[(int)($stakeholder['group_id'] ?? 0)][] = $stakeholder;
+}
+
+$pageTitle = $cmsPage['seo_title'] ?? 'Programme Stakeholders | Trans-Nzoia AHP Tracker';
+$pageDescription = $cmsPage['seo_description'] ?? 'Explore the public stakeholder ecosystem behind the Trans-Nzoia Affordable Housing Programme.';
+$pageKeywords = $cmsPage['seo_keywords'] ?? 'Trans-Nzoia affordable housing stakeholders, AHP partners, housing programme Kenya';
+$pageAuthor = 'Trans-Nzoia County Government';
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = 'https://housing.transnzoia.go.ke/stakeholders.php';
+$canonicalUrl = $cmsPage['canonical_url'] ?? Url::to('stakeholders.php');
+$heroImage = st_text($hero, 'background_image', trim((string)($cmsPage['hero_image'] ?? '')) ?: 'uploads/heroes/hero-main.jpg');
+$heroAlt = st_text($hero, 'background_alt', 'Affordable housing programme site visit in Trans-Nzoia County');
+$ogImage = $heroImage;
 $pageStyles = [
-  'assets/css/global.css',
-  'assets/css/pages/stakeholders.css'
+    'assets/css/global.css',
+    'assets/css/pages/stakeholders.css',
 ];
 $pageScripts = [
-  'assets/js/global.js',
-  'assets/js/pages/stakeholders.js'
+    'assets/js/global.js',
+    'assets/js/pages/stakeholders.js',
 ];
 $headMeta = [
-  '<meta name="geo.region" content="KE-36">',
-  '<meta name="geo.placename" content="Trans-Nzoia County, Kenya">',
-  '<meta property="og:title" content="Programme Stakeholders | Trans-Nzoia AHP Tracker">',
-  '<meta property="og:description" content="The full ecosystem of partners, government bodies, contractors, financiers and communities delivering affordable housing in Trans-Nzoia County.">',
-  '<meta property="og:type" content="website">',
-  '<meta property="og:url" content="https://housing.transnzoia.go.ke/stakeholders.php">',
-  '<meta property="og:image" content="uploads/heroes/hero-main.jpg">',
-  '<meta property="og:locale" content="en_KE">',
-  '<meta property="og:site_name" content="Trans-Nzoia AHP Tracker">',
-  '<meta name="twitter:card" content="summary_large_image">',
-  '<meta name="twitter:title" content="Programme Stakeholders | Trans-Nzoia AHP Tracker">',
-  '<meta name="twitter:description" content="Discover every entity shaping affordable housing delivery in Trans-Nzoia County.">',
-  '<meta name="twitter:image" content="uploads/heroes/hero-main.jpg">'
+    '<meta name="geo.region" content="KE-36">',
+    '<meta name="geo.placename" content="Trans-Nzoia County, Kenya">',
 ];
-include __DIR__ . "/app/partials/" . 'head.php';
+
+function st_e(mixed $value): string
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function st_text(array $content, string $key, string $fallback = ''): string
+{
+    return CmsLoader::text($content, $key, $fallback);
+}
+
+function st_lines(array $value): array
+{
+    return array_values(array_filter(array_map(static fn ($item): string => trim((string)$item), $value)));
+}
+
+function st_icon(?string $icon, string $fallback = 'fa-handshake'): string
+{
+    $icon = trim((string)$icon);
+    return preg_match('/^fa[-a-z0-9 ]+$/i', $icon) ? $icon : $fallback;
+}
+
+function st_url(string $url): string
+{
+    $url = trim($url);
+    if ($url === '') {
+        return '';
+    }
+
+    if (preg_match('#^https?://#i', $url)) {
+        return $url;
+    }
+
+    return Url::to($url);
+}
+
+function st_kpi(array $hero, string $valueKey, string $labelKey, string $fallbackValue, string $fallbackLabel): array
+{
+    return [
+        'value' => st_text($hero, $valueKey, $fallbackValue),
+        'label' => st_text($hero, $labelKey, $fallbackLabel),
+    ];
+}
+
+$kpis = [
+    st_kpi($hero, 'kpi_1_value', 'kpi_1_label', (string)count($groups), 'Stakeholder Groups'),
+    st_kpi($hero, 'kpi_2_value', 'kpi_2_label', (string)($stats['stakeholder_page'] ?? count($stakeholders)), 'Public Partners'),
+    st_kpi($hero, 'kpi_3_value', 'kpi_3_label', (string)($stats['formal_partners'] ?? count($partners)), 'Formal Partners'),
+    st_kpi($hero, 'kpi_4_value', 'kpi_4_label', (string)count($milestones), 'Milestones'),
+];
+
+$pagePayload = [
+    'groups' => array_map(static function (array $group) use ($stakeholdersByGroup): array {
+        $groupStakeholders = array_slice($stakeholdersByGroup[(int)$group['id']] ?? [], 0, 8);
+        return [
+            'id' => (int)$group['id'],
+            'slug' => (string)$group['slug'],
+            'name' => (string)$group['name'],
+            'summary' => (string)($group['summary'] ?? ''),
+            'description' => (string)($group['description'] ?? ''),
+            'icon' => st_icon($group['icon'] ?? '', 'fa-layer-group'),
+            'count_label' => (string)($group['count_label'] ?: format_number($group['stakeholder_count'] ?? 0) . ' records'),
+            'tags' => StakeholderGroup::tags($group),
+            'entities' => array_map(static fn (array $item): array => [
+                'label' => (string)$item['organisation'],
+                'role' => (string)($item['role'] ?? ''),
+            ], $groupStakeholders),
+        ];
+    }, $groups),
+];
+
+include __DIR__ . '/app/partials/head.php';
 ?>
 <body>
-<?php include __DIR__ . "/app/partials/" . 'cursor.php'; ?>
-<?php include __DIR__ . "/app/partials/" . 'skip-link.php'; ?>
-<?php include __DIR__ . "/app/partials/" . 'navbar.php'; ?><main id="main-content">
+<?php include __DIR__ . '/app/partials/cursor.php'; ?>
+<?php include __DIR__ . '/app/partials/skip-link.php'; ?>
+<?php include __DIR__ . '/app/partials/navbar.php'; ?>
 
-    <!-- ============================================================
-         S1: HERO
-    ============================================================ -->
-    <section class="sk-hero" aria-label="Programme stakeholder ecosystem overview">
-      <div class="sk-hero-bg" aria-hidden="true">
-        <img src="uploads/heroes/hero-main.jpg" alt="" loading="eager" onerror="this.style.display='none'">
-        <div class="sk-hero-overlay"></div>
-        <div class="sk-hero-grid-overlay"></div>
-      </div>
-      <div class="container">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <a href="index.php" class="breadcrumb-link">Home</a>
-          <span class="breadcrumb-sep" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
-          <a href="about.php" class="breadcrumb-link">About</a>
-          <span class="breadcrumb-sep" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
-          <span class="breadcrumb-current" aria-current="page">Stakeholders</span>
-        </nav>
-        <div class="sk-hero-body">
-          <div class="sk-hero-eyebrow">
-            <i class="fa-solid fa-network-wired" aria-hidden="true"></i>
-            Programme Ecosystem &mdash; Partners, Institutions &amp; Communities
+<main id="main-content">
+  <section class="sk-hero" aria-label="Programme stakeholder ecosystem overview">
+    <div class="sk-hero-bg" aria-hidden="true">
+      <img <?= public_image_attrs($heroImage, $heroAlt, ['loading' => 'eager', 'fetchpriority' => 'high', 'onerror' => "this.style.display='none'"]) ?>>
+      <div class="sk-hero-overlay"></div>
+      <div class="sk-hero-grid-overlay"></div>
+    </div>
+    <div class="container">
+      <div class="sk-hero-body">
+        <div class="sk-hero-eyebrow">
+          <i class="fa-solid fa-network-wired" aria-hidden="true"></i>
+          <?= st_e(st_text($hero, 'eyebrow', 'Programme Ecosystem')) ?>
+        </div>
+        <h1 class="sk-hero-title"><?= nl2br(st_e(st_text($hero, 'title', 'Everyone Who Makes It Happen'))) ?></h1>
+        <p class="sk-hero-sub"><?= st_e(st_text($hero, 'subtitle')) ?></p>
+        <div class="sk-hero-kpi-strip" role="region" aria-label="Programme at a glance">
+<?php foreach ($kpis as $index => $kpi): ?>
+          <?php if ($index > 0): ?><div class="sk-hero-kpi-div" aria-hidden="true"></div><?php endif; ?>
+          <div class="sk-hero-kpi-item">
+            <span class="sk-hero-kpi-num"><?= st_e($kpi['value']) ?></span>
+            <span class="sk-hero-kpi-lbl"><?= st_e($kpi['label']) ?></span>
           </div>
-          <h1 class="sk-hero-title">Everyone Who Makes It Happen</h1>
-          <p class="sk-hero-sub">A transparent map of every institution, partner, contractor, regulator and community driving the Affordable Housing Programme in Trans-Nzoia County â€” from national policy to ground-level delivery.</p>
-          <div class="sk-hero-kpi-strip" role="region" aria-label="Programme at a glance">
-            <div class="sk-hero-kpi-item">
-              <span class="sk-hero-kpi-num">6</span>
-              <span class="sk-hero-kpi-lbl">Government Tiers</span>
-            </div>
-            <div class="sk-hero-kpi-div" aria-hidden="true"></div>
-            <div class="sk-hero-kpi-item">
-              <span class="sk-hero-kpi-num">12+</span>
-              <span class="sk-hero-kpi-lbl">Implementing Partners</span>
-            </div>
-            <div class="sk-hero-kpi-div" aria-hidden="true"></div>
-            <div class="sk-hero-kpi-item">
-              <span class="sk-hero-kpi-num">5,000+</span>
-              <span class="sk-hero-kpi-lbl">Households Targeted</span>
-            </div>
-            <div class="sk-hero-kpi-div" aria-hidden="true"></div>
-            <div class="sk-hero-kpi-item">
-              <span class="sk-hero-kpi-num">4</span>
-              <span class="sk-hero-kpi-lbl">Oversight Bodies</span>
-            </div>
-          </div>
+<?php endforeach; ?>
         </div>
       </div>
-      <div class="sk-hero-scroll-hint" aria-hidden="true">
-        <span>Explore the ecosystem</span>
-        <i class="fa-solid fa-chevron-down"></i>
+    </div>
+    <div class="sk-hero-scroll-hint" aria-hidden="true">
+      <span><?= st_e(st_text($hero, 'scroll_label', 'Explore the ecosystem')) ?></span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+  </section>
+
+  <section class="sk-ecosystem" aria-labelledby="ecosystem-heading">
+    <div class="container">
+      <div class="sk-section-header fade-up">
+        <div class="sk-eyebrow"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> <?= st_e(st_text($ecosystem, 'eyebrow', 'Ecosystem Overview')) ?></div>
+        <h2 class="sk-section-title" id="ecosystem-heading"><?= st_e(st_text($ecosystem, 'title', 'The Programme Web')) ?></h2>
+        <p class="sk-section-sub"><?= st_e(st_text($ecosystem, 'subtitle')) ?></p>
       </div>
-    </section>
 
-    <!-- ============================================================
-         S2: ECOSYSTEM MAP â€” Hub & Spoke
-    ============================================================ -->
-    <section class="sk-ecosystem" aria-labelledby="ecosystem-heading">
-      <div class="container">
-        <div class="sk-section-header fade-up">
-          <div class="sk-eyebrow"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Ecosystem Overview</div>
-          <h2 class="sk-section-title" id="ecosystem-heading">The Programme Web</h2>
-          <p class="sk-section-sub">Click any stakeholder category to highlight its role and connections within the programme delivery chain.</p>
-        </div>
-
-        <div class="sk-map-wrap fade-up">
-          <div class="sk-map" id="stakeholderMap" role="region" aria-label="Interactive stakeholder ecosystem diagram">
-
-            <!-- Centre Hub -->
-            <div class="sk-map-hub">
-              <div class="sk-map-hub-ring sk-map-hub-ring--1" aria-hidden="true"></div>
-              <div class="sk-map-hub-ring sk-map-hub-ring--2" aria-hidden="true"></div>
-              <div class="sk-map-hub-inner" aria-hidden="true">
-                <i class="fa-solid fa-house-chimney"></i>
-              </div>
-              <span class="sk-map-hub-label">Trans-Nzoia<br>AHP</span>
-            </div>
-
-            <!-- Spokes: 6 categories placed via CSS positioning -->
-            <button class="sk-map-node" data-cat="national" style="--angle:0deg" aria-label="National Government stakeholders">
-              <div class="sk-map-node-icon" style="--node-color:#1e4d00;--node-light:#edfbd6">
-                <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
-              </div>
-              <span class="sk-map-node-label">National<br>Government</span>
-              <span class="sk-map-node-count">4 entities</span>
-            </button>
-
-            <button class="sk-map-node" data-cat="county" style="--angle:60deg" aria-label="County Government stakeholders">
-              <div class="sk-map-node-icon" style="--node-color:#276600;--node-light:#edfbd6">
-                <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
-              </div>
-              <span class="sk-map-node-label">County<br>Government</span>
-              <span class="sk-map-node-count">3 entities</span>
-            </button>
-
-            <button class="sk-map-node" data-cat="contractors" style="--angle:120deg" aria-label="Implementing Contractors stakeholders">
-              <div class="sk-map-node-icon" style="--node-color:#1e4d00;--node-light:#edfbd6">
-                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
-              </div>
-              <span class="sk-map-node-label">Implementing<br>Contractors</span>
-              <span class="sk-map-node-count">8 firms</span>
-            </button>
-
-            <button class="sk-map-node" data-cat="financial" style="--angle:180deg" aria-label="Financial Partners stakeholders">
-              <div class="sk-map-node-icon" style="--node-color:#276600;--node-light:#edfbd6">
-                <i class="fa-solid fa-landmark" aria-hidden="true"></i>
-              </div>
-              <span class="sk-map-node-label">Financial<br>Partners</span>
-              <span class="sk-map-node-count">4 institutions</span>
-            </button>
-
-            <button class="sk-map-node" data-cat="oversight" style="--angle:240deg" aria-label="Oversight and Regulation stakeholders">
-              <div class="sk-map-node-icon" style="--node-color:#3d8c00;--node-light:#edfbd6">
-                <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-              </div>
-              <span class="sk-map-node-label">Oversight &amp;<br>Regulation</span>
-              <span class="sk-map-node-count">4 bodies</span>
-            </button>
-
-            <button class="sk-map-node" data-cat="community" style="--angle:300deg" aria-label="Community and Beneficiaries stakeholders">
-              <div class="sk-map-node-icon" style="--node-color:#1e4d00;--node-light:#edfbd6">
-                <i class="fa-solid fa-people-group" aria-hidden="true"></i>
-              </div>
-              <span class="sk-map-node-label">Community &amp;<br>Beneficiaries</span>
-              <span class="sk-map-node-count">5,000+ households</span>
-            </button>
-
-            <!-- SVG connector lines -->
-            <svg class="sk-map-connectors" aria-hidden="true" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <radialGradient id="connGrad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#9fe870" stop-opacity="0.6"/>
-                  <stop offset="100%" stop-color="#9fe870" stop-opacity="0.1"/>
-                </radialGradient>
-              </defs>
-              <!-- 6 lines from centre to each node -->
-              <line class="sk-conn-line" data-cat="national"     x1="300" y1="300" x2="300" y2="100"/>
-              <line class="sk-conn-line" data-cat="county"       x1="300" y1="300" x2="474" y2="200"/>
-              <line class="sk-conn-line" data-cat="contractors"  x1="300" y1="300" x2="474" y2="400"/>
-              <line class="sk-conn-line" data-cat="financial"    x1="300" y1="300" x2="300" y2="500"/>
-              <line class="sk-conn-line" data-cat="oversight"    x1="300" y1="300" x2="126" y2="400"/>
-              <line class="sk-conn-line" data-cat="community"    x1="300" y1="300" x2="126" y2="200"/>
-            </svg>
+<?php if ($groups): ?>
+      <div class="sk-map-wrap fade-up">
+        <div class="sk-map" id="stakeholderMap" role="region" aria-label="Interactive stakeholder ecosystem diagram">
+          <div class="sk-map-hub">
+            <div class="sk-map-hub-ring sk-map-hub-ring--1" aria-hidden="true"></div>
+            <div class="sk-map-hub-ring sk-map-hub-ring--2" aria-hidden="true"></div>
+            <div class="sk-map-hub-inner" aria-hidden="true"><i class="fa-solid fa-house-chimney"></i></div>
+            <span class="sk-map-hub-label"><?= nl2br(st_e(st_text($ecosystem, 'hub_label', 'Trans-Nzoia AHP'))) ?></span>
           </div>
-
-          <!-- Detail panel â€” shown on node click -->
-          <div class="sk-map-detail" id="mapDetail" aria-live="polite" aria-atomic="true">
-            <div class="sk-map-detail-inner" id="mapDetailInner">
-              <div class="sk-map-detail-placeholder">
-                <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
-                <p>Click any stakeholder category above to explore its role in the programme.</p>
-              </div>
+          <svg class="sk-map-connectors" aria-hidden="true" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet">
+<?php foreach ($groups as $index => $group): ?>
+            <line class="sk-conn-line" data-cat="<?= st_e($group['slug']) ?>" x1="300" y1="300" x2="<?= st_e((string)(300 + 200 * sin(deg2rad($index * (360 / max(1, count($groups))))))) ?>" y2="<?= st_e((string)(300 - 200 * cos(deg2rad($index * (360 / max(1, count($groups))))))) ?>"></line>
+<?php endforeach; ?>
+          </svg>
+<?php foreach ($groups as $index => $group): ?>
+          <button class="sk-map-node" data-cat="<?= st_e($group['slug']) ?>" style="--angle:<?= st_e((string)($index * (360 / max(1, count($groups))))) ?>deg" aria-label="<?= st_e($group['name']) ?>">
+            <div class="sk-map-node-icon">
+              <i class="fa-solid <?= st_e(st_icon($group['icon'] ?? '', 'fa-layer-group')) ?>" aria-hidden="true"></i>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         S3: STAKEHOLDER CATEGORIES GRID
-    ============================================================ -->
-    <section class="sk-categories" aria-labelledby="categories-heading">
-      <div class="container">
-        <div class="sk-section-header fade-up">
-          <div class="sk-eyebrow"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Stakeholder Groups</div>
-          <h2 class="sk-section-title" id="categories-heading">Six Pillars of Programme Delivery</h2>
-          <p class="sk-section-sub">Every entity in the Trans-Nzoia AHP belongs to one of six interconnected stakeholder groups â€” each with distinct responsibilities and accountabilities.</p>
-        </div>
-
-        <div class="sk-cat-grid" id="catGrid">
-
-          <!-- National Government -->
-          <div class="sk-cat-card fade-up" data-cat="national">
-            <div class="sk-cat-card-front">
-              <div class="sk-cat-icon" style="--cat-clr:#1e4d00;--cat-bg:#d1fae5">
-                <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
-              </div>
-              <div class="sk-cat-count" style="--count-clr:#1e4d00">4 entities</div>
-              <h3 class="sk-cat-name">National Government</h3>
-              <p class="sk-cat-desc">The apex leadership setting policy, allocating funds and providing legal mandate for the Affordable Housing Programme countrywide.</p>
-              <div class="sk-cat-tags">
-                <span class="sk-cat-tag">Policy</span>
-                <span class="sk-cat-tag">Funding</span>
-                <span class="sk-cat-tag">Mandate</span>
-              </div>
-              <button class="sk-cat-flip-btn" aria-label="See entities in National Government group">
-                See entities <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="sk-cat-card-back" style="--cat-clr:#1e4d00;--cat-bg:#f6faf2">
-              <h4 class="sk-cat-back-title">National Government Entities</h4>
-              <ul class="sk-cat-entities">
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> H.E. The President of Kenya</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> CS â€” State Dept. of Housing &amp; Urban Dev.</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> PS â€” State Dept. of Housing</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Affordable Housing Board (AHB)</li>
-              </ul>
-              <a href="leadership.php" class="sk-cat-back-link">
-                <i class="fa-solid fa-user-tie" aria-hidden="true"></i> View Leadership Page
-              </a>
-              <button class="sk-cat-flip-back-btn" aria-label="Go back to National Government overview">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-              </button>
-            </div>
-          </div>
-
-          <!-- County Government -->
-          <div class="sk-cat-card fade-up" data-cat="county">
-            <div class="sk-cat-card-front">
-              <div class="sk-cat-icon" style="--cat-clr:#1e4d00;--cat-bg:#edfbd6">
-                <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
-              </div>
-              <div class="sk-cat-count" style="--count-clr:#1e4d00">3 entities</div>
-              <h3 class="sk-cat-name">County Government</h3>
-              <p class="sk-cat-desc">The Trans-Nzoia County Government provides land, facilitation and local governance to support programme implementation on the ground.</p>
-              <div class="sk-cat-tags">
-                <span class="sk-cat-tag">Land</span>
-                <span class="sk-cat-tag">Facilitation</span>
-                <span class="sk-cat-tag">Field Office</span>
-              </div>
-              <button class="sk-cat-flip-btn" aria-label="See entities in County Government group">
-                See entities <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="sk-cat-card-back" style="--cat-clr:#1e4d00;--cat-bg:#f6faf2">
-              <h4 class="sk-cat-back-title">County Government Entities</h4>
-              <ul class="sk-cat-entities">
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> H.E. The Governor â€” Trans-Nzoia County</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> County Executive Member â€” Lands &amp; Housing</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> AHB Field Office â€” Kitale (Dir. Moses Owuor)</li>
-              </ul>
-              <a href="leadership.php#county-spotlight" class="sk-cat-back-link">
-                <i class="fa-solid fa-user-tie" aria-hidden="true"></i> View Field Director
-              </a>
-              <button class="sk-cat-flip-back-btn" aria-label="Go back to County Government overview">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-              </button>
-            </div>
-          </div>
-
-          <!-- Implementing Contractors -->
-          <div class="sk-cat-card fade-up" data-cat="contractors">
-            <div class="sk-cat-card-front">
-              <div class="sk-cat-icon" style="--cat-clr:#1e4d00;--cat-bg:#edfbd6">
-                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
-              </div>
-              <div class="sk-cat-count" style="--count-clr:#1e4d00">8 firms</div>
-              <h3 class="sk-cat-name">Implementing Contractors</h3>
-              <p class="sk-cat-desc">NCA-registered construction firms awarded tenders to build housing units across the five Trans-Nzoia constituencies.</p>
-              <div class="sk-cat-tags">
-                <span class="sk-cat-tag">Construction</span>
-                <span class="sk-cat-tag">NCA Certified</span>
-                <span class="sk-cat-tag">Active Tenders</span>
-              </div>
-              <button class="sk-cat-flip-btn" aria-label="See entities in Implementing Contractors group">
-                See firms <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="sk-cat-card-back" style="--cat-clr:#1e4d00;--cat-bg:#f6faf2">
-              <h4 class="sk-cat-back-title">Active Contractor Firms</h4>
-              <ul class="sk-cat-entities">
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Kiunga Civil Engineering Ltd</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Baraka Construction &amp; Supplies</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Nile Basin Builders Ltd</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Savanna Homes Ltd</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Summit Structures Kenya</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> +3 more active firms</li>
-              </ul>
-              <a href="leadership.php#contractors" class="sk-cat-back-link">
-                <i class="fa-solid fa-hard-hat" aria-hidden="true"></i> View All Contractors
-              </a>
-              <button class="sk-cat-flip-back-btn" aria-label="Go back to Implementing Contractors overview">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-              </button>
-            </div>
-          </div>
-
-          <!-- Financial Partners -->
-          <div class="sk-cat-card fade-up" data-cat="financial">
-            <div class="sk-cat-card-front">
-              <div class="sk-cat-icon" style="--cat-clr:#1e4d00;--cat-bg:#edfbd6">
-                <i class="fa-solid fa-landmark" aria-hidden="true"></i>
-              </div>
-              <div class="sk-cat-count" style="--count-clr:#1e4d00">4 institutions</div>
-              <h3 class="sk-cat-name">Financial Partners</h3>
-              <p class="sk-cat-desc">Government and private financial institutions mobilising housing levies, mortgage capital and digital payment infrastructure for beneficiaries.</p>
-              <div class="sk-cat-tags">
-                <span class="sk-cat-tag">Housing Levy</span>
-                <span class="sk-cat-tag">Mortgage</span>
-                <span class="sk-cat-tag">eCitizen</span>
-              </div>
-              <button class="sk-cat-flip-btn" aria-label="See entities in Financial Partners group">
-                See institutions <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="sk-cat-card-back" style="--cat-clr:#1e4d00;--cat-bg:#f6faf2">
-              <h4 class="sk-cat-back-title">Financial Institutions</h4>
-              <ul class="sk-cat-entities">
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> State Dept. of Housing (Treasury)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Kenya Mortgage Refinance Co. (KMRC)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Boma Yangu (Beneficiary Portal)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> KCB Bank Kenya Ltd</li>
-              </ul>
-              <a href="https://www.bomayangu.go.ke" target="_blank" rel="noopener noreferrer" class="sk-cat-back-link">
-                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Boma Yangu Portal
-              </a>
-              <button class="sk-cat-flip-back-btn" aria-label="Go back to Financial Partners overview">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-              </button>
-            </div>
-          </div>
-
-          <!-- Oversight & Regulation -->
-          <div class="sk-cat-card fade-up" data-cat="oversight">
-            <div class="sk-cat-card-front">
-              <div class="sk-cat-icon" style="--cat-clr:#1e4d00;--cat-bg:#edfbd6">
-                <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-              </div>
-              <div class="sk-cat-count" style="--count-clr:#1e4d00">4 bodies</div>
-              <h3 class="sk-cat-name">Oversight &amp; Regulation</h3>
-              <p class="sk-cat-desc">Independent statutory bodies ensuring environmental compliance, construction quality, industry standards and transparent accountability in the programme.</p>
-              <div class="sk-cat-tags">
-                <span class="sk-cat-tag">Environment</span>
-                <span class="sk-cat-tag">Standards</span>
-                <span class="sk-cat-tag">Compliance</span>
-              </div>
-              <button class="sk-cat-flip-btn" aria-label="See entities in Oversight and Regulation group">
-                See bodies <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="sk-cat-card-back" style="--cat-clr:#1e4d00;--cat-bg:#f6faf2">
-              <h4 class="sk-cat-back-title">Oversight Bodies</h4>
-              <ul class="sk-cat-entities">
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> National Environment Mgmt. Authority (NEMA)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> National Construction Authority (NCA)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Kenya National Bureau of Statistics (KNBS)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Office of the Auditor General (OAG)</li>
-              </ul>
-              <a href="https://www.nema.go.ke" target="_blank" rel="noopener noreferrer" class="sk-cat-back-link">
-                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Visit NEMA
-              </a>
-              <button class="sk-cat-flip-back-btn" aria-label="Go back to Oversight and Regulation overview">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-              </button>
-            </div>
-          </div>
-
-          <!-- Community & Beneficiaries -->
-          <div class="sk-cat-card fade-up" data-cat="community">
-            <div class="sk-cat-card-front">
-              <div class="sk-cat-icon" style="--cat-clr:#1e4d00;--cat-bg:#edfbd6">
-                <i class="fa-solid fa-people-group" aria-hidden="true"></i>
-              </div>
-              <div class="sk-cat-count" style="--count-clr:#1e4d00">5,000+ households</div>
-              <h3 class="sk-cat-name">Community &amp; Beneficiaries</h3>
-              <p class="sk-cat-desc">The residents, ward committees, women groups and registered beneficiaries who are the ultimate reason the programme exists.</p>
-              <div class="sk-cat-tags">
-                <span class="sk-cat-tag">Beneficiaries</span>
-                <span class="sk-cat-tag">Ward Reps</span>
-                <span class="sk-cat-tag">Women Groups</span>
-              </div>
-              <button class="sk-cat-flip-btn" aria-label="See details about Community and Beneficiaries group">
-                See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="sk-cat-card-back" style="--cat-clr:#1e4d00;--cat-bg:#f6faf2">
-              <h4 class="sk-cat-back-title">Community Groups</h4>
-              <ul class="sk-cat-entities">
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Registered Boma Yangu Applicants</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Ward Development Committees (5 wards)</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Trans-Nzoia Women Housing Network</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> Youth Cohort Beneficiaries Programme</li>
-                <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i> PWD Priority Housing Applicants</li>
-              </ul>
-              <a href="https://www.bomayangu.go.ke" target="_blank" rel="noopener noreferrer" class="sk-cat-back-link">
-                <i class="fa-solid fa-house-chimney-user" aria-hidden="true"></i> Register on Boma Yangu
-              </a>
-              <button class="sk-cat-flip-back-btn" aria-label="Go back to Community and Beneficiaries overview">
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
-              </button>
-            </div>
-          </div>
-
-        </div><!-- /sk-cat-grid -->
-      </div>
-    </section>
-
-    <!-- ============================================================
-         S4: ROLES & RESPONSIBILITIES ACCORDION
-    ============================================================ -->
-    <section class="sk-roles" aria-labelledby="roles-heading">
-      <div class="sk-roles-bg" aria-hidden="true"></div>
-      <div class="container">
-        <div class="sk-section-header sk-section-header--light fade-up">
-          <div class="sk-eyebrow sk-eyebrow--light"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Mandates &amp; Accountabilities</div>
-          <h2 class="sk-section-title sk-section-title--light" id="roles-heading">Who Does What?</h2>
-          <p class="sk-section-sub sk-section-sub--light">Expand each stakeholder group to understand their legal mandate, core responsibilities and how they interact with other programme actors.</p>
-        </div>
-
-        <div class="sk-accordion" id="rolesAccordion" role="list">
-
-          <!-- National Govt -->
-          <div class="sk-acc-item" role="listitem">
-            <button class="sk-acc-trigger" aria-expanded="false" aria-controls="acc-national" id="acc-trigger-national">
-              <div class="sk-acc-trigger-left">
-                <div class="sk-acc-icon" style="--acc-clr:#9fe870">
-                  <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="sk-acc-name">National Government</span>
-                  <span class="sk-acc-sub">Policy &middot; Funding &middot; National Mandate</span>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="sk-acc-panel" id="acc-national" role="region" aria-labelledby="acc-trigger-national" hidden>
-              <div class="sk-acc-panel-inner">
-                <div class="sk-acc-row">
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-gavel" aria-hidden="true"></i> Legal Basis</h4>
-                    <p>The Affordable Housing Programme is anchored in the Kenya Constitution 2010 Article 43(b) â€” the right to accessible and adequate housing â€” and operationalised through the Affordable Housing Act 2024.</p>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Core Responsibilities</h4>
-                    <ul class="sk-acc-list">
-                      <li>Formulate national housing policy and annual delivery targets</li>
-                      <li>Allocate Treasury funding via the Housing Levy (1.5% of gross salary)</li>
-                      <li>Establish and fund the Affordable Housing Board (AHB)</li>
-                      <li>Award contracts through open national tender processes</li>
-                    </ul>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Reporting Lines</h4>
-                    <p>Reports to the President via the Cabinet Secretary. AHB reports to the PS and CS. All county field offices report to the AHB CEO nationally.</p>
-                    <a href="leadership.php" class="sk-acc-link">View full hierarchy <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- County Govt -->
-          <div class="sk-acc-item" role="listitem">
-            <button class="sk-acc-trigger" aria-expanded="false" aria-controls="acc-county" id="acc-trigger-county">
-              <div class="sk-acc-trigger-left">
-                <div class="sk-acc-icon" style="--acc-clr:#9fe870">
-                  <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="sk-acc-name">County Government â€” Trans-Nzoia</span>
-                  <span class="sk-acc-sub">Land &middot; Facilitation &middot; Local Governance</span>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="sk-acc-panel" id="acc-county" role="region" aria-labelledby="acc-trigger-county" hidden>
-              <div class="sk-acc-panel-inner">
-                <div class="sk-acc-row">
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-gavel" aria-hidden="true"></i> Legal Basis</h4>
-                    <p>Operating under the County Governments Act 2012 and County Land Management Act. The county provides public land for housing sites under Article 62 of the Constitution.</p>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Core Responsibilities</h4>
-                    <ul class="sk-acc-list">
-                      <li>Identify and gazette public land for housing sites</li>
-                      <li>Facilitate community engagement and baraza sessions</li>
-                      <li>Issue local construction permits and way-leaves</li>
-                      <li>Monitor project progress through ward administrators</li>
-                    </ul>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Reporting Lines</h4>
-                    <p>The CEC Member for Lands &amp; Housing reports to the Governor. The AHB Field Director (Moses Owuor) is a national officer embedded in the county.</p>
-                    <a href="leadership.php" class="sk-acc-link">Meet Field Director <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Contractors -->
-          <div class="sk-acc-item" role="listitem">
-            <button class="sk-acc-trigger" aria-expanded="false" aria-controls="acc-contractors" id="acc-trigger-contractors">
-              <div class="sk-acc-trigger-left">
-                <div class="sk-acc-icon" style="--acc-clr:#9fe870">
-                  <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="sk-acc-name">Implementing Contractors</span>
-                  <span class="sk-acc-sub">Construction &middot; NCA Registration &middot; Site Delivery</span>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="sk-acc-panel" id="acc-contractors" role="region" aria-labelledby="acc-trigger-contractors" hidden>
-              <div class="sk-acc-panel-inner">
-                <div class="sk-acc-row">
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-gavel" aria-hidden="true"></i> Legal Basis</h4>
-                    <p>Contractors must hold a valid National Construction Authority (NCA) registration at category NCA 1â€“5 and comply with the Public Procurement and Asset Disposal Act 2015.</p>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Core Responsibilities</h4>
-                    <ul class="sk-acc-list">
-                      <li>Execute construction works as per approved Bills of Quantities</li>
-                      <li>Maintain project schedules and submit monthly progress reports</li>
-                      <li>Ensure site safety compliance per OSHA 2007</li>
-                      <li>Achieve at least 30% local youth and women sub-contracting</li>
-                    </ul>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Reporting Lines</h4>
-                    <p>Contractors report to the AHB Field Director and the AHB Project Manager in Nairobi. Payments are certified by an NCA-registered Clerk of Works.</p>
-                    <a href="leadership.php#contractors" class="sk-acc-link">View active contractors <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Financial -->
-          <div class="sk-acc-item" role="listitem">
-            <button class="sk-acc-trigger" aria-expanded="false" aria-controls="acc-financial" id="acc-trigger-financial">
-              <div class="sk-acc-trigger-left">
-                <div class="sk-acc-icon" style="--acc-clr:#9fe870">
-                  <i class="fa-solid fa-landmark" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="sk-acc-name">Financial Partners</span>
-                  <span class="sk-acc-sub">Housing Levy &middot; Mortgages &middot; Beneficiary Payments</span>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="sk-acc-panel" id="acc-financial" role="region" aria-labelledby="acc-trigger-financial" hidden>
-              <div class="sk-acc-panel-inner">
-                <div class="sk-acc-row">
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-gavel" aria-hidden="true"></i> Legal Basis</h4>
-                    <p>Governed by the Affordable Housing Act 2024, the Kenya Mortgage Refinance Company Act, and the Finance Act 2023 establishing the mandatory 1.5% Housing Levy.</p>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Core Responsibilities</h4>
-                    <ul class="sk-acc-list">
-                      <li>Collect and manage housing levy receipts (KRA via eCitizen)</li>
-                      <li>Disburse construction payments in certified tranches</li>
-                      <li>Provide affordable mortgage refinancing through KMRC</li>
-                      <li>Operate Boma Yangu beneficiary registration and allocation</li>
-                    </ul>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Reporting Lines</h4>
-                    <p>KMRC reports to the National Treasury. Boma Yangu is operated by the AHB under the CS. Financial auditing is conducted by the Office of the Auditor General.</p>
-                    <a href="https://www.bomayangu.go.ke" target="_blank" rel="noopener noreferrer" class="sk-acc-link">Boma Yangu Portal <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Oversight -->
-          <div class="sk-acc-item" role="listitem">
-            <button class="sk-acc-trigger" aria-expanded="false" aria-controls="acc-oversight" id="acc-trigger-oversight">
-              <div class="sk-acc-trigger-left">
-                <div class="sk-acc-icon" style="--acc-clr:#9fe870">
-                  <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="sk-acc-name">Oversight &amp; Regulation</span>
-                  <span class="sk-acc-sub">Environment &middot; Quality &middot; Audit &middot; Statistics</span>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="sk-acc-panel" id="acc-oversight" role="region" aria-labelledby="acc-trigger-oversight" hidden>
-              <div class="sk-acc-panel-inner">
-                <div class="sk-acc-row">
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-gavel" aria-hidden="true"></i> Legal Basis</h4>
-                    <p>NEMA operates under EMCA Cap 387; NCA under the NCA Act 2011; KNBS under the Statistics Act 2006; OAG under the Public Finance Management Act 2012.</p>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Core Responsibilities</h4>
-                    <ul class="sk-acc-list">
-                      <li>NEMA: Environmental Impact Assessment and compliance</li>
-                      <li>NCA: Contractor registration, site inspection &amp; quality audit</li>
-                      <li>KNBS: Independent housing delivery and impact statistics</li>
-                      <li>OAG: Annual programme expenditure audit reports</li>
-                    </ul>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Independence</h4>
-                    <p>All four oversight bodies are constitutionally or legislatively independent from the programme implementers to ensure objective accountability.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Community -->
-          <div class="sk-acc-item" role="listitem">
-            <button class="sk-acc-trigger" aria-expanded="false" aria-controls="acc-community" id="acc-trigger-community">
-              <div class="sk-acc-trigger-left">
-                <div class="sk-acc-icon" style="--acc-clr:#9fe870">
-                  <i class="fa-solid fa-people-group" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="sk-acc-name">Community &amp; Beneficiaries</span>
-                  <span class="sk-acc-sub">Residents &middot; Ward Reps &middot; Women Groups &middot; PWDs</span>
-                </div>
-              </div>
-              <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
-            </button>
-            <div class="sk-acc-panel" id="acc-community" role="region" aria-labelledby="acc-trigger-community" hidden>
-              <div class="sk-acc-panel-inner">
-                <div class="sk-acc-row">
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-gavel" aria-hidden="true"></i> Legal Basis</h4>
-                    <p>Community participation is protected under the Constitution Article 10 (national values) and Article 174 (devolution objects). The AHP prioritises vulnerable groups per the Affordable Housing Act 2024.</p>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Entitlements &amp; Roles</h4>
-                    <ul class="sk-acc-list">
-                      <li>Register and apply for housing allocation via Boma Yangu</li>
-                      <li>Participate in ward-level baraza and site verification meetings</li>
-                      <li>Report construction grievances to the Field Office</li>
-                      <li>Women &amp; PWD groups: priority allocation under AHP regulations</li>
-                    </ul>
-                  </div>
-                  <div class="sk-acc-col">
-                    <h4 class="sk-acc-col-title"><i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i> Engagement Channels</h4>
-                    <p>Community members engage through ward-level meetings, the Boma Yangu portal, the AHB Field Office in Kitale, and this public tracker.</p>
-                    <a href="contact.php" class="sk-acc-link">Contact Field Office <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- /sk-accordion -->
-      </div>
-    </section>
-
-    <!-- ============================================================
-         S5: ENGAGEMENT TIMELINE
-    ============================================================ -->
-    <section class="sk-timeline" aria-labelledby="timeline-heading">
-      <div class="container">
-        <div class="sk-section-header fade-up">
-          <div class="sk-eyebrow"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Programme Journey</div>
-          <h2 class="sk-section-title" id="timeline-heading">Key Stakeholder Engagement Milestones</h2>
-          <p class="sk-section-sub">From presidential directive to community baraza â€” a chronological record of how stakeholders have shaped this programme.</p>
-        </div>
-
-        <div class="sk-timeline-nav fade-up">
-          <button class="sk-tl-arrow" id="tlPrev" aria-label="Scroll to previous milestones" disabled>
-            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            <span class="sk-map-node-label"><?= st_e($group['name']) ?></span>
+            <span class="sk-map-node-count"><?= st_e($group['count_label'] ?: format_number($group['stakeholder_count'] ?? 0) . ' records') ?></span>
           </button>
-          <div class="sk-timeline-scroll-wrap" role="region" aria-label="Stakeholder engagement timeline, scroll horizontally to see all milestones">
-          <div class="sk-timeline-track" id="timelineTrack">
-
-            <div class="sk-tl-item" data-cat="national">
-              <div class="sk-tl-dot" style="--tl-clr:#1e4d00"><i class="fa-solid fa-flag" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">June 2022</div>
-                <div class="sk-tl-badge" style="--tl-clr:#1e4d00">National Govt</div>
-                <h4 class="sk-tl-title">Presidential Directive â€” AHP Launch</h4>
-                <p class="sk-tl-desc">H.E. the President directs immediate rollout of 200,000 affordable units nationwide, including Trans-Nzoia allocation.</p>
-              </div>
+<?php endforeach; ?>
+        </div>
+        <div class="sk-map-detail" id="mapDetail" aria-live="polite" aria-atomic="true">
+          <div class="sk-map-detail-inner" id="mapDetailInner">
+            <div class="sk-map-detail-placeholder">
+              <i class="fa-solid fa-hand-pointer" aria-hidden="true"></i>
+              <p><?= st_e(st_text($ecosystem, 'empty_text', 'Select a stakeholder group to view details.')) ?></p>
             </div>
+          </div>
+        </div>
+      </div>
+<?php else: ?>
+      <div class="sk-empty fade-up"><?= st_e(st_text($ecosystem, 'empty_text', 'Stakeholder groups will appear here once published.')) ?></div>
+<?php endif; ?>
+    </div>
+  </section>
 
-            <div class="sk-tl-item" data-cat="financial">
-              <div class="sk-tl-dot" style="--tl-clr:#276600"><i class="fa-solid fa-coins" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Jan 2023</div>
-                <div class="sk-tl-badge" style="--tl-clr:#276600">Financial</div>
-                <h4 class="sk-tl-title">Housing Levy Activation</h4>
-                <p class="sk-tl-desc">1.5% Housing Levy takes effect. KRA begins collection via eCitizen. Boma Yangu portal opens for beneficiary registration.</p>
-              </div>
+  <section class="sk-categories" id="stakeholder-groups" aria-labelledby="categories-heading">
+    <div class="container">
+      <div class="sk-section-header fade-up">
+        <div class="sk-eyebrow"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> <?= st_e(st_text($pillars, 'eyebrow', 'Stakeholder Groups')) ?></div>
+        <h2 class="sk-section-title" id="categories-heading"><?= st_e(st_text($pillars, 'title', 'Programme Delivery Pillars')) ?></h2>
+        <p class="sk-section-sub"><?= st_e(st_text($pillars, 'subtitle')) ?></p>
+      </div>
+
+<?php if ($groups): ?>
+      <div class="sk-cat-grid" id="catGrid">
+<?php foreach ($groups as $group): ?>
+        <?php $groupStakeholders = array_slice($stakeholdersByGroup[(int)$group['id']] ?? [], 0, 8); ?>
+        <article class="sk-cat-card fade-up" data-cat="<?= st_e($group['slug']) ?>">
+          <div class="sk-cat-card-front">
+            <div class="sk-cat-icon">
+              <i class="fa-solid <?= st_e(st_icon($group['icon'] ?? '', 'fa-layer-group')) ?>" aria-hidden="true"></i>
             </div>
-
-            <div class="sk-tl-item" data-cat="county">
-              <div class="sk-tl-dot" style="--tl-clr:#276600"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Mar 2023</div>
-                <div class="sk-tl-badge" style="--tl-clr:#276600">County Govt</div>
-                <h4 class="sk-tl-title">Trans-Nzoia Land Allocation MoU</h4>
-                <p class="sk-tl-desc">Governor signs MoU with AHB â€” 5 parcels of county public land formally set aside for AHP sites across the five constituencies.</p>
-              </div>
+            <div class="sk-cat-count"><?= st_e($group['count_label'] ?: format_number($group['stakeholder_count'] ?? 0) . ' records') ?></div>
+            <h3 class="sk-cat-name"><?= st_e($group['name']) ?></h3>
+            <p class="sk-cat-desc"><?= st_e($group['description'] ?: $group['summary']) ?></p>
+            <div class="sk-cat-tags">
+<?php foreach (StakeholderGroup::tags($group) as $tag): ?>
+              <span class="sk-cat-tag"><?= st_e($tag) ?></span>
+<?php endforeach; ?>
             </div>
+            <button class="sk-cat-flip-btn" type="button" aria-label="See records in <?= st_e($group['name']) ?>">
+              <?= st_e($group['cta_label'] ?: 'See records') ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="sk-cat-card-back">
+            <h4 class="sk-cat-back-title"><?= st_e($group['name']) ?></h4>
+<?php if ($groupStakeholders): ?>
+            <ul class="sk-cat-entities">
+<?php foreach ($groupStakeholders as $item): ?>
+              <li><i class="fa-solid fa-circle-dot" aria-hidden="true"></i><span><?= st_e($item['organisation']) ?><?php if (!empty($item['role'])): ?> <small><?= st_e($item['role']) ?></small><?php endif; ?></span></li>
+<?php endforeach; ?>
+            </ul>
+<?php else: ?>
+            <p class="sk-card-empty">No public organisations in this group yet.</p>
+<?php endif; ?>
+            <?php $ctaUrl = st_url((string)($group['cta_url'] ?? '')); ?>
+            <?php if ($ctaUrl !== ''): ?>
+            <a href="<?= st_e($ctaUrl) ?>" class="sk-cat-back-link">
+              <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> <?= st_e($group['cta_label'] ?: 'Open link') ?>
+            </a>
+            <?php endif; ?>
+            <button class="sk-cat-flip-back-btn" type="button" aria-label="Go back to <?= st_e($group['name']) ?> overview">
+              <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back
+            </button>
+          </div>
+        </article>
+<?php endforeach; ?>
+      </div>
+<?php else: ?>
+      <div class="sk-empty fade-up"><?= st_e(st_text($pillars, 'empty_text', 'No stakeholder groups have been published yet.')) ?></div>
+<?php endif; ?>
+    </div>
+  </section>
 
-            <div class="sk-tl-item" data-cat="oversight">
-              <div class="sk-tl-dot" style="--tl-clr:#1e4d00"><i class="fa-solid fa-leaf" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Jul 2023</div>
-                <div class="sk-tl-badge" style="--tl-clr:#1e4d00">Oversight</div>
-                <h4 class="sk-tl-title">NEMA EIAs Completed</h4>
-                <p class="sk-tl-desc">Environmental Impact Assessments completed for all 5 priority sites. NEMA grants conditional approval with mitigation requirements.</p>
-              </div>
-            </div>
-
-            <div class="sk-tl-item" data-cat="community">
-              <div class="sk-tl-dot" style="--tl-clr:#1e4d00"><i class="fa-solid fa-people-group" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Sep 2023</div>
-                <div class="sk-tl-badge" style="--tl-clr:#1e4d00">Community</div>
-                <h4 class="sk-tl-title">Ward Baraza Series â€” 5 Constituencies</h4>
-                <p class="sk-tl-desc">Public participation barazas held in each ward. Over 1,200 residents attend. Community grievances recorded and addressed in project designs.</p>
-              </div>
-            </div>
-
-            <div class="sk-tl-item" data-cat="contractors">
-              <div class="sk-tl-dot" style="--tl-clr:#276600"><i class="fa-solid fa-file-contract" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Dec 2023</div>
-                <div class="sk-tl-badge" style="--tl-clr:#276600">Contractors</div>
-                <h4 class="sk-tl-title">First 4 Contracts Awarded</h4>
-                <p class="sk-tl-desc">NCA-registered firms awarded contracts for Kitale, Matunda, Saboti and Kiminini sites following open competitive tendering.</p>
-              </div>
-            </div>
-
-            <div class="sk-tl-item" data-cat="national">
-              <div class="sk-tl-dot" style="--tl-clr:#1e4d00"><i class="fa-solid fa-shovel" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Feb 2024</div>
-                <div class="sk-tl-badge" style="--tl-clr:#1e4d00">National Govt</div>
-                <h4 class="sk-tl-title">Trans-Nzoia Groundbreaking Ceremony</h4>
-                <p class="sk-tl-desc">CS for Housing officiates groundbreaking at Maili Tatu, Kitale. Construction works commence at Maili Tatu and Matunda sites simultaneously.</p>
-              </div>
-            </div>
-
-            <div class="sk-tl-item" data-cat="oversight">
-              <div class="sk-tl-dot" style="--tl-clr:#1e4d00"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Jun 2024</div>
-                <div class="sk-tl-badge" style="--tl-clr:#1e4d00">Oversight</div>
-                <h4 class="sk-tl-title">NCA Q1 Site Audit â€” All Sites Pass</h4>
-                <p class="sk-tl-desc">National Construction Authority conducts first quarterly inspection. All active sites pass structural quality checks. Minor drainage issues flagged at Kiminini â€” resolved.</p>
-              </div>
-            </div>
-
-            <div class="sk-tl-item" data-cat="community">
-              <div class="sk-tl-dot" style="--tl-clr:#1e4d00"><i class="fa-solid fa-house-chimney-user" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Jan 2025</div>
-                <div class="sk-tl-badge" style="--tl-clr:#1e4d00">Community</div>
-                <h4 class="sk-tl-title">Beneficiary Balloting â€” Phase 1</h4>
-                <p class="sk-tl-desc">AHB conducts first transparent allocation ballot for 400 units. 1,840 applicants verified; priority given to teachers, nurses and PWD groups.</p>
-              </div>
-            </div>
-
-            <div class="sk-tl-item" data-cat="contractors">
-              <div class="sk-tl-dot" style="--tl-clr:#276600"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
-              <div class="sk-tl-card">
-                <div class="sk-tl-date">Present</div>
-                <div class="sk-tl-badge" style="--tl-clr:#276600">Contractors</div>
-                <h4 class="sk-tl-title">8 Sites Active â€” 1,730 Units Underway</h4>
-                <p class="sk-tl-desc">All eight Trans-Nzoia AHP sites now under active construction. Maili Tatu leads at 60% completion. Programme on track for Q4 2026 first handovers.</p>
-              </div>
-            </div>
-
-          </div><!-- /sk-timeline-track -->
-          </div><!-- /sk-timeline-scroll-wrap -->
-          <button class="sk-tl-arrow" id="tlNext" aria-label="Scroll to next milestones">
-            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+  <section class="sk-roles" aria-labelledby="roles-heading">
+    <div class="sk-roles-bg" aria-hidden="true"></div>
+    <div class="container">
+      <div class="sk-section-header sk-section-header--light fade-up">
+        <div class="sk-eyebrow sk-eyebrow--light"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> <?= st_e(st_text($mandates, 'eyebrow', 'Mandates & Accountabilities')) ?></div>
+        <h2 class="sk-section-title sk-section-title--light" id="roles-heading"><?= st_e(st_text($mandates, 'title', 'Who Does What?')) ?></h2>
+        <p class="sk-section-sub sk-section-sub--light"><?= st_e(st_text($mandates, 'subtitle')) ?></p>
+      </div>
+      <div class="sk-accordion">
+<?php foreach ($groups as $index => $group): ?>
+        <?php $panelId = 'stakeholder-panel-' . (int)$group['id']; ?>
+        <article class="sk-acc-item fade-up">
+          <button class="sk-acc-trigger" type="button" aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>" aria-controls="<?= st_e($panelId) ?>">
+            <span class="sk-acc-trigger-left">
+              <span class="sk-acc-icon"><i class="fa-solid <?= st_e(st_icon($group['icon'] ?? '', 'fa-layer-group')) ?>" aria-hidden="true"></i></span>
+              <span><span class="sk-acc-name"><?= st_e($group['name']) ?></span><span class="sk-acc-sub"><?= st_e($group['summary']) ?></span></span>
+            </span>
+            <i class="fa-solid fa-chevron-down sk-acc-chevron" aria-hidden="true"></i>
           </button>
-        </div><!-- /sk-timeline-nav -->
+          <div class="sk-acc-panel" id="<?= st_e($panelId) ?>" <?= $index === 0 ? '' : 'hidden' ?>>
+            <div class="sk-acc-panel-inner">
+              <div class="sk-acc-row">
+                <div class="sk-acc-col">
+                  <h3 class="sk-acc-col-title"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Mandate</h3>
+                  <p><?= st_e($group['legal_basis'] ?: $group['description']) ?></p>
+                </div>
+                <div class="sk-acc-col">
+                  <h3 class="sk-acc-col-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Responsibilities</h3>
+                  <ul class="sk-acc-list">
+<?php foreach (StakeholderGroup::responsibilities($group) as $responsibility): ?>
+                    <li><?= st_e($responsibility) ?></li>
+<?php endforeach; ?>
+                  </ul>
+                </div>
+                <div class="sk-acc-col">
+                  <h3 class="sk-acc-col-title"><i class="fa-solid fa-route" aria-hidden="true"></i> Reporting</h3>
+                  <p><?= st_e($group['reporting_lines'] ?: 'Reporting lines will be published after confirmation.') ?></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+<?php endforeach; ?>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- ============================================================
-         S6: COMMUNITY VOICE
-    ============================================================ -->
-    <section class="sk-voices" aria-labelledby="voices-heading">
-      <div class="container">
-        <div class="sk-section-header fade-up">
-          <div class="sk-eyebrow"><i class="fa-solid fa-quote-left" aria-hidden="true"></i> Community Voice</div>
-          <h2 class="sk-section-title" id="voices-heading">The People Behind the Programme</h2>
-          <p class="sk-section-sub">Ward representatives, registered beneficiaries and community advocates share their experiences with the Trans-Nzoia AHP.</p>
+  <section class="sk-timeline" aria-labelledby="timeline-heading">
+    <div class="container">
+      <div class="sk-section-header fade-up">
+        <div class="sk-eyebrow"><i class="fa-solid fa-timeline" aria-hidden="true"></i> <?= st_e(st_text($milestoneCopy, 'eyebrow', 'Programme Journey')) ?></div>
+        <h2 class="sk-section-title" id="timeline-heading"><?= nl2br(st_e(st_text($milestoneCopy, 'title', 'Stakeholder Engagement Milestones'))) ?></h2>
+        <p class="sk-section-sub"><?= st_e(st_text($milestoneCopy, 'subtitle')) ?></p>
+      </div>
+<?php if ($milestones): ?>
+      <div class="sk-timeline-nav fade-up">
+        <button class="sk-tl-arrow" id="tlPrev" aria-label="Scroll to previous milestones"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        <div class="sk-timeline-scroll-wrap" tabindex="0">
+          <div class="sk-timeline-track">
+<?php foreach ($milestones as $milestone): ?>
+            <article class="sk-tl-item" data-cat="<?= st_e($milestone['group_name'] ?? '') ?>">
+              <div class="sk-tl-dot"><i class="fa-solid <?= st_e(st_icon($milestone['icon'] ?: $milestone['group_icon'] ?? '', 'fa-flag')) ?>" aria-hidden="true"></i></div>
+              <div class="sk-tl-card">
+                <div class="sk-tl-date"><?= st_e($milestone['date_label'] ?: (!empty($milestone['milestone_date']) ? format_date($milestone['milestone_date']) : 'Current')) ?></div>
+                <?php if (!empty($milestone['badge_label']) || !empty($milestone['group_name'])): ?><div class="sk-tl-badge"><?= st_e($milestone['badge_label'] ?: $milestone['group_name']) ?></div><?php endif; ?>
+                <h3 class="sk-tl-title"><?= st_e($milestone['title']) ?></h3>
+                <p class="sk-tl-desc"><?= st_e($milestone['summary']) ?></p>
+              </div>
+            </article>
+<?php endforeach; ?>
+          </div>
         </div>
-
-        <div class="sk-voices-grid" id="voicesGrid">
-
-          <div class="sk-voice-card fade-up">
-            <div class="sk-voice-top">
-              <div class="sk-voice-avatar" style="--av-bg:linear-gradient(135deg,#1e4d00,#4a9e2c)">MW</div>
-              <div class="sk-voice-meta">
-                <strong>Margaret Wanjiku</strong>
-                <span>Registered Beneficiary &mdash; Kitale Township Ward</span>
-                <div class="sk-voice-stars" aria-label="5 out of 5 stars">
-                  <i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i>
-                </div>
-              </div>
-            </div>
-            <blockquote class="sk-voice-quote">
-              &ldquo;I have been a Boma Yangu applicant since 2023. When I attended the baraza in our ward, I could ask questions directly to the Field Director. They told us exactly when to expect our units. That kind of transparency gives me confidence.&rdquo;
-            </blockquote>
-            <div class="sk-voice-tags">
-              <span class="sk-voice-tag sk-voice-tag--community">Beneficiary</span>
-              <span class="sk-voice-tag sk-voice-tag--engagement">Ward Baraza</span>
-            </div>
-          </div>
-
-          <div class="sk-voice-card fade-up">
-            <div class="sk-voice-top">
-              <div class="sk-voice-avatar" style="--av-bg:linear-gradient(135deg,#1e4d00,#276600)">JO</div>
-              <div class="sk-voice-meta">
-                <strong>James Omwange</strong>
-                <span>Ward Rep &mdash; Saboti Constituency Development Committee</span>
-                <div class="sk-voice-stars" aria-label="5 out of 5 stars">
-                  <i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i>
-                </div>
-              </div>
-            </div>
-            <blockquote class="sk-voice-quote">
-              &ldquo;As a ward representative I attended all five site-selection meetings. The community was genuinely heard â€” the Matunda site was repositioned 200 metres based on our drainage concern. That is real stakeholder engagement.&rdquo;
-            </blockquote>
-            <div class="sk-voice-tags">
-              <span class="sk-voice-tag sk-voice-tag--ward">Ward Rep</span>
-              <span class="sk-voice-tag sk-voice-tag--engagement">Site Selection</span>
-            </div>
-          </div>
-
-          <div class="sk-voice-card fade-up">
-            <div class="sk-voice-top">
-              <div class="sk-voice-avatar" style="--av-bg:linear-gradient(135deg,#163300,#1e4d00)">FK</div>
-              <div class="sk-voice-meta">
-                <strong>Fatuma Koech</strong>
-                <span>Trans-Nzoia Women Housing Network â€” Chairperson</span>
-                <div class="sk-voice-stars" aria-label="4 out of 5 stars">
-                  <i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-regular fa-star" aria-hidden="true"></i>
-                </div>
-              </div>
-            </div>
-            <blockquote class="sk-voice-quote">
-              &ldquo;Our network lobbied for 30% unit allocation to single mothers and women-headed households. The AHB listened and committed to this in the balloting criteria. We are seeing it being honoured. We will continue monitoring.&rdquo;
-            </blockquote>
-            <div class="sk-voice-tags">
-              <span class="sk-voice-tag sk-voice-tag--community">Women's Group</span>
-              <span class="sk-voice-tag sk-voice-tag--advocacy">Advocacy</span>
-            </div>
-          </div>
-
-          <div class="sk-voice-card fade-up">
-            <div class="sk-voice-top">
-              <div class="sk-voice-avatar" style="--av-bg:linear-gradient(135deg,#1e4d00,#3d8c00)">DM</div>
-              <div class="sk-voice-meta">
-                <strong>David Mutai</strong>
-                <span>Youth Cohort Rep &mdash; Cherang&rsquo;any &amp; Tuwani Ward</span>
-                <div class="sk-voice-stars" aria-label="5 out of 5 stars">
-                  <i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i><i class="fa-solid fa-star" aria-hidden="true"></i>
-                </div>
-              </div>
-            </div>
-            <blockquote class="sk-voice-quote">
-              &ldquo;As a 28-year-old teacher, I could never afford to own a home under normal circumstances. The Boma Yangu process was straightforward. I applied, attended the baraza, and I am ballot number 114. Progress is real.&rdquo;
-            </blockquote>
-            <div class="sk-voice-tags">
-              <span class="sk-voice-tag sk-voice-tag--community">Beneficiary</span>
-              <span class="sk-voice-tag sk-voice-tag--youth">Youth Cohort</span>
-            </div>
-          </div>
-
-        </div><!-- /sk-voices-grid -->
+        <button class="sk-tl-arrow" id="tlNext" aria-label="Scroll to next milestones"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
       </div>
-    </section>
+<?php else: ?>
+      <div class="sk-empty fade-up"><?= st_e(st_text($milestoneCopy, 'empty_text')) ?></div>
+<?php endif; ?>
+    </div>
+  </section>
 
-    <!-- ============================================================
-         S7: FORMAL MoU / PARTNER STRIP
-    ============================================================ -->
-    <section class="sk-partners" aria-labelledby="partners-heading">
-      <div class="sk-partners-bg" aria-hidden="true"></div>
-      <div class="container">
-        <div class="sk-section-header sk-section-header--light fade-up">
-          <div class="sk-eyebrow sk-eyebrow--light"><i class="fa-solid fa-handshake" aria-hidden="true"></i> Formal Partnerships</div>
-          <h2 class="sk-section-title sk-section-title--light" id="partners-heading">MoU Signatories &amp; Institutional Partners</h2>
-          <p class="sk-section-sub sk-section-sub--light">All formal implementing partners and oversight institutions with whom the Trans-Nzoia AHB Field Office holds active agreements or collaborative mandates.</p>
-        </div>
-
-        <div class="sk-partners-row fade-up">
-
-          <a href="https://www.housing.go.ke" target="_blank" rel="noopener noreferrer" class="sk-partner-tile" aria-label="State Department of Housing and Urban Development">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>State Dept. Housing</strong>
-              <span>Policy &amp; Funding Principal</span>
-            </div>
-            <i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i>
-          </a>
-
-          <a href="https://www.affordablehousing.go.ke" target="_blank" rel="noopener noreferrer" class="sk-partner-tile" aria-label="Affordable Housing Board">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-house-chimney" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>Affordable Housing Board</strong>
-              <span>Programme Implementing Agency</span>
-            </div>
-            <i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i>
-          </a>
-
-          <a href="https://www.nema.go.ke" target="_blank" rel="noopener noreferrer" class="sk-partner-tile" aria-label="National Environment Management Authority">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-leaf" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>NEMA</strong>
-              <span>Environmental Oversight</span>
-            </div>
-            <i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i>
-          </a>
-
-          <a href="https://www.nca.go.ke" target="_blank" rel="noopener noreferrer" class="sk-partner-tile" aria-label="National Construction Authority">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-helmet-safety" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>NCA</strong>
-              <span>Construction Quality &amp; Standards</span>
-            </div>
-            <i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i>
-          </a>
-
-          <a href="https://www.kmrc.co.ke" target="_blank" rel="noopener noreferrer" class="sk-partner-tile" aria-label="Kenya Mortgage Refinance Company">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-landmark" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>KMRC</strong>
-              <span>Mortgage Refinancing</span>
-            </div>
-            <i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i>
-          </a>
-
-          <a href="https://www.bomayangu.go.ke" target="_blank" rel="noopener noreferrer" class="sk-partner-tile" aria-label="Boma Yangu Beneficiary Portal">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-house-chimney-user" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>Boma Yangu</strong>
-              <span>Beneficiary Registration Portal</span>
-            </div>
-            <i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i>
-          </a>
-
-          <div class="sk-partner-tile sk-partner-tile--local" aria-label="Trans-Nzoia County Government">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>Trans-Nzoia County</strong>
-              <span>Land Provision &amp; Facilitation</span>
-            </div>
-          </div>
-
-          <div class="sk-partner-tile sk-partner-tile--local" aria-label="Office of the Auditor General">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>Office of Auditor General</strong>
-              <span>Financial Audit &amp; Accountability</span>
-            </div>
-          </div>
-
-          <div class="sk-partner-tile sk-partner-tile--local" aria-label="Kenya National Bureau of Statistics">
-            <div class="sk-partner-tile-icon" style="--ptile-clr:#1e4d00"><i class="fa-solid fa-chart-bar" aria-hidden="true"></i></div>
-            <div class="sk-partner-tile-body">
-              <strong>KNBS</strong>
-              <span>Impact Data &amp; Statistics</span>
-            </div>
-          </div>
-
-        </div><!-- /sk-partners-row -->
+  <section class="sk-voices" id="community-voices" aria-labelledby="voices-heading">
+    <div class="container">
+      <div class="sk-section-header fade-up">
+        <div class="sk-eyebrow"><i class="fa-solid fa-quote-left" aria-hidden="true"></i> <?= st_e(st_text($voiceCopy, 'eyebrow', 'Community Voice')) ?></div>
+        <h2 class="sk-section-title" id="voices-heading"><?= st_e(st_text($voiceCopy, 'title', 'The People Behind the Programme')) ?></h2>
+        <p class="sk-section-sub"><?= st_e(st_text($voiceCopy, 'subtitle')) ?></p>
       </div>
-    </section>
-
-    <!-- ============================================================
-         S8: ENGAGEMENT CTA â€” 4 Action Cards
-    ============================================================ -->
-    <section class="sk-engage" aria-labelledby="engage-heading">
-      <div class="container">
-        <div class="sk-section-header fade-up">
-          <div class="sk-eyebrow"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Get Involved</div>
-          <h2 class="sk-section-title" id="engage-heading">How to Engage the Programme</h2>
-          <p class="sk-section-sub">Whether you are a potential beneficiary, a community leader, a journalist or an interested partner â€” here is how to connect with the Trans-Nzoia AHP.</p>
-        </div>
-
-        <div class="sk-engage-grid fade-up">
-
-          <div class="sk-engage-card" style="--eng-clr:#1e4d00;--eng-bg:#f6faf2">
-            <div class="sk-engage-icon">
-              <i class="fa-solid fa-house-chimney-user" aria-hidden="true"></i>
+<?php if ($voices): ?>
+      <div class="sk-voices-grid" id="voicesGrid">
+<?php foreach ($voices as $voice): ?>
+        <article class="sk-voice-card fade-up">
+          <div class="sk-voice-top">
+            <div class="sk-voice-avatar"><?= st_e($voice['initials'] ?: StakeholderTestimonial::initials((string)$voice['name'])) ?></div>
+            <div class="sk-voice-meta">
+              <strong><?= st_e($voice['name']) ?></strong>
+              <span><?= st_e($voice['role']) ?></span>
+              <div class="sk-voice-stars" aria-label="<?= st_e((string)(int)$voice['rating']) ?> out of 5 stars">
+<?php for ($i = 1; $i <= 5; $i++): ?>
+                <i class="<?= $i <= (int)$voice['rating'] ? 'fa-solid' : 'fa-regular' ?> fa-star" aria-hidden="true"></i>
+<?php endfor; ?>
+              </div>
             </div>
-            <h3 class="sk-engage-title">Register as a Beneficiary</h3>
-            <p class="sk-engage-desc">Apply for an affordable housing unit through the national Boma Yangu portal. All Trans-Nzoia County residents who contribute to the Housing Levy are eligible to apply.</p>
-            <ul class="sk-engage-steps">
-              <li><span>1</span> Create account on Boma Yangu</li>
-              <li><span>2</span> Upload ID, KRA PIN &amp; payslip</li>
-              <li><span>3</span> Select Trans-Nzoia as preferred county</li>
-              <li><span>4</span> Await allocation ballot notification</li>
-            </ul>
-            <a href="https://www.bomayangu.go.ke" target="_blank" rel="noopener noreferrer" class="sk-engage-btn" style="--eng-clr:#1e4d00">
-              Apply on Boma Yangu <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
-            </a>
           </div>
-
-          <div class="sk-engage-card" style="--eng-clr:#1e4d00;--eng-bg:#edfbd6">
-            <div class="sk-engage-icon">
-              <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-            </div>
-            <h3 class="sk-engage-title">Report a Site Issue</h3>
-            <p class="sk-engage-desc">Noticed a construction quality concern, delayed works or a governance issue? Submit a formal grievance through our Field Office or NEMA's environmental desk.</p>
-            <ul class="sk-engage-steps">
-              <li><span>1</span> Document the concern with date &amp; location</li>
-              <li><span>2</span> Contact the Kitale Field Office</li>
-              <li><span>3</span> Or submit via our Contact page</li>
-              <li><span>4</span> We respond within 5 working days</li>
-            </ul>
-            <a href="contact.php" class="sk-engage-btn" style="--eng-clr:#1e4d00">
-              Contact Field Office <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-            </a>
+          <blockquote class="sk-voice-quote"><?= st_e($voice['quote']) ?></blockquote>
+          <div class="sk-voice-tags">
+<?php foreach (StakeholderTestimonial::tags($voice) as $tag): ?>
+            <span class="sk-voice-tag sk-voice-tag--community"><?= st_e($tag) ?></span>
+<?php endforeach; ?>
           </div>
-
-          <div class="sk-engage-card" style="--eng-clr:#276600;--eng-bg:#f6faf2">
-            <div class="sk-engage-icon">
-              <i class="fa-solid fa-people-roof" aria-hidden="true"></i>
-            </div>
-            <h3 class="sk-engage-title">Attend a Community Baraza</h3>
-            <p class="sk-engage-desc">Ward-level public participation meetings are held quarterly at each project site. All residents are welcome to attend, ask questions and provide input into the programme.</p>
-            <ul class="sk-engage-steps">
-              <li><span>1</span> Watch for announcements on this tracker</li>
-              <li><span>2</span> Notify your ward administrator</li>
-              <li><span>3</span> Bring your National ID</li>
-              <li><span>4</span> Sign the attendance register</li>
-            </ul>
-            <a href="news.php" class="sk-engage-btn" style="--eng-clr:#276600">
-              See upcoming events <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-            </a>
-          </div>
-
-          <div class="sk-engage-card" style="--eng-clr:#276600;--eng-bg:#edfbd6">
-            <div class="sk-engage-icon">
-              <i class="fa-solid fa-handshake-angle" aria-hidden="true"></i>
-            </div>
-            <h3 class="sk-engage-title">Partner with the Programme</h3>
-            <p class="sk-engage-desc">Are you an institution, NGO, research body or media house seeking to collaborate with the Trans-Nzoia AHP? We welcome formal partnership proposals.</p>
-            <ul class="sk-engage-steps">
-              <li><span>1</span> Prepare a one-page partnership concept note</li>
-              <li><span>2</span> Send to the Field Director's office</li>
-              <li><span>3</span> Attend an introductory meeting</li>
-              <li><span>4</span> MoU reviewed and signed if approved</li>
-            </ul>
-            <a href="contact.php" class="sk-engage-btn" style="--eng-clr:#276600">
-              Submit Proposal <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-            </a>
-          </div>
-
-        </div><!-- /sk-engage-grid -->
+        </article>
+<?php endforeach; ?>
       </div>
-    </section>
+<?php else: ?>
+      <div class="sk-empty fade-up"><?= st_e(st_text($voiceCopy, 'empty_text')) ?></div>
+<?php endif; ?>
+    </div>
+  </section>
 
-  </main><!-- /main-content -->
+  <section class="sk-partners" aria-labelledby="partners-heading">
+    <div class="sk-partners-bg" aria-hidden="true"></div>
+    <div class="container">
+      <div class="sk-section-header sk-section-header--light fade-up">
+        <div class="sk-eyebrow sk-eyebrow--light"><i class="fa-solid fa-handshake" aria-hidden="true"></i> <?= st_e(st_text($partnerCopy, 'eyebrow', 'Formal Partnerships')) ?></div>
+        <h2 class="sk-section-title sk-section-title--light" id="partners-heading"><?= st_e(st_text($partnerCopy, 'title', 'Institutional Partners')) ?></h2>
+        <p class="sk-section-sub sk-section-sub--light"><?= st_e(st_text($partnerCopy, 'subtitle')) ?></p>
+      </div>
+<?php if ($partners): ?>
+      <div class="sk-partners-row fade-up">
+<?php foreach ($partners as $partner): ?>
+        <?php $partnerUrl = st_url((string)($partner['website'] ?? '')); ?>
+        <<?= $partnerUrl !== '' ? 'a href="' . st_e($partnerUrl) . '" target="_blank" rel="noopener noreferrer"' : 'div' ?> class="sk-partner-tile<?= $partnerUrl === '' ? ' sk-partner-tile--local' : '' ?>">
+          <div class="sk-partner-tile-icon"><i class="fa-solid <?= st_e(st_icon($partner['icon'] ?: $partner['group_icon'] ?? '', 'fa-handshake')) ?>" aria-hidden="true"></i></div>
+          <div class="sk-partner-tile-body">
+            <strong><?= st_e($partner['organisation']) ?></strong>
+            <span><?= st_e($partner['role'] ?: $partner['partner_type']) ?></span>
+          </div>
+          <?php if ($partnerUrl !== ''): ?><i class="fa-solid fa-arrow-up-right-from-square sk-partner-tile-arrow" aria-hidden="true"></i><?php endif; ?>
+        </<?= $partnerUrl !== '' ? 'a' : 'div' ?>>
+<?php endforeach; ?>
+      </div>
+<?php else: ?>
+      <div class="sk-empty sk-empty--dark fade-up"><?= st_e(st_text($partnerCopy, 'empty_text')) ?></div>
+<?php endif; ?>
+    </div>
+  </section>
 
-  <!-- ============================================================
-       FOOTER
-  ============================================================ -->
-<?php include __DIR__ . "/app/partials/" . 'footer.php'; ?>
-<?php include __DIR__ . "/app/partials/" . 'back-to-top.php'; ?>
-<?php include __DIR__ . "/app/partials/" . 'mobile-menu.php'; ?>
-<?php include __DIR__ . "/app/partials/" . 'scripts.php'; ?>
+</main>
+
+<?= CmsLoader::jsonScript('stakeholders-page-data', $pagePayload) ?>
+<?php include __DIR__ . '/app/partials/footer.php'; ?>
+<?php include __DIR__ . '/app/partials/back-to-top.php'; ?>
+<?php include __DIR__ . '/app/partials/mobile-menu.php'; ?>
+<?php include __DIR__ . '/app/partials/scripts.php'; ?>
 </body>
 </html>

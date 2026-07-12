@@ -1,12 +1,13 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../app/core/bootstrap.php';
 Guard::exactRole('superadmin');
 
-$pageTitle = 'Superadmin Dashboard';
+$pageTitle = 'County Director Dashboard';
 $pageDescription = 'Executive control dashboard for the Trans-Nzoia Affordable Housing Programme Tracker.';
 $adminRole = 'superadmin';
 $componentCss = ['cards', 'tables', 'charts'];
 $componentScripts = ['notifications'];
+$pageScripts = ['charts'];
 $contentClass = 'sa-dashboard';
 $pageKicker = 'County Director Command Centre';
 
@@ -158,13 +159,10 @@ $unreadContacts = $rows(
      ORDER BY created_at DESC
      LIMIT 5"
 );
-$announcements = $rows(
-    'SELECT id, title, is_pinned, created_at, expires_at
-     FROM announcements
-     WHERE expires_at IS NULL OR expires_at >= NOW()
-     ORDER BY is_pinned DESC, created_at DESC
-     LIMIT 5'
-);
+$portalAnnouncements = Announcement::activeForRole('superadmin', 5, (int)(Auth::id() ?? 0));
+$portalAnnouncementSubtitle = 'Pinned and role-targeted staff broadcasts.';
+$portalAnnouncementManageUrl = Url::to('admin/superadmin/announcements.php');
+$announcements = $portalAnnouncements;
 $projectProgress = $rows(
     'SELECT p.name, p.status, p.pct_complete, p.est_delivery, c.name AS constituency
      FROM projects p
@@ -185,7 +183,7 @@ $addSignal = static function (array &$signals, string $severity, string $icon, s
 };
 
 if ($pendingApprovals > 0) {
-    $addSignal($executiveSignals, 'critical', 'fa-clipboard-check', 'Final approvals waiting', format_number($pendingApprovals) . ' IPCs need superadmin review.', 'admin/superadmin/ipcs.php?payment_readiness=approval-ready');
+    $addSignal($executiveSignals, 'critical', 'fa-clipboard-check', 'Final approvals waiting', format_number($pendingApprovals) . ' IPCs need County Director review.', 'admin/superadmin/ipcs.php?payment_readiness=approval-ready');
 }
 if ($approvedAwaitingPayment > 0) {
     $addSignal($executiveSignals, 'action', 'fa-credit-card', 'Approved IPCs unpaid', format_number($approvedAwaitingPayment) . ' approved IPCs are waiting for payment processing.', 'admin/superadmin/financials.php');
@@ -241,12 +239,12 @@ $chartData = [
         'values' => array_map(static fn (array $row): int => (int)$row['units'], $unitsByConstituency),
     ],
     'budgetBurn' => [
-        'labels' => array_map(static fn (array $row): string => safe_truncate((string)$row['name'], 28), $budgetBurn),
+        'labels' => array_map(static fn (array $row): string => (string)$row['name'], $budgetBurn),
         'contract' => array_map(static fn (array $row): float => (float)$row['contract_sum'], $budgetBurn),
         'paid' => array_map(static fn (array $row): float => (float)$row['paid'], $budgetBurn),
     ],
     'attendanceByProject' => [
-        'labels' => array_map(static fn (array $row): string => safe_truncate((string)$row['name'], 24), $attendanceByProject),
+        'labels' => array_map(static fn (array $row): string => (string)$row['name'], $attendanceByProject),
         'values' => array_map(static fn (array $row): int => (int)$row['total'], $attendanceByProject),
     ],
 ];
@@ -369,9 +367,9 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <span class="stat-widget__icon"><i class="fa-solid fa-chart-gantt" aria-hidden="true"></i></span>
     <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_percentage($programmeProgress)) ?></strong><span class="stat-widget__label">Programme Progress</span><span class="stat-widget__trend"><?= Security::e(format_number($delayedProgrammeTasks)) ?> delayed, <?= Security::e(format_number($criticalProgrammeTasks)) ?> critical</span></span>
   </article>
-  <article class="stat-widget stat-widget--danger">
+  <article class="stat-widget stat-widget--danger" data-dashboard-contact-stat>
     <span class="stat-widget__icon"><i class="fa-solid fa-inbox" aria-hidden="true"></i></span>
-    <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($unreadContactsCount)) ?></strong><span class="stat-widget__label">Unread Contacts</span><span class="stat-widget__trend">Citizen inbox attention</span></span>
+    <span class="stat-widget__body"><strong class="stat-widget__value" data-dashboard-unread-contacts><?= Security::e(format_number($unreadContactsCount)) ?></strong><span class="stat-widget__label">Unread Contacts</span><span class="stat-widget__trend" data-dashboard-contact-trend><?= $unreadContactsCount > 0 ? 'Citizen inbox attention' : 'Inbox is clear' ?></span></span>
   </article>
   <article class="stat-widget">
     <span class="stat-widget__icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
@@ -459,7 +457,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
 <section class="sa-ops-grid">
   <article class="card">
     <div class="card__header">
-      <div><h2 class="card__title">Pending Final Approvals</h2><p class="card__subtitle">Certified and endorsed IPCs waiting for superadmin action.</p></div>
+      <div><h2 class="card__title">Pending Final Approvals</h2><p class="card__subtitle">Certified and endorsed IPCs waiting for County Director action.</p></div>
       <a class="btn btn--outline btn--sm" href="<?= Security::e(Url::to('admin/superadmin/ipcs.php?payment_readiness=approval-ready')) ?>">Open IPC Centre</a>
     </div>
 <?php if ($pendingApprovalRows === []): ?>
@@ -520,7 +518,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
 <?php $pct = percentage($project['pct_complete']); ?>
       <div class="sa-project-card">
         <div class="sa-project-card__top">
-          <div><strong><?= Security::e($project['name']) ?></strong><small><?= Security::e($project['constituency']) ?> · <?= Security::e(format_date($project['est_delivery'])) ?></small></div>
+          <div><strong><?= Security::e($project['name']) ?></strong><small><?= Security::e($project['constituency']) ?> Â· <?= Security::e(format_date($project['est_delivery'])) ?></small></div>
           <span class="badge <?= Security::e(status_badge_class($project['status'])) ?>"><?= Security::e(status_label($project['status'])) ?></span>
         </div>
         <div class="progress" aria-label="<?= Security::e($project['name']) ?> progress"><span class="progress__bar" style="width: <?= Security::e((string)$pct) ?>%"></span></div>
@@ -531,15 +529,15 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
 <?php endif; ?>
   </article>
 
-  <article class="card">
+  <article class="card" data-dashboard-contact-inbox>
     <div class="card__header">
       <div><h2 class="card__title">Citizen Contact Inbox</h2><p class="card__subtitle">Unread public submissions.</p></div>
       <a class="btn btn--outline btn--sm" href="<?= Security::e(Url::to('admin/superadmin/contact-inbox.php')) ?>">Open Inbox</a>
     </div>
 <?php if ($unreadContacts === []): ?>
-    <div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-inbox" aria-hidden="true"></i></span><h3 class="empty-state__title">Inbox is clear</h3><p class="empty-state__text">Unread submissions will appear here.</p></div>
+    <div class="empty-state" data-dashboard-contact-empty><span class="empty-state__icon"><i class="fa-solid fa-inbox" aria-hidden="true"></i></span><h3 class="empty-state__title">Inbox is clear</h3><p class="empty-state__text">Unread submissions will appear here.</p></div>
 <?php else: ?>
-    <div class="sa-list">
+    <div class="sa-list" data-dashboard-contact-list>
 <?php foreach ($unreadContacts as $contact): ?>
       <a class="sa-list-item" href="<?= Security::e(Url::to('admin/superadmin/contact-inbox.php')) ?>">
         <span><strong><?= Security::e($contact['name']) ?></strong><small><?= Security::e($contact['subject'] ?: 'No subject') ?></small></span>
@@ -561,7 +559,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <div class="sa-list">
 <?php foreach ($announcements as $announcement): ?>
       <a class="sa-list-item" href="<?= Security::e(Url::to('admin/superadmin/announcements.php')) ?>">
-        <span><strong><?= Security::e($announcement['title']) ?></strong><small><?= ((int)$announcement['is_pinned'] === 1) ? 'Pinned · ' : '' ?><?= Security::e(format_date($announcement['created_at'])) ?></small></span>
+        <span><strong><?= Security::e($announcement['title']) ?></strong><small><?= ((int)$announcement['is_pinned'] === 1) ? 'Pinned Â· ' : '' ?><?= Security::e(format_date($announcement['created_at'])) ?></small></span>
         <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
       </a>
 <?php endforeach; ?>
@@ -570,56 +568,8 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
   </article>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-(function () {
-  'use strict';
-  var data = <?= $jsonChartData ?: '{}' ?>;
-  var root = getComputedStyle(document.documentElement);
-  var css = function (name) { return root.getPropertyValue(name).trim(); };
-  var palette = [css('--admin-primary'), css('--admin-lime'), css('--admin-info'), css('--admin-warning'), css('--admin-success'), css('--admin-danger')];
-  var gridColor = css('--admin-border');
-  var textColor = css('--admin-text-muted');
-
-  function chart(id, config) {
-    var canvas = document.getElementById(id);
-    if (!canvas || typeof Chart === 'undefined') return;
-    return new Chart(canvas, config);
-  }
-
-  function doughnut(id, dataset) {
-    chart(id, {
-      type: 'doughnut',
-      data: { labels: dataset.labels || [], datasets: [{ data: dataset.values || [], backgroundColor: palette, borderWidth: 0 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, usePointStyle: true } } }, cutout: '68%' }
-    });
-  }
-
-  function bar(id, labels, datasets) {
-    chart(id, {
-      type: 'bar',
-      data: { labels: labels || [], datasets: datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { color: textColor, usePointStyle: true } } },
-        scales: {
-          x: { ticks: { color: textColor }, grid: { color: gridColor } },
-          y: { ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true }
-        }
-      }
-    });
-  }
-
-  doughnut('projectStatusChart', data.projectStatus || {});
-  doughnut('ipcPipelineChart', data.ipcPipeline || {});
-  bar('unitsChart', (data.unitsByConstituency || {}).labels, [{ label: 'Units', data: (data.unitsByConstituency || {}).values || [], backgroundColor: css('--admin-primary') }]);
-  bar('attendanceProjectChart', (data.attendanceByProject || {}).labels, [{ label: 'Signed in today', data: (data.attendanceByProject || {}).values || [], backgroundColor: css('--admin-success') }]);
-  bar('budgetBurnChart', (data.budgetBurn || {}).labels, [
-    { label: 'Contract Sum', data: (data.budgetBurn || {}).contract || [], backgroundColor: css('--admin-primary') },
-    { label: 'Paid', data: (data.budgetBurn || {}).paid || [], backgroundColor: css('--admin-lime') }
-  ]);
-}());
+window.AHPTC_DASHBOARD_CHARTS = <?= $jsonChartData ?: '{}' ?>;
 </script>
 
 <?php include dirname(__DIR__, 2) . '/app/partials/admin/shell-end.php'; ?>

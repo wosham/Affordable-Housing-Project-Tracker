@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_news_editor';
 $id = Security::cleanInt($_GET['id'] ?? ($_POST['article_id'] ?? 0));
@@ -40,6 +40,13 @@ $format = (string)($article['post_format'] ?? ($_GET['format'] ?? 'article'));
 $format = array_key_exists($format, NewsArticle::FORMATS) ? $format : 'article';
 $formatMeta = NewsArticle::FORMATS[$format];
 $categories = NewsArticle::categories();
+$officialCategoryId = '';
+foreach ($categories as $category) {
+    if (($category['slug'] ?? '') === 'official') {
+        $officialCategoryId = (string)$category['id'];
+        break;
+    }
+}
 $imageOptions = NewsArticle::mediaOptions('image');
 $pdfOptions = NewsArticle::mediaOptions('pdf');
 $tagValue = $article && !empty($article['id']) ? implode(', ', NewsArticle::tagNames((int)$article['id'])) : '';
@@ -62,7 +69,12 @@ $form = array_merge([
     'external_url' => '',
     'status' => 'draft',
     'is_featured' => 0,
-    'is_visible' => 1,
+    'is_visible' => $format === 'announcement' ? 0 : 1,
+    'show_in_ticker' => $format === 'announcement' ? 1 : 0,
+    'ticker_text' => '',
+    'ticker_url' => '',
+    'ticker_expires_at' => '',
+    'ticker_priority' => 0,
     'published_at' => '',
     'scheduled_for' => '',
     'seo_title' => '',
@@ -70,16 +82,20 @@ $form = array_merge([
     'og_image_id' => '',
 ], $article ?: []);
 
+if ($format === 'announcement' && (string)$form['category_id'] === '' && $officialCategoryId !== '') {
+    $form['category_id'] = $officialCategoryId;
+}
+
 $pageTitle = $form['id'] ? 'Edit News Post' : 'Add ' . $formatMeta['label'];
 $pageDescription = 'Create and update public news posts, announcements and downloadable reports.';
 $adminRole = 'superadmin';
 $contentClass = 'sa-news-page sa-news-editor-page';
 $componentCss = ['media-library', 'news-admin'];
-$pageStyles = ['https://cdn.quilljs.com/1.3.7/quill.snow.css'];
-$pageScripts = ['https://cdn.quilljs.com/1.3.7/quill.min.js', 'media-picker', 'news-editor'];
+$pageStyles = ['admin/assets/vendor/quill/quill.snow.css'];
+$pageScripts = ['admin/assets/vendor/quill/quill.js', 'media-picker', 'news-editor'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'News', 'url' => Url::to('admin/superadmin/news.php')],
     ['label' => $form['id'] ? 'Edit Post' : 'Add Post'],
 ];
@@ -92,6 +108,16 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <input type="hidden" name="article_id" value="<?= Security::e((string)$form['id']) ?>">
   <input type="hidden" name="post_format" value="<?= Security::e($format) ?>">
   <input type="hidden" name="body" value="<?= Security::e($form['body']) ?>" data-quill-body>
+<?php if ($format === 'announcement'): ?>
+  <input type="hidden" name="featured_image_id" value="">
+  <input type="hidden" name="image_caption" value="">
+  <input type="hidden" name="og_image_id" value="">
+  <input type="hidden" name="attachment_id" value="">
+  <input type="hidden" name="external_url" value="">
+  <input type="hidden" name="source_label" value="">
+  <input type="hidden" name="is_visible" value="0">
+  <input type="hidden" name="is_featured" value="0">
+<?php endif; ?>
 
   <section class="card sa-news-editor-hero">
     <div>
@@ -114,11 +140,30 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <label class="form-field"><span class="form-label">Status</span><select class="form-select" name="status"><?php foreach (NewsArticle::STATUSES as $status): ?><option value="<?= Security::e($status) ?>" <?= (string)$form['status'] === $status ? 'selected' : '' ?>><?= Security::e(status_label($status)) ?></option><?php endforeach; ?></select></label>
           <label class="form-field"><span class="form-label">Published at</span><input class="form-input" type="datetime-local" name="published_at" value="<?= Security::e(sa_news_datetime_input($form['published_at'] ?? '')) ?>"></label>
           <label class="form-field"><span class="form-label">Scheduled for</span><input class="form-input" type="datetime-local" name="scheduled_for" value="<?= Security::e(sa_news_datetime_input($form['scheduled_for'] ?? '')) ?>"></label>
+<?php if ($format !== 'announcement'): ?>
           <label class="sa-news-switch"><input type="checkbox" name="is_visible" value="1" <?= (int)($form['is_visible'] ?? 1) === 1 ? 'checked' : '' ?>><span>Visible on public News page</span></label>
           <label class="sa-news-switch"><input type="checkbox" name="is_featured" value="1" <?= (int)($form['is_featured'] ?? 0) === 1 ? 'checked' : '' ?>><span>Featured story</span></label>
+<?php else: ?>
+          <div class="alert alert--info"><strong>Ticker-only notice</strong><span>Official public announcements are hidden from the News page and cannot be featured stories.</span></div>
+<?php endif; ?>
         </div>
       </section>
 
+      <section class="card">
+        <div class="card__header"><div><h3 class="card__title">Ticker & Public Promotion</h3><p class="card__subtitle">Control live ticker visibility and destination.</p></div></div>
+        <div class="card__body">
+          <label class="sa-news-switch"><input type="checkbox" name="show_in_ticker" value="1" <?= (int)($form['show_in_ticker'] ?? ($format === 'announcement' ? 1 : 0)) === 1 ? 'checked' : '' ?>><span>Show in live ticker</span></label>
+          <label class="form-field"><span class="form-label">Ticker text</span><input class="form-input" name="ticker_text" value="<?= Security::e($form['ticker_text'] ?? '') ?>" placeholder="Defaults to post title"></label>
+          <label class="form-field"><span class="form-label">Supporting URL</span><input class="form-input" type="url" name="ticker_url" value="<?= Security::e($form['ticker_url'] ?? '') ?>" placeholder="https://... or leave blank"></label>
+          <div class="form-grid form-grid--2">
+            <label class="form-field"><span class="form-label">Ticker expires at</span><input class="form-input" type="datetime-local" name="ticker_expires_at" value="<?= Security::e(sa_news_datetime_input($form['ticker_expires_at'] ?? '')) ?>"></label>
+            <label class="form-field"><span class="form-label">Ticker priority</span><input class="form-input" type="number" name="ticker_priority" min="0" max="100" value="<?= Security::e((string)($form['ticker_priority'] ?? 0)) ?>"></label>
+          </div>
+          <p class="form-hint">Normal news and reports link to their article when Supporting URL is blank. Ticker-only announcements need a Supporting URL only if they should open another page.</p>
+        </div>
+      </section>
+
+<?php if ($format !== 'announcement'): ?>
       <section class="card">
         <div class="card__header"><div><h3 class="card__title">Media</h3><p class="card__subtitle">Use existing Media Library assets.</p></div></div>
         <div class="card__body">
@@ -137,6 +182,15 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <label class="form-field"><span class="form-label">Editor notes</span><textarea class="form-textarea" name="editor_notes" rows="4" placeholder="Internal notes only"><?= Security::e($meta['editor_notes'] ?? '') ?></textarea></label>
         </div>
       </section>
+<?php else: ?>
+      <section class="card">
+        <div class="card__header"><div><h3 class="card__title">Official Notice</h3><p class="card__subtitle">Text-only public ticker and News notice.</p></div></div>
+        <div class="card__body">
+          <p class="form-hint">This format publishes a text-only public announcement. It appears on the public news page and the live ticker without image, PDF or source fields.</p>
+          <label class="form-field"><span class="form-label">Editor notes</span><textarea class="form-textarea" name="editor_notes" rows="4" placeholder="Internal notes only"><?= Security::e($meta['editor_notes'] ?? '') ?></textarea></label>
+        </div>
+      </section>
+<?php endif; ?>
     </aside>
 
     <main class="sa-news-editor-main">
@@ -159,10 +213,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <section class="card sa-news-quill-card">
         <div class="card__header"><div><h3 class="card__title">Content</h3><p class="card__subtitle">Write the article body with formatting, links and media references.</p></div></div>
         <div class="sa-quill-toolbar" id="newsQuillToolbar">
-          <span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button><button class="ql-underline"></button><button class="ql-strike"></button></span>
-          <span class="ql-formats"><button class="ql-header" value="2"></button><button class="ql-header" value="3"></button><button class="ql-blockquote"></button></span>
-          <span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span>
-          <span class="ql-formats"><button class="ql-link"></button><button class="ql-clean"></button></span>
+          <span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button><button type="button" class="ql-underline"></button><button type="button" class="ql-strike"></button></span>
+          <span class="ql-formats"><button type="button" class="ql-header" value="2"></button><button type="button" class="ql-header" value="3"></button><button type="button" class="ql-blockquote"></button></span>
+          <span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button></span>
+          <span class="ql-formats"><button type="button" class="ql-link"></button><button type="button" class="ql-clean"></button></span>
         </div>
         <div class="sa-news-quill" id="newsQuillEditor"><?= $form['body'] ?></div>
       </section>

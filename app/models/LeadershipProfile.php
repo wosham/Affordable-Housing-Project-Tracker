@@ -37,7 +37,9 @@ class LeadershipProfile extends Model
             "SELECT lp.*, ml.path AS media_path, ml.url AS media_url
              FROM leadership_profiles lp
              LEFT JOIN media_library ml ON ml.id = lp.photo_id
-             WHERE lp.status = 'published' AND lp.show_in_spotlight = 1
+             WHERE lp.status = 'published'
+               AND COALESCE(lp.is_visible, 1) = 1
+               AND lp.show_in_spotlight = 1
              ORDER BY lp.sort_order ASC, lp.id ASC
              LIMIT 1"
         );
@@ -48,6 +50,8 @@ class LeadershipProfile extends Model
         return self::ordered([
             'status' => 'published',
             'show_in_org_chart' => '1',
+            'public_only' => true,
+            'require_slug' => true,
         ]);
     }
 
@@ -57,10 +61,28 @@ class LeadershipProfile extends Model
             "SELECT lp.*, ml.path AS media_path, ml.url AS media_url
              FROM leadership_profiles lp
              LEFT JOIN media_library ml ON ml.id = lp.photo_id
-             WHERE lp.status = 'published' AND lp.show_in_cards = 1
+             WHERE lp.status = 'published'
+               AND COALESCE(lp.is_visible, 1) = 1
+               AND lp.slug IS NOT NULL
+               AND lp.slug <> ''
+               AND lp.show_in_cards = 1
              ORDER BY lp.sort_order ASC, lp.tier ASC, lp.name ASC
              LIMIT " . max(1, $limit)
         );
+    }
+
+    public static function publicStats(): array
+    {
+        return Database::fetch(
+            "SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN show_in_org_chart = 1 THEN 1 ELSE 0 END) AS org_nodes,
+                SUM(CASE WHEN show_in_cards = 1 THEN 1 ELSE 0 END) AS public_cards,
+                SUM(CASE WHEN show_in_spotlight = 1 THEN 1 ELSE 0 END) AS spotlight
+             FROM leadership_profiles
+             WHERE status = 'published'
+               AND COALESCE(is_visible, 1) = 1"
+        ) ?: [];
     }
 
     public static function stats(): array
@@ -82,6 +104,7 @@ class LeadershipProfile extends Model
         $name = Security::cleanString((string)($data['name'] ?? ''));
         $slug = trim((string)($data['slug'] ?? ''));
         $slug = $slug !== '' ? self::slug($slug) : self::slug($name);
+        self::ensureUniqueSlug($slug, $id);
         $initials = trim((string)($data['initials'] ?? ''));
         $initials = $initials !== '' ? strtoupper(substr(preg_replace('/[^a-z0-9]/i', '', $initials), 0, 12)) : self::initials($name);
         $responsibilities = self::normaliseResponsibilities((string)($data['responsibilities'] ?? ''));
@@ -171,6 +194,14 @@ class LeadershipProfile extends Model
             $bindings[] = (string)$filters['status'];
         }
 
+        if (!empty($filters['public_only'])) {
+            $where[] = 'COALESCE(lp.is_visible, 1) = 1';
+        }
+
+        if (!empty($filters['require_slug'])) {
+            $where[] = "lp.slug IS NOT NULL AND lp.slug <> ''";
+        }
+
         if (isset($filters['show_in_org_chart']) && (string)$filters['show_in_org_chart'] !== '') {
             $where[] = 'lp.show_in_org_chart = ?';
             $bindings[] = (int)$filters['show_in_org_chart'];
@@ -185,5 +216,17 @@ class LeadershipProfile extends Model
         return array_values(array_filter(array_map(static function (string $line): string {
             return trim($line);
         }, $lines)));
+    }
+
+    private static function ensureUniqueSlug(string $slug, ?int $id = null): void
+    {
+        $existing = Database::fetch(
+            'SELECT id FROM leadership_profiles WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1',
+            [$slug, $id, $id]
+        );
+
+        if ($existing) {
+            throw new RuntimeException('This leadership slug is already in use.');
+        }
     }
 }

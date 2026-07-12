@@ -30,8 +30,7 @@ class Guard
         self::auth();
 
         if ((string)Auth::role() !== $role) {
-            $target = $redirectTo ?? RoleAccess::dashboardFor(is_string(Auth::role()) ? Auth::role() : null);
-            Response::redirect(Url::to($target));
+            Response::redirect($redirectTo ?? Url::to('admin/auth/unauthorised.php'));
         }
     }
 }

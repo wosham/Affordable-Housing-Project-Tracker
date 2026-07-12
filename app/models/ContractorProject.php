@@ -149,7 +149,7 @@ class ContractorProject
         ];
     }
 
-    public static function progressHistory(int $projectId, int $userId, string $role, int $limit = 10): array
+    public static function progressHistory(int $projectId, int $userId, string $role, int $limit = 10, int $offset = 0): array
     {
         if (!self::canAccess($userId, $role, $projectId)) {
             return [];
@@ -164,11 +164,26 @@ class ContractorProject
                  LEFT JOIN users rv ON rv.id = ppu.reviewed_by
                  WHERE ppu.project_id = ?
                  ORDER BY ppu.created_at DESC, ppu.id DESC
-                 LIMIT " . max(1, $limit),
+                 LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset),
                 [$projectId]
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Logger::error('contractor_progress_history_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
             return [];
+        }
+    }
+
+    public static function progressHistoryCount(int $projectId, int $userId, string $role): int
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return 0;
+        }
+        try {
+            $row = Database::fetch('SELECT COUNT(*) AS total FROM project_progress_updates WHERE project_id = ?', [$projectId]);
+            return (int)($row['total'] ?? 0);
+        } catch (Throwable $e) {
+            Logger::error('contractor_progress_count_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return 0;
         }
     }
 
@@ -178,15 +193,268 @@ class ContractorProject
             return [];
         }
 
-        return Database::fetchAll(
-            "SELECT *
-             FROM programme_tasks
-             WHERE project_id = ?
-             ORDER BY FIELD(COALESCE(status, 'pending'), 'in_progress', 'pending', 'not_started', 'delayed', 'on_hold', 'complete', 'cancelled'),
-                      COALESCE(planned_end, end_date) ASC, sort_order ASC
-             LIMIT " . max(1, $limit),
-            [$projectId]
-        );
+        try {
+            return Database::fetchAll(
+                "SELECT *
+                 FROM programme_tasks
+                 WHERE project_id = ?
+                 ORDER BY FIELD(COALESCE(status, 'pending'), 'in_progress', 'pending', 'not_started', 'delayed', 'on_hold', 'complete', 'cancelled'),
+                          COALESCE(planned_end, end_date) ASC, sort_order ASC
+                 LIMIT " . max(1, $limit),
+                [$projectId]
+            );
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    public static function boqItems(int $projectId, int $userId, string $role, array $filters = [], int $limit = 200, int $offset = 0): array
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return [];
+        }
+
+        $where = ['b.project_id = ?'];
+        $bindings = [$projectId];
+
+        $section = trim((string)($filters['section'] ?? ''));
+        if ($section !== '') {
+            $where[] = 'b.section = ?';
+            $bindings[] = $section;
+        }
+
+        $status = trim((string)($filters['status'] ?? ''));
+        if ($status !== '') {
+            if ($status === 'remaining') {
+                $where[] = 'COALESCE(b.certified_qty, 0) < COALESCE(b.quantity, 0)';
+            } elseif ($status === 'claimed') {
+                $where[] = 'COALESCE(b.certified_qty, 0) > 0';
+            } elseif ($status === 'paid') {
+                $where[] = 'COALESCE(b.paid_qty, 0) > 0';
+            } elseif ($status === 'risk') {
+                $where[] = "COALESCE(b.risk_status, 'normal') IN ('watch','high','critical')";
+            }
+        }
+
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(b.item_no LIKE ? OR b.section LIKE ? OR b.description LIKE ?)';
+            $term = '%' . $q . '%';
+            array_push($bindings, $term, $term, $term);
+        }
+
+        try {
+            return Database::fetchAll(
+                "SELECT
+                    b.*,
+                    COALESCE(NULLIF(b.amount, 0), b.quantity * b.rate) AS line_amount,
+                    COALESCE(b.certified_qty * b.rate, 0) AS certified_value,
+                    COALESCE(b.paid_qty * b.rate, 0) AS paid_value,
+                    GREATEST(COALESCE(b.quantity, 0) - COALESCE(b.certified_qty, 0), 0) AS remaining_qty,
+                    GREATEST((COALESCE(b.quantity, 0) - COALESCE(b.certified_qty, 0)) * COALESCE(b.rate, 0), 0) AS remaining_value
+                 FROM boq_items b
+                 WHERE " . implode(' AND ', $where) . "
+                 ORDER BY b.section ASC, b.item_no ASC, b.id ASC
+                 LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset),
+                $bindings
+            );
+        } catch (Throwable $e) {
+            Logger::error('contractor_boq_items_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public static function boqCount(int $projectId, int $userId, string $role, array $filters = []): int
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return 0;
+        }
+        $where = ['b.project_id = ?'];
+        $bindings = [$projectId];
+        $section = trim((string)($filters['section'] ?? ''));
+        if ($section !== '') {
+            $where[] = 'b.section = ?';
+            $bindings[] = $section;
+        }
+        $status = trim((string)($filters['status'] ?? ''));
+        if ($status === 'remaining') {
+            $where[] = 'COALESCE(b.certified_qty, 0) < COALESCE(b.quantity, 0)';
+        } elseif ($status === 'claimed') {
+            $where[] = 'COALESCE(b.certified_qty, 0) > 0';
+        } elseif ($status === 'paid') {
+            $where[] = 'COALESCE(b.paid_qty, 0) > 0';
+        } elseif ($status === 'risk') {
+            $where[] = "COALESCE(b.risk_status, 'normal') IN ('watch','high','critical')";
+        }
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(b.item_no LIKE ? OR b.section LIKE ? OR b.description LIKE ?)';
+            $term = '%' . $q . '%';
+            array_push($bindings, $term, $term, $term);
+        }
+        try {
+            $row = Database::fetch('SELECT COUNT(*) AS total FROM boq_items b WHERE ' . implode(' AND ', $where), $bindings);
+            return (int)($row['total'] ?? 0);
+        } catch (Throwable $e) {
+            Logger::error('contractor_boq_count_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return 0;
+        }
+    }
+
+    /** High-value / risk BOQ lines for side panel (not page-bound). */
+    public static function boqAttentionItems(int $projectId, int $userId, string $role, int $limit = 8): array
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return [];
+        }
+        try {
+            return Database::fetchAll(
+                "SELECT b.*,
+                        COALESCE(NULLIF(b.amount, 0), b.quantity * b.rate) AS line_amount,
+                        GREATEST((COALESCE(b.quantity, 0) - COALESCE(b.certified_qty, 0)) * COALESCE(b.rate, 0), 0) AS remaining_value,
+                        GREATEST(COALESCE(b.quantity, 0) - COALESCE(b.certified_qty, 0), 0) AS remaining_qty
+                 FROM boq_items b
+                 WHERE b.project_id = ?
+                   AND (
+                        COALESCE(b.risk_status, 'normal') IN ('watch','high','critical')
+                        OR COALESCE(b.certified_qty, 0) >= COALESCE(b.quantity, 0)
+                        OR ((COALESCE(b.quantity, 0) - COALESCE(b.certified_qty, 0)) * COALESCE(b.rate, 0)) >= 1000000
+                   )
+                 ORDER BY ((COALESCE(b.quantity, 0) - COALESCE(b.certified_qty, 0)) * COALESCE(b.rate, 0)) DESC, b.id ASC
+                 LIMIT " . max(1, min(20, $limit)),
+                [$projectId]
+            );
+        } catch (Throwable $e) {
+            Logger::error('contractor_boq_attention_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public static function boqSections(int $projectId, int $userId, string $role): array
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return [];
+        }
+
+        try {
+            $rows = Database::fetchAll(
+                "SELECT section, COUNT(*) AS total
+                 FROM boq_items
+                 WHERE project_id = ?
+                 GROUP BY section
+                 ORDER BY section ASC",
+                [$projectId]
+            );
+            return array_values(array_filter($rows, static fn (array $row): bool => trim((string)($row['section'] ?? '')) !== ''));
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    public static function programmeList(int $projectId, int $userId, string $role, array $filters = [], int $limit = 200, int $offset = 0): array
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return [];
+        }
+
+        $where = ['pt.project_id = ?'];
+        $bindings = [$projectId];
+
+        $status = trim((string)($filters['status'] ?? ''));
+        if ($status !== '') {
+            if ($status === 'delayed') {
+                $where[] = "COALESCE(pt.status, '') NOT IN ('done','completed','complete','cancelled') AND COALESCE(pt.planned_end, pt.end_date) < CURDATE()";
+            } else {
+                $where[] = 'pt.status = ?';
+                $bindings[] = $status;
+            }
+        }
+
+        if (!empty($filters['critical'])) {
+            $where[] = 'COALESCE(pt.critical_path, 0) = 1';
+        }
+
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(pt.task_name LIKE ? OR pt.notes LIKE ?)';
+            $term = '%' . $q . '%';
+            array_push($bindings, $term, $term);
+        }
+
+        try {
+            return Database::fetchAll(
+                "SELECT pt.*
+                 FROM programme_tasks pt
+                 WHERE " . implode(' AND ', $where) . "
+                 ORDER BY FIELD(COALESCE(pt.status, 'pending'), 'in_progress', 'pending', 'not_started', 'delayed', 'on_hold', 'complete', 'completed', 'done', 'cancelled'),
+                          COALESCE(pt.planned_end, pt.end_date) ASC,
+                          pt.sort_order ASC,
+                          pt.id ASC
+                 LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset),
+                $bindings
+            );
+        } catch (Throwable $e) {
+            Logger::error('contractor_programme_list_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    public static function programmeCount(int $projectId, int $userId, string $role, array $filters = []): int
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return 0;
+        }
+        $where = ['pt.project_id = ?'];
+        $bindings = [$projectId];
+        $status = trim((string)($filters['status'] ?? ''));
+        if ($status === 'delayed') {
+            $where[] = "COALESCE(pt.status, '') NOT IN ('done','completed','complete','cancelled') AND COALESCE(pt.planned_end, pt.end_date) < CURDATE()";
+        } elseif ($status !== '') {
+            $where[] = 'pt.status = ?';
+            $bindings[] = $status;
+        }
+        if (!empty($filters['critical'])) {
+            $where[] = 'COALESCE(pt.critical_path, 0) = 1';
+        }
+        $q = trim((string)($filters['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(pt.task_name LIKE ? OR pt.notes LIKE ?)';
+            $term = '%' . $q . '%';
+            array_push($bindings, $term, $term);
+        }
+        try {
+            $row = Database::fetch('SELECT COUNT(*) AS total FROM programme_tasks pt WHERE ' . implode(' AND ', $where), $bindings);
+            return (int)($row['total'] ?? 0);
+        } catch (Throwable $e) {
+            Logger::error('contractor_programme_count_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return 0;
+        }
+    }
+
+    /** Open / overdue / critical tasks for side panel (not page-bound). */
+    public static function programmeFocusItems(int $projectId, int $userId, string $role, int $limit = 8): array
+    {
+        if (!self::canAccess($userId, $role, $projectId)) {
+            return [];
+        }
+        try {
+            return Database::fetchAll(
+                "SELECT pt.*
+                 FROM programme_tasks pt
+                 WHERE pt.project_id = ?
+                   AND COALESCE(pt.status, '') NOT IN ('done','completed','complete','cancelled')
+                 ORDER BY
+                   (COALESCE(pt.planned_end, pt.end_date) IS NOT NULL AND COALESCE(pt.planned_end, pt.end_date) < CURDATE()) DESC,
+                   COALESCE(pt.critical_path, 0) DESC,
+                   COALESCE(pt.planned_end, pt.end_date) ASC,
+                   pt.sort_order ASC
+                 LIMIT " . max(1, min(20, $limit)),
+                [$projectId]
+            );
+        } catch (Throwable $e) {
+            Logger::error('contractor_programme_focus_failed', ['project_id' => $projectId, 'error' => $e->getMessage()]);
+            return [];
+        }
     }
 
     public static function latestIpcs(int $projectId, int $userId, string $role, int $limit = 5): array

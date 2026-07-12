@@ -34,13 +34,89 @@
 
 .chart-container {
     position: relative;
+    display: grid;
+    grid-template-rows: minmax(230px, 1fr) auto;
     width: 100%;
-    min-height: 220px;
+    min-height: 280px;
+    overflow: hidden;
+    border-radius: var(--admin-radius);
 }
 
 .chart-container canvas {
     display: block;
     max-width: 100%;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 230px;
+}
+
+.sa-chart-legend {
+    display: flex;
+    align-items: center;
+    gap: .45rem .75rem;
+    flex-wrap: wrap;
+    padding: .55rem .75rem .7rem;
+    border-top: 1px solid color-mix(in srgb, var(--admin-border) 72%, transparent);
+    background: color-mix(in srgb, var(--admin-surface-muted) 68%, var(--admin-surface));
+}
+
+.sa-chart-legend__item {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    gap: .35rem;
+    color: var(--admin-text-muted);
+    font-size: .72rem;
+    line-height: 1.2;
+}
+
+.sa-chart-legend__item i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex: 0 0 10px;
+}
+
+.sa-chart-legend__item strong {
+    color: var(--admin-text);
+    font-weight: 750;
+}
+
+.sa-chart-legend__item em {
+    color: var(--admin-text-muted);
+    font-style: normal;
+    font-weight: 750;
+}
+
+.sa-chart-tooltip {
+    position: fixed;
+    z-index: 3000;
+    display: grid;
+    gap: .2rem;
+    max-width: min(280px, calc(100vw - 24px));
+    padding: .7rem .8rem;
+    border: 1px solid color-mix(in srgb, var(--admin-border-strong) 76%, transparent);
+    border-radius: var(--admin-radius);
+    background: color-mix(in srgb, var(--admin-text) 94%, #000);
+    color: #fff;
+    box-shadow: var(--admin-shadow-lg);
+    pointer-events: none;
+}
+
+.sa-chart-tooltip[hidden] {
+    display: none;
+}
+
+.sa-chart-tooltip strong {
+    font-size: .82rem;
+    line-height: 1.25;
+}
+
+.sa-chart-tooltip span,
+.sa-chart-tooltip small {
+    color: color-mix(in srgb, #fff 82%, transparent);
+    font-size: .75rem;
+    line-height: 1.35;
 }
 
 /* Empty chart state */

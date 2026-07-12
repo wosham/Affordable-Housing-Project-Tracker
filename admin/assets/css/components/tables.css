@@ -1,19 +1,209 @@
-/* Admin Tables Component — base styles live in admin-global.css */
+/* Admin Tables Component — additive only. Base table/filter styles live in admin-global.css */
 
-/* Cell content stacking: all table cells that have strong+small inside */
+/* Cell content stacking */
 .data-table td strong { display: block; font-weight: 700; }
-.data-table td small  { display: block; color: var(--admin-text-muted); font-size: .78rem; }
+.data-table td small  { display: block; color: var(--admin-text-muted); font-size: .78rem; margin-top: 3px; }
 .data-table td time   { color: var(--admin-text-muted); font-size: .82rem; }
 
-/* Table toolbar (filter + pagination strip above/below table) */
-.table-toolbar { display: flex; justify-content: space-between; align-items: center; padding: var(--admin-space-md) var(--admin-space-lg); border-bottom: 1px solid var(--admin-border); flex-wrap: wrap; gap: var(--admin-space-sm); }
+/* Table toolbar (opt-in strip) */
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--admin-space-md) var(--admin-space-lg);
+  border-bottom: 1px solid var(--admin-border);
+  flex-wrap: wrap;
+  gap: var(--admin-space-sm);
+  background: color-mix(in srgb, var(--admin-surface-muted) 70%, #fff);
+  min-width: 0;
+}
 
-/* Compact table variant */
+.table-toolbar__search {
+  min-width: min(200px, 100%);
+  flex: 1 1 160px;
+  max-width: 100%;
+}
+
+.table-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Compact / striped */
 .data-table--compact th,
 .data-table--compact td { padding: .5rem .75rem; }
 
-/* Striped variant */
 .data-table--striped tbody tr:nth-child(even) { background: var(--admin-surface-muted); }
 
-/* data-table-wrap alias (used on attendance page without border) */
-.data-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--admin-border); border-radius: var(--admin-radius); background: var(--admin-surface); }
+/* Money columns */
+.data-table .is-money,
+.data-table th.is-money {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sortable headers (data-tables.js) */
+.data-table th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.data-table th[data-sort]::after {
+  content: ' \2195';
+  opacity: .35;
+  font-size: .75em;
+}
+
+.data-table th[data-sort-dir="asc"]::after {
+  content: ' \2191';
+  opacity: .9;
+  color: var(--admin-primary);
+}
+
+.data-table th[data-sort-dir="desc"]::after {
+  content: ' \2193';
+  opacity: .9;
+  color: var(--admin-primary);
+}
+
+.data-table th[data-sort]:hover {
+  color: var(--admin-primary);
+  background: color-mix(in srgb, var(--admin-lime-soft) 40%, transparent);
+}
+
+/* Sticky header option */
+.data-table--sticky thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--admin-surface-muted);
+  box-shadow: 0 1px 0 var(--admin-border);
+}
+
+/* Soften wrap scrolling only — do NOT redefine base .table-wrap chrome */
+.table-wrap,
+.data-table-wrap {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table td {
+  overflow-wrap: anywhere;
+}
+
+.data-table td.is-money,
+.data-table td .badge,
+.data-table td .btn {
+  overflow-wrap: normal;
+}
+
+.table-wrap--borderless {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Opt-in grid filter layout (do not override global flex .filter-bar) */
+.filter-bar--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .85rem;
+  align-items: end;
+}
+
+.filter-bar--grid .filter-group,
+.filter-bar--grid label {
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.filter-bar--grid .filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  align-items: center;
+}
+
+/* Optional mobile card stack — only .data-table--stack + data-label */
+@media (max-width: 720px) {
+  .data-table--stack {
+    min-width: 0 !important;
+  }
+
+  .data-table--stack thead {
+    display: none;
+  }
+
+  .data-table--stack,
+  .data-table--stack tbody,
+  .data-table--stack tr,
+  .data-table--stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table--stack tr {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--admin-border);
+  }
+
+  .data-table--stack tr:last-child {
+    border-bottom: 0;
+  }
+
+  .data-table--stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .35rem 0;
+    text-align: right;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table--stack td::before {
+    content: attr(data-label);
+    color: var(--admin-text-muted);
+    font-size: .72rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    text-align: left;
+    flex: 0 0 42%;
+  }
+
+  .data-table--stack td:not([data-label])::before {
+    display: none;
+  }
+
+  .data-table--stack td[colspan] {
+    display: block;
+    text-align: left;
+  }
+
+  .data-table--stack td.is-money,
+  .data-table--stack td strong {
+    text-align: right;
+  }
+
+  .filter-bar--grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

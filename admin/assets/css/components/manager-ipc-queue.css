@@ -66,20 +66,43 @@
 
 .manager-ipc-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+  gap: 1.25rem;
   align-items: start;
+  width: 100%;
 }
 
 .manager-ipc-main,
 .manager-ipc-side {
   display: grid;
   gap: 1rem;
+  min-width: 0; /* prevent wide table from crushing/overlapping side column */
+}
+
+.manager-ipc-main {
+  overflow: hidden;
+}
+
+.manager-ipc-side {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  z-index: 1;
+}
+
+.manager-ipc-card .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .manager-ipc-filter {
-  grid-template-columns: 1.35fr 1.25fr repeat(4, minmax(130px, 1fr)) auto;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   align-items: end;
+}
+
+.manager-ipc-table {
+  min-width: 960px;
 }
 
 .manager-ipc-table th,
@@ -88,21 +111,32 @@
 }
 
 .manager-ipc-table td {
-  min-width: 116px;
+  min-width: 0;
 }
 
 .manager-ipc-table td:first-child {
-  min-width: 130px;
+  min-width: 110px;
 }
 
 .manager-ipc-table td:nth-child(2),
 .manager-ipc-table td:nth-child(3) {
-  min-width: 180px;
+  min-width: 140px;
+  max-width: 200px;
 }
 
 .manager-ipc-table .is-money {
   text-align: right;
   white-space: nowrap;
+}
+
+.manager-ipc-panel {
+  overflow: hidden;
+}
+
+.manager-ipc-mini-list strong,
+.manager-ipc-mini-list small {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .manager-ipc-table small,
@@ -311,17 +345,18 @@
   font-weight: 800;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .manager-ipc-layout {
     grid-template-columns: 1fr;
   }
 
   .manager-ipc-side {
+    position: static;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .manager-ipc-filter {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

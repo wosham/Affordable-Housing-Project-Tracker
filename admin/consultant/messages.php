@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $pageTitle = 'Messages';
 $pageDescription = 'Technical team conversations and direct messages.';

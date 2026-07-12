@@ -28,6 +28,10 @@
     return meta('csrf-token-name', '_csrf_token');
   }
 
+  function csrfForm() {
+    return meta('csrf-form', 'default');
+  }
+
   function toUrl(url) {
     if (/^(https?:)?\/\//i.test(url) || url.charAt(0) === '/') {
       return url;
@@ -44,6 +48,7 @@
 
     if (unsafeMethods.indexOf(method) !== -1) {
       headers['X-CSRF-Token'] = csrfToken();
+      headers['X-CSRF-Form'] = csrfForm();
     }
 
     if (body && typeof body === 'object' && !isFormData) {
@@ -76,6 +81,18 @@
         return data;
       });
     });
+  }
+
+  function toast(message, type) {
+    type = type || 'success';
+    var node = document.createElement('div');
+    node.className = 'ahptc-toast' + (type === 'error' ? ' is-error' : '');
+    node.setAttribute('role', 'status');
+    node.textContent = message || '';
+    document.body.appendChild(node);
+    window.setTimeout(function () {
+      if (node.parentNode) node.parentNode.removeChild(node);
+    }, 3600);
   }
 
   function closeSidebar() {
@@ -258,7 +275,9 @@
     baseUrl: baseUrl,
     csrfToken: csrfToken,
     csrfTokenName: csrfTokenName,
+    csrfForm: csrfForm,
     request: request,
+    toast: toast,
     openSidebar: openSidebar,
     closeSidebar: closeSidebar,
     toggleSidebar: toggleSidebar,

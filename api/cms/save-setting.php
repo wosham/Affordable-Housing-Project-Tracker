@@ -21,7 +21,7 @@ if ($key === '') {
     Response::json(['success' => false, 'message' => 'Setting key is required.'], 422);
 }
 
-if (!in_array($type, ['text', 'number', 'boolean', 'json', 'image', 'color'], true)) {
+if (!in_array($type, ['text', 'number', 'boolean', 'json', 'image', 'color', 'url', 'email'], true)) {
     Response::json(['success' => false, 'message' => 'Invalid setting type.'], 422);
 }
 
@@ -35,6 +35,16 @@ if ($type === 'json') {
     $value = in_array(strtolower((string)$value), ['1', 'true', 'yes', 'on'], true) ? '1' : '0';
 } elseif ($type === 'number') {
     $value = (string)(float)$value;
+} elseif ($type === 'email') {
+    $value = Security::cleanEmail(trim((string)$value));
+    if ($value !== '' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        Response::json(['success' => false, 'message' => 'Email setting value is invalid.'], 422);
+    }
+} elseif ($type === 'url') {
+    $value = Security::cleanString(trim((string)$value));
+    if ($value !== '' && !filter_var($value, FILTER_VALIDATE_URL) && !str_starts_with($value, '/')) {
+        Response::json(['success' => false, 'message' => 'URL setting value is invalid.'], 422);
+    }
 } else {
     $value = Security::cleanString(trim((string)$value));
 }

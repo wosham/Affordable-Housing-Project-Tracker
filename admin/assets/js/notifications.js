@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var POLL_MS = 30000;
+  var POLL_MS = 15000;
 
   function qs(selector, root) {
     return (root || document).querySelector(selector);
@@ -44,6 +44,10 @@
     list.innerHTML = '<div class="notification-empty" data-notification-empty><i class="fa-solid fa-bell-slash" aria-hidden="true"></i><span>No notifications yet</span></div>';
   }
 
+  function renderError(list) {
+    list.innerHTML = '<div class="notification-empty is-error" data-notification-empty><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>Notifications could not be loaded.</span></div>';
+  }
+
   function renderItems(root, items) {
     var list = qs('[data-notification-list]', root);
     if (!list) return;
@@ -70,7 +74,8 @@
       updateBadge(root, data.unread || 0);
       renderItems(root, data.items || []);
     }).catch(function () {
-      // Keep header resilient if the API is unavailable.
+      var list = qs('[data-notification-list]', root);
+      if (list) renderError(list);
     });
   }
 
@@ -129,10 +134,16 @@
       list.addEventListener('click', function (event) {
         var item = event.target.closest && event.target.closest('[data-notification-id]');
         if (!item) return;
+        var href = item.getAttribute('href') || '#';
         var id = Number(item.getAttribute('data-notification-id') || 0);
         if (item.classList.contains('is-unread')) {
-          item.classList.remove('is-unread');
-          markRead(root, id);
+          event.preventDefault();
+          markRead(root, id).then(function () {
+            item.classList.remove('is-unread');
+            return fetchNotifications(root);
+          }).finally(function () {
+            if (href && href !== '#') window.location.href = href;
+          });
         }
       });
     }

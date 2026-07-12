@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_gallery';
 
@@ -43,7 +43,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '');
 
-$perPage = 18;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalItems = GalleryImage::adminCount($filters);
 $totalPages = max(1, (int)ceil($totalItems / $perPage));
@@ -61,7 +61,7 @@ $componentCss = ['gallery-admin'];
 $csrfForm = 'superadmin_gallery';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Gallery Registry'],
 ];
 
@@ -139,7 +139,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
               <?php gallery_action_form($csrfForm, (int)$item['id'], 'feature', 'fa-star', 'Toggle featured'); ?>
               <?php gallery_action_form($csrfForm, (int)$item['id'], 'highlight', 'fa-wand-magic-sparkles', 'Toggle highlight'); ?>
               <?php gallery_action_form($csrfForm, (int)$item['id'], (string)$item['status'] === 'published' ? 'hide' : 'publish', (string)$item['status'] === 'published' ? 'fa-eye-slash' : 'fa-paper-plane', (string)$item['status'] === 'published' ? 'Hide' : 'Publish'); ?>
-              <?php gallery_action_form($csrfForm, (int)$item['id'], 'delete', 'fa-trash', 'Delete', 'btn--danger', 'Delete this gallery item?'); ?>
+              <?php gallery_action_form($csrfForm, (int)$item['id'], 'delete', 'fa-eye-slash', 'Hide', 'btn--danger', 'Hide this gallery item from the public gallery?'); ?>
             </div>
           </td>
         </tr>

@@ -9,17 +9,22 @@ ApiMiddleware::handle([
 
 $email = Security::cleanEmail((string)($_POST['email'] ?? ''));
 $name = Security::cleanString((string)($_POST['name'] ?? ''));
-$honeypot = trim((string)($_POST['_gotcha'] ?? ''));
-$ip = substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
-$userAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
-$sourceUrl = substr((string)($_SERVER['HTTP_REFERER'] ?? Url::to('news.php')), 0, 500);
+$ip = PublicApi::clientIp();
+$userAgent = PublicApi::userAgent();
+$sourceUrl = PublicApi::safeSourcePath(PublicApi::sourceUrl(Url::to('news.php')));
 
-if ($honeypot !== '') {
-    Response::json(['success' => true, 'message' => 'Subscription received.']);
+if (PublicApi::honeypot()) {
+    PublicApi::fakeSuccess('Subscription received.');
 }
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    Response::json(['success' => false, 'message' => 'Please enter a valid email address.', 'errors' => ['email' => 'Invalid email address.']], 422);
+    PublicApi::validation(['email' => 'Invalid email address.'], 'Please enter a valid email address.');
+}
+if (strlen($email) > 190) {
+    PublicApi::validation(['email' => 'Email address is too long.'], 'Please enter a valid email address.');
+}
+if (strlen($name) > 120) {
+    PublicApi::validation(['name' => 'Name is too long.']);
 }
 
 if ($ip !== '') {
@@ -30,7 +35,7 @@ if ($ip !== '') {
             [$ip]
         );
         if ((int)($recent['total'] ?? 0) >= $limit) {
-            Response::json(['success' => false, 'message' => 'Please wait a few minutes before subscribing again.'], 429);
+            PublicApi::fail('Please wait a few minutes before subscribing again.', 429, [], ['retry_after' => 600]);
         }
     } catch (Throwable) {
     }
@@ -43,7 +48,6 @@ try {
         'source_url' => $sourceUrl ?: null,
     ]);
 
-    $subscriber = $result['subscriber'] ?? null;
     if (!empty($result['created']) && class_exists('Notification')) {
         Notification::pushRole(
             'superadmin',
@@ -54,17 +58,13 @@ try {
         );
     }
 
-    Response::json([
-        'success' => true,
-        'message' => !empty($result['reactivated'])
-            ? 'Your subscription has been reactivated.'
-            : 'Thank you. You are subscribed to programme updates.',
-        'subscriber' => [
-            'email' => $subscriber['email'] ?? $email,
-            'status' => $subscriber['status'] ?? 'active',
-        ],
-    ]);
+    PublicApi::ok([
+        'subscribed' => true,
+        'reactivated' => !empty($result['reactivated']),
+    ], !empty($result['reactivated'])
+        ? 'Your subscription has been reactivated.'
+        : 'Thank you. You are subscribed to programme updates.');
 } catch (Throwable $e) {
-    Logger::error('Newsletter subscription failed', ['error' => $e->getMessage()]);
-    Response::json(['success' => false, 'message' => 'Unable to subscribe right now. Please try again.'], 500);
+    PublicApi::log('Newsletter subscription failed', ['error' => $e->getMessage()]);
+    PublicApi::fail('Unable to subscribe right now. Please try again.', 500);
 }

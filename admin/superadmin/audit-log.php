@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $filters = [
     'q' => Security::cleanString((string)($_GET['q'] ?? '')),
@@ -18,7 +18,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== null && $value !== 0);
 
-$perPage = max(10, min(100, Security::cleanInt($_GET['per_page'] ?? 25)));
+$perPage = max(10, min(100, Security::cleanInt($_GET['per_page'] ?? 10)));
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $total = AuditLog::countItems($filters);
 $totalPages = max(1, (int)ceil($total / $perPage));
@@ -42,7 +42,7 @@ $componentCss = ['audit-log'];
 $pageScripts = ['audit-log'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Audit Log'],
 ];
 
@@ -99,7 +99,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     <div class="filter-group"><label class="filter-label" for="ip">IP</label><input class="form-input" id="ip" name="ip" value="<?= Security::e($filters['ip'] ?? '') ?>" placeholder="192.168..."></div>
     <div class="filter-group"><label class="filter-label" for="date_from">From</label><input class="form-input" id="date_from" name="date_from" type="date" value="<?= Security::e($filters['date_from'] ?? '') ?>"></div>
     <div class="filter-group"><label class="filter-label" for="date_to">To</label><input class="form-input" id="date_to" name="date_to" type="date" value="<?= Security::e($filters['date_to'] ?? '') ?>"></div>
-    <div class="filter-group"><label class="filter-label" for="per_page">Rows</label><select class="form-select" id="per_page" name="per_page"><?php foreach ([25, 50, 100] as $size): ?><option value="<?= $size ?>" <?= $perPage === $size ? 'selected' : '' ?>><?= $size ?></option><?php endforeach; ?></select></div>
+    <div class="filter-group"><label class="filter-label" for="per_page">Rows</label><select class="form-select" id="per_page" name="per_page"><?php foreach ([10, 25, 50, 100] as $size): ?><option value="<?= $size ?>" <?= $perPage === $size ? 'selected' : '' ?>><?= $size ?></option><?php endforeach; ?></select></div>
     <div class="filter-actions"><button class="btn btn--primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i> Filter</button><a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/audit-log.php')) ?>">Reset</a></div>
   </form>
 
@@ -113,7 +113,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php foreach ($logs as $log): ?>
         <tr data-audit-row data-audit-id="<?= (int)$log['id'] ?>">
           <td><strong><?= Security::e(format_datetime($log['created_at'])) ?></strong><small><?= Security::e(time_ago($log['created_at'])) ?></small></td>
-          <td><strong><?= Security::e($log['actor_name']) ?></strong><small><?= Security::e(($log['actor_email'] ?: 'No email') . ' · ' . role_label($log['actor_role'] ?: 'system')) ?></small></td>
+          <td><strong><?= Security::e($log['actor_name']) ?></strong><small><?= Security::e(($log['actor_email'] ?: 'No email') . ' Â· ' . role_label($log['actor_role'] ?: 'system')) ?></small></td>
           <td><span class="badge <?= Security::e(audit_severity_badge($log['severity'])) ?>"><?= Security::e(status_label($log['severity'])) ?></span><small><?= Security::e(status_label($log['action'])) ?></small></td>
           <td><strong><?= Security::e(status_label($log['module'])) ?></strong><small>Target #<?= Security::e((string)$log['target_id']) ?></small></td>
           <td><strong><?= Security::e($log['ip'] ?: '-') ?></strong><small><?= Security::e(safe_truncate($log['route'] ?: '-', 42)) ?></small></td>

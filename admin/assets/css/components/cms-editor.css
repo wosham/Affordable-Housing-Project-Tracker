@@ -1776,3 +1776,37 @@
         padding: 0 var(--admin-space-md) var(--admin-space-md);
     }
 }
+
+.sa-cms-module-callout--faq {
+    grid-template-columns: 54px minmax(0, 1fr) auto;
+    min-height: auto;
+}
+
+.sa-cms-module-callout--faq > div:not(.sa-cms-module-callout__icon) {
+    min-width: 0;
+}
+
+.sa-cms-module-callout--faq .sa-panel-label {
+    width: max-content;
+    max-width: 100%;
+}
+
+.sa-cms-module-callout--faq .btn {
+    justify-self: end;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .sa-cms-module-callout--faq {
+        grid-template-columns: 54px minmax(0, 1fr);
+    }
+
+    .sa-cms-module-callout--faq .btn {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+    }
+}
+
+.sa-cms-module-callout--faq p { max-width: 74rem; }
+.sa-cms-module-callout--faq h3 { overflow-wrap: anywhere; }
+.sa-faq-cms .sa-home-cms-block, .sa-contact-cms .sa-home-cms-block, .sa-news-cms .sa-home-cms-block, .sa-gallery-cms .sa-home-cms-block, .sa-leadership-cms .sa-home-cms-block, .sa-stakeholders-cms .sa-home-cms-block { width: 100%; }

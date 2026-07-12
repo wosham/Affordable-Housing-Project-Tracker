@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $pageTitle = 'Reports';
 $pageDescription = 'Generate progress, financial, attendance, project and public content reports.';
@@ -18,7 +18,7 @@ $breadcrumbs = [
 $types = ReportBuilder::typesForRole('superadmin');
 $projects = ReportBuilder::projectsForFilter();
 $constituencies = ReportBuilder::constituenciesForFilter();
-$recentRuns = ReportBuilder::recentRuns(8);
+$recentRuns = ReportBuilder::recentRuns(10);
 $defaultFrom = date('Y-m-01');
 $defaultTo = date('Y-m-d');
 
@@ -89,23 +89,27 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
         </label>
         <label class="form-field">
           <span class="form-label">Status</span>
-          <select class="form-select" name="status">
+          <select class="form-select" name="status" data-report-status>
             <option value="">Any status</option>
-            <option value="planning">Planning</option>
-            <option value="active">Active</option>
-            <option value="stalled">Stalled</option>
-            <option value="completed">Completed</option>
-            <option value="geo-fail">GPS failed</option>
-            <option value="present">Present</option>
+            <option value="planning" data-report-status-scope="project">Planning</option>
+            <option value="active" data-report-status-scope="project">Active</option>
+            <option value="on_hold" data-report-status-scope="project">On hold</option>
+            <option value="stalled" data-report-status-scope="project">Stalled</option>
+            <option value="completed" data-report-status-scope="project">Completed</option>
+            <option value="cancelled" data-report-status-scope="project">Cancelled</option>
+            <option value="present" data-report-status-scope="attendance">Present</option>
+            <option value="late" data-report-status-scope="attendance">Late</option>
+            <option value="absent" data-report-status-scope="attendance">Absent</option>
+            <option value="geo-fail" data-report-status-scope="attendance">GPS failed</option>
+            <option value="outside-window" data-report-status-scope="attendance">Outside window</option>
           </select>
         </label>
         <label class="form-field">
           <span class="form-label">Output</span>
-          <select class="form-select" name="format" data-report-format>
+          <select class="form-select" name="format" data-report-format disabled>
             <option value="json">Preview</option>
-            <option value="csv">CSV export</option>
-            <option value="html">Printable HTML</option>
           </select>
+          <small class="form-help">Use CSV or Print View for exports.</small>
         </label>
       </div>
 
@@ -134,7 +138,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
         <span><i class="fa-solid fa-file-lines" aria-hidden="true"></i></span>
         <div>
           <strong><?= Security::e(ReportBuilder::TYPES[$run['report_type']]['label'] ?? status_label($run['report_type'])) ?></strong>
-          <small><?= Security::e(strtoupper((string)$run['format'])) ?> by <?= Security::e($run['user_name']) ?> · <?= Security::e(time_ago($run['created_at'])) ?></small>
+          <small><?= Security::e(strtoupper((string)$run['format'])) ?> by <?= Security::e($run['user_name']) ?> Â· <?= Security::e(time_ago($run['created_at'])) ?></small>
         </div>
         <em><?= Security::e(format_number($run['row_count'])) ?></em>
       </div>

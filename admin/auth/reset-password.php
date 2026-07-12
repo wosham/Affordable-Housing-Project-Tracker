@@ -180,6 +180,6 @@ $resetToken = trim((string)($_GET['token'] ?? ''));
   </main>
 
   <script src="../../assets/js/global.js"></script>
-  <script src="../assets/js/reset-password.js"></script>
+  <script src="../assets/js/reset-password.js?v=20260614-reset-url"></script>
 </body>
 </html>

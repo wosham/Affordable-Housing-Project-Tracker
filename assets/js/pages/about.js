@@ -142,7 +142,7 @@
   }
 
   /* -------------------------------------------------------
-     5. HERO KPI COUNTERS (static values, just animate up)
+     5. HERO KPI COUNTERS
      ------------------------------------------------------- */
   function initHeroKPIs() {
     const kpis = document.querySelectorAll('.ab-kpi-val[data-count]');
@@ -287,8 +287,13 @@
   function initTicker() {
     const track = document.querySelector('.ticker-track');
     if (!track || track.children.length === 0) return;
-    const clone = track.innerHTML;
-    track.innerHTML += clone;
+    if (track.dataset.cloned === 'true') return;
+    Array.from(track.children).forEach((child) => {
+      const clone = child.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      track.appendChild(clone);
+    });
+    track.dataset.cloned = 'true';
   }
 
   /* -------------------------------------------------------

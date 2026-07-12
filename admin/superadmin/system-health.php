@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $snapshot = SystemHealth::snapshot(false);
 $recentSnapshots = SystemHealth::recentSnapshots(8);
@@ -16,7 +16,7 @@ $componentCss = ['system-health'];
 $pageScripts = ['system-health'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'System Health'],
 ];
 
@@ -55,7 +55,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php foreach ($snapshot['recommendations'] as $recommendation): ?>
     <article class="health-recommendation health-recommendation--<?= Security::e($recommendation['status']) ?>">
       <span><i class="fa-solid <?= $recommendation['status'] === 'critical' ? 'fa-circle-xmark' : 'fa-triangle-exclamation' ?>" aria-hidden="true"></i></span>
-      <div><strong><?= Security::e($recommendation['title']) ?></strong><small><?= Security::e(status_label($recommendation['group']) . ' · ' . $recommendation['message']) ?></small></div>
+      <div><strong><?= Security::e($recommendation['title']) ?></strong><small><?= Security::e(status_label($recommendation['group']) . ' Â· ' . $recommendation['message']) ?></small></div>
     </article>
 <?php endforeach; ?>
   </div>
@@ -76,7 +76,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <thead><tr><th>Directory</th><th>Status</th><th>Permissions</th><th>Files</th><th>Size</th><th>Modified</th></tr></thead>
       <tbody>
 <?php foreach (($checks['storage']['meta']['directories'] ?? []) as $dir): ?>
-        <tr><td><strong><?= Security::e($dir['label']) ?></strong><small><?= Security::e($dir['path']) ?></small></td><td><span class="badge <?= Security::e(health_badge($dir['status'])) ?>"><?= Security::e(status_label($dir['status'])) ?></span></td><td><?= $dir['exists'] ? ($dir['readable'] ? 'Readable' : 'Not readable') . ' · ' . ($dir['writable'] ? 'Writable' : 'Not writable') : 'Missing' ?></td><td><?= Security::e(format_number($dir['stats']['files'] ?? 0)) ?></td><td><?= Security::e(SystemHealth::formatBytes($dir['stats']['size'] ?? 0)) ?></td><td><?= Security::e(format_datetime($dir['stats']['modified_at'] ?? null)) ?></td></tr>
+        <tr><td><strong><?= Security::e($dir['label']) ?></strong><small><?= Security::e($dir['path']) ?></small></td><td><span class="badge <?= Security::e(health_badge($dir['status'])) ?>"><?= Security::e(status_label($dir['status'])) ?></span></td><td><?= $dir['exists'] ? ($dir['readable'] ? 'Readable' : 'Not readable') . ' Â· ' . ($dir['writable'] ? 'Writable' : 'Not writable') : 'Missing' ?></td><td><?= Security::e(format_number($dir['stats']['files'] ?? 0)) ?></td><td><?= Security::e(SystemHealth::formatBytes($dir['stats']['size'] ?? 0)) ?></td><td><?= Security::e(format_datetime($dir['stats']['modified_at'] ?? null)) ?></td></tr>
 <?php endforeach; ?>
       </tbody>
     </table>

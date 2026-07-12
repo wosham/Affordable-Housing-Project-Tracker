@@ -18,13 +18,15 @@ function consultant_quality_page(array $config): void
         'to' => trim((string)($_GET['to'] ?? '')),
     ];
     $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
-    $limit = 15;
+    $limit = 10;
     $offset = ($page - 1) * $limit;
     $projects = ConsultantQuality::projects($userId, $role);
     $summary = ConsultantQuality::summary($type, $userId, $role, $filters);
     $items = ConsultantQuality::items($type, $userId, $role, $filters, $limit, $offset);
     $total = ConsultantQuality::count($type, $userId, $role, $filters);
     $pages = max(1, (int)ceil($total / $limit));
+    $priorityItems = ConsultantQuality::priorityItems($type, $userId, $role, $filters, 8);
+    $baseUrl = (string)$config['url'];
     ?>
 
     <section class="quality-hero card">
@@ -39,9 +41,13 @@ function consultant_quality_page(array $config): void
       </div>
     </section>
 
-    <section class="quality-stats">
+    <section class="quality-stats" aria-label="<?= Security::e($config['heading']) ?> summary">
       <?php foreach ($config['stats'] as $stat): ?>
-        <?php consultant_quality_stat($stat['icon'], $summary[$stat['key']] ?? 0, $stat['label'], $stat['hint']); ?>
+        <?php
+          $statFilter = $stat['filter'] ?? [];
+          $statPath = consultant_quality_filter_url($baseUrl, $statFilter);
+          consultant_quality_stat($stat['icon'], $summary[$stat['key']] ?? 0, $stat['label'], $stat['hint'], $statPath);
+        ?>
       <?php endforeach; ?>
     </section>
 
@@ -55,7 +61,7 @@ function consultant_quality_page(array $config): void
           <span class="badge badge--info"><?= format_number($total) ?> records</span>
         </div>
 
-        <?php consultant_quality_filters($type, $filters, $projects, $config['url']); ?>
+        <?php consultant_quality_filters($type, $filters, $projects, $baseUrl); ?>
 
         <div class="table-wrap">
           <table class="data-table quality-table">
@@ -67,16 +73,18 @@ function consultant_quality_page(array $config): void
 
       <aside class="quality-card card">
         <h2><?= Security::e($config['side_title']) ?></h2>
-        <p><?= Security::e($config['side_hint']) ?></p>
+        <p><?= Security::e($config['side_hint']) ?> Portfolio-wide (not limited to this page).</p>
         <div class="quality-side-list">
-          <?php $sideItems = array_slice(array_filter($items, fn ($item): bool => (string)($item['consultant_review_status'] ?? 'pending') === 'pending' || (string)($item['consultant_review_status'] ?? '') === 'flagged'), 0, 7); ?>
-          <?php foreach ($sideItems as $item): ?>
-            <?php consultant_quality_side_item($type, $item); ?>
-          <?php endforeach; ?>
-          <?php if ($sideItems === []): ?>
-            <div class="quality-empty">No priority records in this view.</div>
-          <?php endif; ?>
+          <?php if ($priorityItems === []): ?>
+            <div class="empty-state empty-state--compact">
+              <strong class="empty-state__title">No priority records</strong>
+              <span class="empty-state__text">Pending or flagged items will appear here.</span>
+            </div>
+          <?php else: foreach ($priorityItems as $item): ?>
+            <?php consultant_quality_side_item($type, $item, $baseUrl); ?>
+          <?php endforeach; endif; ?>
         </div>
+        <a class="btn btn--outline btn--sm" href="<?= Security::e(consultant_quality_filter_url($baseUrl, ['review_status' => 'pending'])) ?>">View pending reviews</a>
       </aside>
     </section>
 
@@ -84,10 +92,17 @@ function consultant_quality_page(array $config): void
     <?php
 }
 
+function consultant_quality_filter_url(string $baseUrl, array $extra): string
+{
+    $query = array_filter(array_merge($_GET, $extra), static fn ($v) => $v !== '' && $v !== null && $v !== 0 && $v !== '0');
+    unset($query['page']);
+    return Url::to($baseUrl . ($query ? '?' . http_build_query($query) : ''));
+}
+
 function consultant_quality_filters(string $type, array $filters, array $projects, string $url): void
 {
     ?>
-    <form class="quality-filter-grid" method="get">
+    <form class="quality-filter-grid" method="get" action="<?= Security::e(Url::to($url)) ?>">
       <label>Search <input type="search" name="q" value="<?= Security::e($filters['q']) ?>" placeholder="Project, record or location..."></label>
       <label>Project
         <select name="project_id">
@@ -98,13 +113,16 @@ function consultant_quality_filters(string $type, array $filters, array $project
         </select>
       </label>
       <?php if ($type === 'quality_test'): ?>
-        <label>Result <select name="result"><option value="">All results</option><?php foreach (['pass','fail','pending'] as $value): ?><option value="<?= $value ?>" <?= $filters['result'] === $value ? 'selected' : '' ?>><?= Security::e(status_label($value)) ?></option><?php endforeach; ?></select></label>
+        <label>Result <select name="result"><option value="">All results</option><?php foreach (['pass', 'fail', 'pending'] as $value): ?><option value="<?= $value ?>" <?= $filters['result'] === $value ? 'selected' : '' ?>><?= Security::e(status_label($value)) ?></option><?php endforeach; ?></select></label>
       <?php elseif ($type === 'inspection'): ?>
         <label>Witness <select name="witness"><option value="">Any</option><option value="1" <?= $filters['witness'] === '1' ? 'selected' : '' ?>>Required</option><option value="0" <?= $filters['witness'] === '0' ? 'selected' : '' ?>>Not required</option></select></label>
       <?php else: ?>
         <label>Status <select name="status"><option value="">All statuses</option><?php foreach (ConsultantQuality::ISSUE_STATUSES as $value): ?><option value="<?= $value ?>" <?= $filters['status'] === $value ? 'selected' : '' ?>><?= Security::e(status_label($value)) ?></option><?php endforeach; ?></select></label>
+        <label>Severity <select name="severity"><option value="">Any</option><?php foreach (ConsultantQuality::SEVERITIES as $value): ?><option value="<?= $value ?>" <?= $filters['severity'] === $value ? 'selected' : '' ?>><?= Security::e(status_label($value)) ?></option><?php endforeach; ?></select></label>
       <?php endif; ?>
       <label>Review <select name="review_status"><option value="">All reviews</option><?php foreach (ConsultantQuality::REVIEW_STATUSES as $value): ?><option value="<?= $value ?>" <?= $filters['review_status'] === $value ? 'selected' : '' ?>><?= Security::e(status_label($value)) ?></option><?php endforeach; ?></select></label>
+      <label>From <input type="date" name="from" value="<?= Security::e($filters['from']) ?>"></label>
+      <label>To <input type="date" name="to" value="<?= Security::e($filters['to']) ?>"></label>
       <button class="btn btn--primary" type="submit"><i class="fa-solid fa-filter"></i> Filter</button>
       <a class="btn btn--outline" href="<?= Security::e(Url::to($url)) ?>">Reset</a>
     </form>
@@ -125,7 +143,7 @@ function consultant_quality_table(string $type, array $items): void
     }
     echo '</tr></thead><tbody>';
     if ($items === []) {
-        echo '<tr><td colspan="' . count($heads) . '"><div class="quality-empty">No records found.</div></td></tr>';
+        echo '<tr><td colspan="' . count($heads) . '"><div class="empty-state"><strong class="empty-state__title">No records found</strong><span class="empty-state__text">Adjust filters or wait for site records on your assigned projects.</span></div></td></tr>';
     }
     foreach ($items as $item) {
         consultant_quality_row($type, $item);
@@ -182,24 +200,46 @@ function consultant_quality_action(string $type, int $id, string $action, string
     echo '<button class="btn btn--sm btn--outline" type="button" aria-label="' . Security::e($label) . '" title="' . Security::e($label) . '" data-quality-action data-type="' . Security::e($type) . '" data-id="' . $id . '" data-action="' . Security::e($action) . '" data-title="' . Security::e($label . ' record') . '" data-item="' . Security::e($item) . '"><i class="fa-solid ' . Security::e($icon) . '"></i><span class="sr-only">' . Security::e($label) . '</span></button>';
 }
 
-function consultant_quality_side_item(string $type, array $item): void
+function consultant_quality_side_item(string $type, array $item, string $baseUrl): void
 {
-    echo '<div class="quality-side-item"><strong>' . Security::e(consultant_quality_item_label($type, $item)) . '</strong><span>' . Security::e(status_label((string)($item['consultant_review_status'] ?? 'pending'))) . '</span></div>';
+    $q = match ($type) {
+        'quality_test' => (string)($item['test_type'] ?? ''),
+        'inspection' => (string)($item['activity'] ?? ''),
+        'ncr' => 'NCR',
+        'defect' => (string)($item['location'] ?? 'Defect'),
+        default => '',
+    };
+    $href = consultant_quality_filter_url($baseUrl, [
+        'project_id' => (int)($item['project_id'] ?? 0),
+        'q' => $q,
+        'review_status' => (string)($item['consultant_review_status'] ?? 'pending'),
+    ]);
+    echo '<a class="quality-side-item quality-side-item--link" href="' . Security::e($href) . '"><strong>' . Security::e(consultant_quality_item_label($type, $item)) . '</strong><span>' . Security::e(status_label((string)($item['consultant_review_status'] ?? 'pending'))) . '</span></a>';
 }
 
-function consultant_quality_stat(string $icon, mixed $value, string $label, string $hint): void
+function consultant_quality_stat(string $icon, mixed $value, string $label, string $hint, string $path = ''): void
 {
-    echo '<article class="quality-stat card"><span class="quality-stat__icon"><i class="fa-solid ' . Security::e($icon) . '"></i></span><div><strong>' . Security::e((string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></article>';
+    $tag = $path !== '' ? 'a' : 'article';
+    $href = $path !== '' ? ' href="' . Security::e($path) . '"' : '';
+    echo '<' . $tag . ' class="quality-stat card"' . $href . '><span class="quality-stat__icon"><i class="fa-solid ' . Security::e($icon) . '"></i></span><div><strong>' . Security::e(is_numeric($value) ? format_number($value) : (string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></' . $tag . '>';
 }
 
 function consultant_quality_pagination(int $page, int $pages, int $total, int $limit): void
 {
+    if ($total <= 0) {
+        return;
+    }
+    $from = min($total, (($page - 1) * $limit) + 1);
+    $to = min($total, $page * $limit);
     $query = $_GET;
-    echo '<div class="pagination"><span>Showing ' . format_number($total === 0 ? 0 : (($page - 1) * $limit) + 1) . '-' . format_number(min($total, $page * $limit)) . ' of ' . format_number($total) . '</span><div>';
+    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number($to) . ' of ' . format_number($total) . '</span><div>';
     $query['page'] = max(1, $page - 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left"></i></a><span class="btn btn--sm btn--primary">' . $page . '</span>';
+    $prevDis = $page <= 1 ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $prevDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left"></i></a>';
+    echo '<span class="btn btn--sm btn--primary">' . $page . ' / ' . $pages . '</span>';
     $query['page'] = min($pages, $page + 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right"></i></a></div></div>';
+    $nextDis = $page >= $pages ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $nextDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right"></i></a></div></div>';
 }
 
 function consultant_quality_modal(): void
@@ -208,19 +248,28 @@ function consultant_quality_modal(): void
     <div class="quality-modal" data-quality-modal hidden>
       <div class="quality-modal__panel">
         <div class="quality-modal__head">
-          <div><strong data-modal-title>Review quality record</strong><span class="quality-secondary" data-modal-item></span></div>
-          <button class="btn btn--sm btn--ghost" type="button" data-modal-close><i class="fa-solid fa-xmark"></i></button>
+          <div>
+            <strong data-modal-title>Review quality record</strong>
+            <span class="quality-secondary" data-modal-item></span>
+          </div>
+          <button class="btn btn--sm btn--ghost" type="button" data-modal-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form>
           <input type="hidden" name="type"><input type="hidden" name="id"><input type="hidden" name="action">
           <div class="quality-modal__body">
-            <label>Severity <select name="severity"><?php foreach (ConsultantQuality::SEVERITIES as $severity): ?><option value="<?= Security::e($severity) ?>"><?= Security::e(status_label($severity)) ?></option><?php endforeach; ?></select></label>
-            <label><span><input type="checkbox" name="documents_checked" value="1"> Supporting documents checked</span></label>
-            <label class="span-2">Review note <textarea name="note" placeholder="Add a clear note for the project team."></textarea></label>
+            <label>Severity
+              <select name="severity">
+                <?php foreach (ConsultantQuality::SEVERITIES as $severity): ?>
+                  <option value="<?= Security::e($severity) ?>"><?= Security::e(status_label($severity)) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label class="quality-check"><span><input type="checkbox" name="documents_checked" value="1"> Supporting documents checked</span></label>
+            <label class="span-2">Review note <textarea name="note" rows="5" placeholder="Add a clear note for the project team."></textarea></label>
           </div>
           <div class="quality-modal__foot">
             <button class="btn btn--outline" type="button" data-modal-close>Cancel</button>
-            <button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Review</button>
+            <button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save review</button>
           </div>
         </form>
       </div>

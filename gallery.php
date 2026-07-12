@@ -24,6 +24,11 @@ function gallery_asset(mixed $path): string
         : Url::asset($path);
 }
 
+function gallery_placeholder(): string
+{
+    return Url::asset('uploads/gallery/maili-tatu-1.jpg');
+}
+
 function gallery_month_year(?string $date, mixed $year = null): string
 {
     $date = trim((string)$date);
@@ -38,23 +43,38 @@ function gallery_month_year(?string $date, mixed $year = null): string
 
 function gallery_item_image(array $item): string
 {
-    return gallery_asset($item['thumbnail_path'] ?: $item['thumbnail_url'] ?: $item['media_path'] ?: $item['media_url'] ?: '');
+    $image = gallery_asset($item['thumbnail_path'] ?: $item['thumbnail_url'] ?: $item['media_path'] ?: $item['media_url'] ?: '');
+    return $image !== '' ? $image : gallery_placeholder();
 }
 
 function gallery_video_url(array $item): string
 {
-    return trim((string)($item['video_url'] ?? '')) ?: gallery_asset($item['media_path'] ?: $item['media_url'] ?: '');
+    $url = trim((string)($item['video_url'] ?? ''));
+    if ($url !== '' && preg_match('#^https?://#i', $url)) {
+        return $url;
+    }
+    return gallery_asset($item['media_path'] ?: $item['media_url'] ?: '');
 }
 
-$categories = GalleryCategory::allOrdered();
-$photos = GalleryImage::publicItems(['media_type' => 'image']);
-$highlights = GalleryImage::publicItems(['highlight' => '1'], 8);
+$publicMinYear = (int)date('Y');
+$publicGalleryFilters = ['year_from' => $publicMinYear];
+
+$photos = GalleryImage::publicItems(['media_type' => 'image'] + $publicGalleryFilters, max(12, SystemConfig::int('public.gallery_initial_limit', 72)));
+$highlights = GalleryImage::publicItems(['highlight' => '1'] + $publicGalleryFilters, 8);
 if ($highlights === []) {
-    $highlights = GalleryImage::publicItems(['featured' => '1'], 8);
+    $highlights = GalleryImage::publicItems(['featured' => '1'] + $publicGalleryFilters, 8);
 }
-$videos = GalleryImage::publicItems(['media_type' => 'video'], 6);
-$years = GalleryImage::years();
-$siteSummary = GalleryImage::siteSummary();
+$videos = GalleryImage::publicItems(['media_type' => 'video'] + $publicGalleryFilters, 6);
+$years = GalleryImage::years(['status' => 'published', 'media_type' => 'image'] + $publicGalleryFilters);
+$siteSummary = GalleryImage::siteSummary($publicGalleryFilters);
+$availableCategorySlugs = array_values(array_unique(array_filter(array_map(
+    static fn (array $item): string => (string)($item['category_slug'] ?? ''),
+    $photos
+))));
+$categories = array_values(array_filter(
+    GalleryCategory::allOrdered(),
+    static fn (array $category): bool => in_array((string)($category['slug'] ?? ''), $availableCategorySlugs, true)
+));
 
 $photoCount = count($photos);
 $siteCount = count($siteSummary);
@@ -72,7 +92,13 @@ foreach ($siteSummary as $site) {
         'pct' => max(0, min(100, (int)($site['pct'] ?? 0))),
         'photos' => count($sitePhotos),
         'link' => !empty($sitePhotos[0]['constituency_slug']) ? 'constituency-detail.php?id=' . rawurlencode((string)$sitePhotos[0]['constituency_slug']) : 'constituencies.php',
-        'images' => array_values(array_filter(array_map('gallery_item_image', array_slice($sitePhotos, 0, 8)))),
+        'images' => array_values(array_filter(array_map(static function (array $item): array {
+            return [
+                'src' => gallery_item_image($item),
+                'title' => (string)($item['title'] ?? 'Site photo'),
+                'alt' => (string)($item['alt_text'] ?: $item['media_alt_text'] ?: $item['title'] ?: 'Site photo'),
+            ];
+        }, array_slice($sitePhotos, 0, 8)))),
     ];
 }
 
@@ -82,7 +108,7 @@ $pageKeywords = $cmsPage['seo_keywords'] ?? 'Trans-Nzoia affordable housing gall
 $pageAuthor = 'Trans-Nzoia County Government - Department of Land, Housing & Physical Planning';
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = $cmsPage['canonical_url'] ?? 'https://housing.transnzoia.go.ke/gallery.php';
+$canonicalUrl = trim((string)($cmsPage['canonical_url'] ?? '')) ?: Url::canonical('gallery.php');
 $pageStyles = ['assets/css/global.css', 'assets/css/pages/gallery.css'];
 $pageScripts = ['assets/js/global.js', 'assets/js/pages/gallery.js'];
 $headMeta = [
@@ -107,16 +133,11 @@ include __DIR__ . '/app/partials/head.php';
 
   <section class="gl-hero" aria-label="Gallery overview">
     <div class="gl-hero-bg" aria-hidden="true">
-      <img src="<?= $e(gallery_asset($heroImage)) ?>" alt="" loading="eager">
+      <img <?= public_image_attrs($heroImage, '', ['loading' => 'eager', 'fetchpriority' => 'high']) ?>>
       <div class="gl-hero-overlay"></div>
       <div class="gl-hero-grid" aria-hidden="true"></div>
     </div>
     <div class="container">
-      <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="index.php" class="breadcrumb-link">Home</a>
-        <span class="breadcrumb-sep" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
-        <span class="breadcrumb-current" aria-current="page"><?= $e($text($hero, 'breadcrumb_label', 'Photo Gallery')) ?></span>
-      </nav>
       <div class="gl-hero-body">
         <div class="gl-hero-eyebrow"><i class="fa-solid fa-images" aria-hidden="true"></i> <?= $e($text($hero, 'eyebrow', 'Visual Documentation - Sites, Events & Progress')) ?></div>
         <h1 class="gl-hero-title"><?= $e($text($hero, 'title', 'Programme in Pictures')) ?></h1>
@@ -158,7 +179,7 @@ include __DIR__ . '/app/partials/head.php';
 <?php foreach ($highlights as $index => $item): ?>
             <article class="gl-hl-slide" data-index="<?= $e($index) ?>">
               <div class="gl-hl-img-wrap">
-                <img src="<?= $e(gallery_item_image($item)) ?>" alt="<?= $e($item['alt_text'] ?: $item['media_alt_text'] ?: $item['title']) ?>" loading="lazy">
+                <img <?= public_image_attrs(gallery_item_image($item), $item['alt_text'] ?: $item['media_alt_text'] ?: $item['title']) ?>>
                 <span class="gl-hl-badge"><?= $e($item['category_name'] ?? 'Gallery') ?></span>
               </div>
               <div class="gl-hl-body">
@@ -212,11 +233,16 @@ include __DIR__ . '/app/partials/head.php';
 
       <div class="gl-photo-grid" id="photoGrid" role="list" aria-label="Photo gallery">
 <?php foreach ($photos as $item): ?>
-<?php $image = gallery_item_image($item); ?>
-        <button class="gl-photo-item" type="button" data-cat="<?= $e($item['category_slug'] ?? '') ?>" data-year="<?= $e($item['year'] ?? '') ?>" data-site="<?= $e($item['site_key'] ?? '') ?>" data-full-src="<?= $e($image) ?>" role="listitem" aria-label="Open photo: <?= $e($item['title']) ?>">
+<?php
+  $image = gallery_item_image($item);
+  $photoTitle = (string)($item['title'] ?? 'Gallery photo');
+  $photoAlt = (string)($item['alt_text'] ?: $item['media_alt_text'] ?: $photoTitle);
+  $photoCaption = (string)($item['caption'] ?: $photoTitle);
+?>
+        <button class="gl-photo-item" type="button" data-cat="<?= $e($item['category_slug'] ?? '') ?>" data-year="<?= $e($item['year'] ?? '') ?>" data-site="<?= $e($item['site_key'] ?? '') ?>" data-full-src="<?= $e($image) ?>" data-title="<?= $e($photoTitle) ?>" data-caption="<?= $e($photoCaption) ?>" role="listitem" aria-label="Open photo: <?= $e($photoTitle) ?>">
           <div class="gl-photo-wrap">
-            <img src="<?= $e($image) ?>" alt="<?= $e($item['alt_text'] ?: $item['media_alt_text'] ?: $item['title']) ?>" loading="lazy">
-            <div class="gl-photo-overlay" aria-hidden="true"><i class="fa-solid fa-expand"></i><span class="gl-photo-overlay-title"><?= $e($item['title']) ?></span></div>
+            <img <?= public_image_attrs($image, $photoAlt) ?>>
+            <div class="gl-photo-overlay" aria-hidden="true"><i class="fa-solid fa-expand"></i><span class="gl-photo-overlay-title"><?= $e($photoTitle) ?></span></div>
           </div>
           <div class="gl-photo-meta">
             <span class="gl-photo-badge gl-photo-badge--<?= $e($item['category_slug'] ?? 'gallery') ?>"><?= $e($item['category_name'] ?? 'Gallery') ?></span>
@@ -277,18 +303,22 @@ include __DIR__ . '/app/partials/head.php';
 <?php if ($videos): ?>
       <div class="gl-video-grid fade-up">
 <?php foreach ($videos as $video): ?>
-<?php $videoUrl = gallery_video_url($video); ?>
+<?php
+  $videoUrl = gallery_video_url($video);
+  $videoTitle = (string)($video['title'] ?? 'Progress video');
+  $videoAlt = (string)($video['alt_text'] ?: $video['media_alt_text'] ?: $videoTitle);
+?>
         <article class="gl-video-card">
           <div class="gl-video-thumb-wrap">
-            <img src="<?= $e(gallery_item_image($video)) ?>" alt="<?= $e($video['alt_text'] ?: $video['title']) ?>" loading="lazy">
+            <img <?= public_image_attrs(gallery_item_image($video), $videoAlt) ?>>
 <?php if ($videoUrl !== ''): ?>
-            <a class="gl-video-play-btn" href="<?= $e($videoUrl) ?>" target="_blank" rel="noopener noreferrer" aria-label="Play <?= $e($video['title']) ?>"><i class="fa-solid fa-play" aria-hidden="true"></i></a>
+            <a class="gl-video-play-btn" href="<?= $e($videoUrl) ?>" target="_blank" rel="noopener noreferrer" aria-label="Play <?= $e($videoTitle) ?>"><i class="fa-solid fa-play" aria-hidden="true"></i></a>
 <?php endif; ?>
 <?php if (!empty($video['duration'])): ?><span class="gl-video-duration"><?= $e($video['duration']) ?></span><?php endif; ?>
           </div>
           <div class="gl-video-body">
             <span class="gl-video-cat"><?= $e($video['category_name'] ?? 'Video') ?></span>
-            <h3 class="gl-video-title"><?= $e($video['title']) ?></h3>
+            <h3 class="gl-video-title"><?= $e($videoTitle) ?></h3>
             <span class="gl-video-date"><i class="fa-solid fa-calendar" aria-hidden="true"></i> <?= $e(gallery_month_year($video['taken_at'] ?? '', $video['year'] ?? '')) ?><?= !empty($video['location']) ? ' - ' . $e($video['location']) : '' ?></span>
           </div>
         </article>
@@ -320,7 +350,7 @@ include __DIR__ . '/app/partials/head.php';
 </div>
 
 <script>
-window.GALLERY_SITE_DATA = <?= json_encode($siteData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+window.GALLERY_SITE_DATA = <?= json_encode($siteData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>
 <?php include __DIR__ . '/app/partials/footer.php'; ?>
 <?php include __DIR__ . '/app/partials/back-to-top.php'; ?>

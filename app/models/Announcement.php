@@ -18,6 +18,8 @@ class Announcement extends Model
     public const STATUSES = ['draft', 'published', 'archived'];
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
     public const ROLES = ['superadmin', 'manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern'];
+    /** Stored in target_roles_json to mean every active staff role. */
+    public const AUDIENCE_ALL = 'all';
 
     public static function adminList(array $filters = [], int $limit = 20, int $offset = 0): array
     {
@@ -70,8 +72,11 @@ class Announcement extends Model
 
     public static function saveFromAdmin(array $input, ?int $id = null): int
     {
-        $roles = self::normalizeRoles($input['target_roles'] ?? []);
+        $audience = self::normalizeAudienceFromInput($input);
         $status = self::normalizeStatus((string)($input['status'] ?? 'draft'));
+        if ($status === 'published' && $audience === []) {
+            throw new RuntimeException('Choose “All staff” or at least one target role before publishing.');
+        }
         $publishedAt = self::normalizeDateTime((string)($input['published_at'] ?? ''));
         if ($status === 'published' && $publishedAt === null) {
             $publishedAt = date('Y-m-d H:i:s');
@@ -84,10 +89,13 @@ class Announcement extends Model
             'type' => self::normalizeType((string)($input['type'] ?? 'info')),
             'status' => $status,
             'priority' => self::normalizePriority((string)($input['priority'] ?? 'normal')),
-            'target_roles_json' => $roles === [] ? null : json_encode($roles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            // Always store explicit JSON: ["all"] or role list. Never silent null for published.
+            'target_roles_json' => $audience === []
+                ? json_encode([], JSON_UNESCAPED_SLASHES)
+                : json_encode($audience, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             'is_pinned' => !empty($input['is_pinned']) ? 1 : 0,
             'cta_label' => self::nullableText($input['cta_label'] ?? null),
-            'cta_url' => self::nullableText($input['cta_url'] ?? null),
+            'cta_url' => self::nullableUrl($input['cta_url'] ?? null),
             'published_at' => $publishedAt,
             'expires_at' => self::normalizeDateTime((string)($input['expires_at'] ?? '')),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -96,6 +104,9 @@ class Announcement extends Model
 
         if ($id !== null && $id > 0) {
             self::update($id, $payload);
+            if (!empty($input['notify_again'])) {
+                self::clearNotificationMarker($id);
+            }
             self::notifyTargetUsersIfNeeded($id);
             return $id;
         }
@@ -128,37 +139,224 @@ class Announcement extends Model
         Database::query('UPDATE announcements SET is_pinned = 1 - COALESCE(is_pinned, 0), updated_at = NOW() WHERE id = ?', [$id]);
     }
 
-    public static function activeForRole(?string $role, int $limit = 5): array
+    public static function activeForRole(?string $role, int $limit = 5, ?int $userId = null): array
     {
         $role = strtolower(trim((string)$role));
         $limit = max(1, $limit);
+        $bindings = [];
+        $audienceSql = '';
+
+        // Superadmin dashboard can see every published notice (management view).
+        // All other roles: only explicit "all" or their role token — never blank/null.
+        if ($role !== 'superadmin') {
+            $audienceSql = "
+               AND (
+                   JSON_CONTAINS(COALESCE(a.target_roles_json, '[]'), JSON_QUOTE(?))
+                   OR JSON_CONTAINS(COALESCE(a.target_roles_json, '[]'), JSON_QUOTE(?))
+               )";
+            $bindings[] = self::AUDIENCE_ALL;
+            $bindings[] = $role !== '' ? $role : '__none__';
+        }
+
+        $dismissSql = '';
+        if ($userId !== null && $userId > 0) {
+            self::ensureUserStateTable();
+            $dismissSql = '
+               AND NOT EXISTS (
+                   SELECT 1 FROM announcement_user_state aus
+                   WHERE aus.announcement_id = a.id
+                     AND aus.user_id = ?
+                     AND aus.dismissed_at IS NOT NULL
+               )';
+            $bindings[] = $userId;
+        }
 
         return Database::fetchAll(
             self::selectSql() . "
              WHERE a.status = 'published'
                AND (a.published_at IS NULL OR a.published_at <= NOW())
-               AND (a.expires_at IS NULL OR a.expires_at >= NOW())
-               AND (
-                   a.target_roles_json IS NULL
-                   OR a.target_roles_json = ''
-                   OR JSON_CONTAINS(a.target_roles_json, JSON_QUOTE(?))
-               )
+               AND (a.expires_at IS NULL OR a.expires_at >= NOW())" . $audienceSql . $dismissSql . "
              ORDER BY a.is_pinned DESC,
                       FIELD(a.priority, 'urgent', 'high', 'normal', 'low'),
                       COALESCE(a.published_at, a.created_at) DESC
              LIMIT " . $limit,
-            [$role]
+            $bindings
         );
+    }
+
+    /**
+     * Whether a stored audience JSON is visible to a portal role.
+     */
+    public static function audienceIncludesRole(?string $json, string $role): bool
+    {
+        $role = strtolower(trim($role));
+        if ($role === 'superadmin') {
+            return true;
+        }
+        $tokens = self::decodeAudience($json);
+        if ($tokens === []) {
+            return false;
+        }
+        return in_array(self::AUDIENCE_ALL, $tokens, true) || in_array($role, $tokens, true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function decodeAudience(?string $json): array
+    {
+        $decoded = json_decode((string)$json, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $out = [];
+        foreach ($decoded as $token) {
+            $token = strtolower(trim((string)$token));
+            if ($token === self::AUDIENCE_ALL || in_array($token, self::ROLES, true)) {
+                $out[] = $token;
+            }
+        }
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * Parse create/edit form into stored audience tokens.
+     *
+     * @return list<string> ["all"] or role slugs; empty only for incomplete drafts
+     */
+    public static function normalizeAudienceFromInput(array $input): array
+    {
+        $mode = strtolower(trim((string)($input['audience_mode'] ?? '')));
+        if ($mode === '' && !empty($input['target_all'])) {
+            $mode = 'all';
+        }
+        // Legacy: unchecked roles meant all — only honor if mode explicitly all.
+        if ($mode === 'all') {
+            return [self::AUDIENCE_ALL];
+        }
+
+        $roles = self::normalizeRoles($input['target_roles'] ?? []);
+        // If author checked every operational role, still store as explicit list (not forced to all).
+        return $roles;
+    }
+
+    public static function isAllAudience(?string $json): bool
+    {
+        return in_array(self::AUDIENCE_ALL, self::decodeAudience($json), true);
+    }
+
+    /** Active user count that would receive this audience. */
+    public static function audienceReachCount(?string $json): int
+    {
+        $tokens = self::decodeAudience($json);
+        if ($tokens === [] || in_array(self::AUDIENCE_ALL, $tokens, true)) {
+            if ($tokens === []) {
+                return 0;
+            }
+            $row = Database::fetch("SELECT COUNT(*) AS c FROM users WHERE status = 'active'");
+            return (int)($row['c'] ?? 0);
+        }
+        $roles = array_values(array_filter($tokens, static fn (string $t): bool => $t !== self::AUDIENCE_ALL));
+        if ($roles === []) {
+            return 0;
+        }
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $row = Database::fetch(
+            "SELECT COUNT(DISTINCT u.id) AS c
+             FROM users u
+             INNER JOIN roles r ON r.id = u.role_id
+             WHERE u.status = 'active' AND r.slug IN ({$placeholders})",
+            $roles
+        );
+        return (int)($row['c'] ?? 0);
+    }
+
+    public static function audienceModeFromJson(?string $json): string
+    {
+        return self::isAllAudience($json) ? 'all' : 'roles';
+    }
+
+
+    public static function markRead(int $announcementId, int $userId): void
+    {
+        if ($announcementId <= 0 || $userId <= 0) {
+            return;
+        }
+        self::ensureUserStateTable();
+        Database::query(
+            'INSERT INTO announcement_user_state (announcement_id, user_id, read_at)
+             VALUES (?, ?, NOW())
+             ON DUPLICATE KEY UPDATE
+                read_at = COALESCE(read_at, NOW()),
+                updated_at = NOW()',
+            [$announcementId, $userId]
+        );
+    }
+
+    public static function dismissForUser(int $announcementId, int $userId): bool
+    {
+        if ($announcementId <= 0 || $userId <= 0) {
+            return false;
+        }
+        self::ensureUserStateTable();
+
+        $announcement = self::find($announcementId);
+        if (!$announcement || (string)($announcement['status'] ?? '') !== 'published') {
+            return false;
+        }
+
+        Database::query(
+            'INSERT INTO announcement_user_state (announcement_id, user_id, read_at, dismissed_at)
+             VALUES (?, ?, NOW(), NOW())
+             ON DUPLICATE KEY UPDATE
+                read_at = COALESCE(read_at, NOW()),
+                dismissed_at = NOW(),
+                updated_at = NOW()',
+            [$announcementId, $userId]
+        );
+
+        return true;
+    }
+
+    public static function ensureUserStateTable(): void
+    {
+        static $ready = false;
+        if ($ready) {
+            return;
+        }
+
+        try {
+            Database::query(
+                'CREATE TABLE IF NOT EXISTS announcement_user_state (
+                    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    announcement_id INT UNSIGNED NOT NULL,
+                    user_id INT UNSIGNED NOT NULL,
+                    read_at DATETIME NULL,
+                    dismissed_at DATETIME NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY uq_announcement_user (announcement_id, user_id),
+                    KEY idx_aus_user_dismissed (user_id, dismissed_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } catch (Throwable) {
+            // Table may already exist with FKs; continue.
+        }
+
+        $ready = true;
     }
 
     public static function roleLabels(?string $json): array
     {
-        $roles = json_decode((string)$json, true);
-        if (!is_array($roles) || $roles === []) {
+        $tokens = self::decodeAudience($json);
+        if ($tokens === []) {
+            return ['No audience set'];
+        }
+        if (in_array(self::AUDIENCE_ALL, $tokens, true)) {
             return ['All staff'];
         }
 
-        return array_map(static fn ($role): string => role_label((string)$role), $roles);
+        return array_map(static fn (string $role): string => role_label($role), $tokens);
     }
 
     public static function typeLabel(string $type): string
@@ -197,8 +395,15 @@ class Announcement extends Model
         }
 
         if (($filters['role'] ?? '') !== '') {
-            $where[] = '(a.target_roles_json IS NULL OR a.target_roles_json = "" OR JSON_CONTAINS(a.target_roles_json, JSON_QUOTE(?)))';
-            $bindings[] = $filters['role'];
+            $role = strtolower(trim((string)$filters['role']));
+            if ($role === self::AUDIENCE_ALL) {
+                $where[] = 'JSON_CONTAINS(COALESCE(a.target_roles_json, \'[]\'), JSON_QUOTE(?))';
+                $bindings[] = self::AUDIENCE_ALL;
+            } else {
+                $where[] = '(JSON_CONTAINS(COALESCE(a.target_roles_json, \'[]\'), JSON_QUOTE(?)) OR JSON_CONTAINS(COALESCE(a.target_roles_json, \'[]\'), JSON_QUOTE(?)))';
+                $bindings[] = self::AUDIENCE_ALL;
+                $bindings[] = $role;
+            }
         }
 
         if (($filters['pinned'] ?? '') === '1') {
@@ -257,6 +462,30 @@ class Announcement extends Model
         return $value === '' ? null : $value;
     }
 
+    private static function nullableUrl(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('#^(?:https?://|mailto:|tel:)#i', $value) === 1 || preg_match('#^(?:/|admin/|api/|[a-z0-9][a-z0-9._/-]*\.php(?:[?#].*)?)#i', $value) === 1) {
+            return $value;
+        }
+
+        throw new RuntimeException('CTA URL must be a valid http, https, mailto, tel or internal portal path.');
+    }
+
+    private static function clearNotificationMarker(int $id): void
+    {
+        $announcement = self::findAdmin($id);
+        $metadata = json_decode((string)($announcement['metadata_json'] ?? ''), true);
+        $metadata = is_array($metadata) ? $metadata : [];
+        unset($metadata['notifications_sent_at'], $metadata['notifications_sent_count'], $metadata['notifications_target_roles']);
+        $metadata['notifications_reset_at'] = date('Y-m-d H:i:s');
+        self::storeMetadata($id, $metadata);
+    }
+
     private static function notifyTargetUsersIfNeeded(int $id): void
     {
         $announcement = self::findAdmin($id);
@@ -275,8 +504,8 @@ class Announcement extends Model
             return;
         }
 
-        $roles = self::normalizeRoles(json_decode((string)($announcement['target_roles_json'] ?? '[]'), true) ?: []);
-        $users = self::notificationUsers($roles);
+        $audience = self::decodeAudience($announcement['target_roles_json'] ?? '[]');
+        $users = self::notificationUsers($audience);
         if ($users === []) {
             $metadata['notifications_sent_at'] = date('Y-m-d H:i:s');
             $metadata['notifications_sent_count'] = 0;
@@ -299,19 +528,34 @@ class Announcement extends Model
 
         $metadata['notifications_sent_at'] = date('Y-m-d H:i:s');
         $metadata['notifications_sent_count'] = count($users);
-        $metadata['notifications_target_roles'] = $roles === [] ? ['all'] : $roles;
+        $metadata['notifications_target_roles'] = $audience === [] ? [] : $audience;
         self::storeMetadata($id, $metadata);
     }
 
-    private static function notificationUsers(array $roles): array
+    /**
+     * @param list<string> $audience tokens: all and/or role slugs
+     * @return list<array{id:int}>
+     */
+    private static function notificationUsers(array $audience): array
     {
-        if ($roles === []) {
+        if ($audience === []) {
+            return [];
+        }
+        if (in_array(self::AUDIENCE_ALL, $audience, true)) {
             return Database::fetchAll(
                 "SELECT u.id
                  FROM users u
                  WHERE u.status = 'active'
                  ORDER BY u.id ASC"
             );
+        }
+
+        $roles = array_values(array_filter(
+            $audience,
+            static fn (string $t): bool => $t !== self::AUDIENCE_ALL && in_array($t, self::ROLES, true)
+        ));
+        if ($roles === []) {
+            return [];
         }
 
         $placeholders = implode(',', array_fill(0, count($roles), '?'));

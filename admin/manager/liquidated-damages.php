@@ -1,7 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+require_once __DIR__ . '/../../app/partials/admin/manager-contract-helpers.php';
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -27,7 +28,7 @@ $summary = ManagerContractControl::ldSummary($userId, $role, $filters);
 $ipcs = !empty($filters['project_id']) ? ManagerContractControl::ipcsForProject($userId, $role, (int)$filters['project_id']) : [];
 
 $pageTitle = 'Liquidated Damages';
-$pageDescription = 'Track delay exposure, LD calculations and IPC application status across assigned contracts.';
+$pageDescription = 'Track delay exposure, LD calculations and IPC application for your assigned projects only.';
 $adminRole = 'manager';
 $csrfForm = 'manager_contract_controls';
 $contentClass = 'manager-contract-controls-page';
@@ -39,7 +40,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 ?>
 
 <section class="mcc-hero card">
-  <div><span class="sa-panel-label"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Contract controls</span><h2>Liquidated Damages</h2><p>Track delay exposure, LD calculations and IPC application status across assigned contracts.</p></div>
+  <div><span class="sa-panel-label"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Contract controls</span><h2>Liquidated Damages</h2><p>Track delay exposure, LD calculations and IPC application for your assigned projects only.</p></div>
   <div class="mcc-hero__actions"><a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/eot-requests.php')) ?>"><i class="fa-solid fa-clock-rotate-left"></i> EOT Requests</a><a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/subcontractors.php')) ?>"><i class="fa-solid fa-people-carry-box"></i> Subcontractors</a><button class="btn btn--primary" type="button" data-mcc-open="ld"><i class="fa-solid fa-plus"></i> New LD</button></div>
 </section>
 
@@ -65,9 +66,32 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </form>
   <div class="table-wrap"><table class="data-table mcc-table"><thead><tr><th>Project</th><th>Rate</th><th>Days</th><th>Total LD</th><th>IPC</th><th>Status</th><th>Manage</th></tr></thead><tbody>
 <?php if ($records === []): ?><tr><td colspan="7"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-scale-balanced"></i></span><strong class="empty-state__title">No LD records found</strong><span class="empty-state__text">Create an LD record or adjust filters.</span></div></td></tr><?php else: foreach ($records as $record): ?>
-    <tr><td><strong><?= Security::e($record['project_name']) ?></strong><small><?= Security::e($record['created_label']) ?></small></td><td class="is-num"><strong><?= Security::e(format_money($record['rate_per_day'])) ?></strong><small>per day</small></td><td class="is-num"><strong><?= Security::e(format_number($record['days_overdue'])) ?></strong></td><td class="is-num"><strong><?= Security::e(format_money($record['total_ld'])) ?></strong></td><td><strong><?= Security::e($record['ipc_label'] ?: '-') ?></strong></td><td><span class="mcc-pill mcc-pill--<?= Security::e($record['status']) ?>"><?= Security::e($record['status_label']) ?></span><small><?= Security::e(safe_truncate($record['notes'] ?: 'No notes', 70)) ?></small></td><td class="mcc-actions"><button class="btn btn--icon btn--primary" type="button" data-mcc-open="ld" data-record="<?= Security::e(json_encode($record, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP)) ?>"><i class="fa-solid fa-pen"></i></button><button class="btn btn--icon btn--outline" type="button" data-mcc-status data-endpoint="api/manager/liquidated-damage-status.php" data-id="<?= (int)$record['id'] ?>" data-status="applied"><i class="fa-solid fa-check"></i></button></td></tr>
+    <tr>
+      <td><strong><?= Security::e($record['project_name']) ?></strong><small><?= Security::e($record['created_label']) ?></small></td>
+      <td class="is-num"><strong><?= Security::e(format_money($record['rate_per_day'])) ?></strong><small>per day</small></td>
+      <td class="is-num"><strong><?= Security::e(format_number($record['days_overdue'])) ?></strong></td>
+      <td class="is-num"><strong><?= Security::e(format_money($record['total_ld'])) ?></strong></td>
+      <td><strong><?= Security::e($record['ipc_label'] ?: '-') ?></strong></td>
+      <td><span class="mcc-pill mcc-pill--<?= Security::e($record['status']) ?>"><?= Security::e($record['status_label']) ?></span><small><?= Security::e(safe_truncate($record['notes'] ?: 'No notes', 70)) ?></small></td>
+      <td class="mcc-actions manager-table-actions">
+        <button class="btn btn--icon btn--primary" type="button" data-mcc-open="ld"<?= mcc_data_attrs([
+            'id' => $record['id'],
+            'project_id' => $record['project_id'],
+            'status' => $record['status'] ?? 'draft',
+            'rate_per_day' => $record['rate_per_day'] ?? 0,
+            'days_overdue' => $record['days_overdue'] ?? 0,
+            'applied_to_ipc_id' => $record['applied_to_ipc_id'] ?? '',
+            'notes' => $record['notes'] ?? '',
+        ]) ?> title="Edit LD" aria-label="Edit LD"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+<?php if (($record['status'] ?? '') !== 'applied'): ?>
+        <button class="btn btn--icon btn--outline" type="button" data-mcc-status data-endpoint="api/manager/liquidated-damage-status.php" data-id="<?= (int)$record['id'] ?>" data-status="applied" title="Mark applied" aria-label="Mark applied"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
+<?php else: ?>
+        <button class="btn btn--icon btn--outline" type="button" data-mcc-status data-endpoint="api/manager/liquidated-damage-status.php" data-id="<?= (int)$record['id'] ?>" data-status="pending" title="Mark pending" aria-label="Mark pending"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+<?php endif; ?>
+      </td>
+    </tr>
 <?php endforeach; endif; ?></tbody></table></div>
-  <?php mcc_pagination($total, $offset, count($records), $page, $totalPages, $filters, 'admin/manager/liquidated-damages.php'); ?>
+  <?php mcc_pagination($total, $offset, count($records), $page, $totalPages, $filters, 'admin/manager/liquidated-damages.php', $perPage); ?>
 </section>
 
 <div class="mcc-modal" data-mcc-modal="ld" hidden><form class="mcc-modal__panel" data-mcc-form data-endpoint="api/manager/liquidated-damage-save.php"><div class="mcc-modal__header"><div><span class="sa-panel-label">LD record</span><h2 data-mcc-title>New LD</h2></div><button class="btn btn--icon btn--ghost" type="button" data-mcc-close><i class="fa-solid fa-xmark"></i></button></div><div class="mcc-modal__body"><input type="hidden" name="id" data-field="id"><section class="mcc-form-grid">
@@ -81,8 +105,3 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section><p class="mcc-form-status" data-mcc-status-text></p></div><div class="mcc-modal__footer"><button class="btn btn--outline" type="button" data-mcc-close>Cancel</button><button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save LD</button></div></form></div>
 
 <?php include __DIR__ . '/../../app/partials/admin/shell-end.php'; ?>
-<?php
-function mcc_default_project(array $projects, string $countKey): int { foreach ($projects as $project) { if ((int)($project[$countKey] ?? 0) > 0) return (int)$project['id']; } return $projects ? (int)$projects[0]['id'] : 0; }
-function mcc_stat(string $icon, mixed $value, string $label, string $trend): void { ?><article class="stat-widget"><span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(is_numeric($value) ? format_number((float)$value) : (string)$value) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span></article><?php }
-function mcc_project_strip(array $projects, array $filters, string $countKey, string $label, string $path): void { ?><section class="mcc-projects"><?php if ($projects === []): ?><article class="card mcc-project is-empty"><strong>No assigned projects</strong><span>Contract controls appear once projects are allocated.</span></article><?php else: foreach ($projects as $project): $query = array_filter(array_merge($filters, ['project_id' => (int)$project['id'], 'page' => 1]), static fn($v) => $v !== '' && $v !== null && $v !== 0); ?><a class="card mcc-project<?= (int)($filters['project_id'] ?? 0) === (int)$project['id'] ? ' is-active' : '' ?>" href="<?= Security::e(Url::to($path . '?' . http_build_query($query))) ?>"><span><strong><?= Security::e($project['name']) ?></strong><small><?= Security::e($project['constituency_name'] ?: status_label($project['status'] ?? 'active')) ?></small></span><em><?= Security::e(format_number($project[$countKey] ?? 0)) ?> <?= Security::e($label) ?></em></a><?php endforeach; endif; ?></section><?php }
-function mcc_pagination(int $total, int $offset, int $count, int $page, int $totalPages, array $filters, string $path): void { if ($totalPages <= 1) return; $from = $total > 0 ? $offset + 1 : 0; $to = min($offset + $count, $total); $prev = array_filter(array_merge($filters, ['page' => max(1, $page - 1)]), static fn($v) => $v !== '' && $v !== null && $v !== 0); $next = array_filter(array_merge($filters, ['page' => min($totalPages, $page + 1)]), static fn($v) => $v !== '' && $v !== null && $v !== 0); ?><nav class="pagination"><p class="pagination__info">Showing <?= Security::e(format_number($from)) ?>-<?= Security::e(format_number($to)) ?> of <?= Security::e(format_number($total)) ?> records</p><div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(Url::to($path . '?' . http_build_query($prev))) ?>"><i class="fa-solid fa-chevron-left"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(Url::to($path . '?' . http_build_query($next))) ?>"><i class="fa-solid fa-chevron-right"></i></a></div></nav><?php }

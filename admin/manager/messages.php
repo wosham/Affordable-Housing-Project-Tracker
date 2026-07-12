@@ -1,10 +1,10 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $pageTitle = 'Messages';
-$pageDescription = 'Project team conversations and direct messages.';
+$pageDescription = 'Project team conversations and direct messages for your assigned portfolio.';
 $adminRole = 'manager';
 $csrfForm = 'messages';
 $contentClass = 'messages-admin-page';

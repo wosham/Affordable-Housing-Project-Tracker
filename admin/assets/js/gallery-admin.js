@@ -19,8 +19,8 @@
     qsa('[data-gallery-media-field]').forEach(function (field) {
       var name = field.getAttribute('data-gallery-media-field');
       var show = type === 'image'
-        ? name === 'primary_image_id'
-        : name === 'video_media_id' || name === 'thumbnail_media_id';
+        ? name === 'primary_image_ids'
+        : name === 'video_media_ids' || name === 'thumbnail_media_id';
       field.hidden = !show;
     });
   }

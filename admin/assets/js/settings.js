@@ -24,6 +24,22 @@
     return input.value;
   }
 
+  function rememberValue(row) {
+    row.setAttribute('data-setting-original-value', inputValue(row));
+  }
+
+  function isDirty(row) {
+    return inputValue(row) !== (row.getAttribute('data-setting-original-value') || '');
+  }
+
+  function updateDirtyState(row) {
+    if (isDirty(row)) {
+      setState(row, 'Unsaved changes', null);
+    } else {
+      setState(row, '', null);
+    }
+  }
+
   function saveRow(row) {
     var key = row.getAttribute('data-setting-key') || '';
     var buttons = qsa('button', row);
@@ -35,6 +51,14 @@
       body: { key: key, value: inputValue(row) }
     }).then(function (data) {
       setState(row, data.message || 'Saved.', true);
+      var input = qs('[data-setting-input]', row);
+      if (input && input.hasAttribute('data-setting-sensitive')) {
+        input.value = '';
+        if (data.setting && data.setting.has_value) {
+          input.setAttribute('placeholder', 'Saved value is hidden. Leave blank to keep it.');
+        }
+      }
+      rememberValue(row);
       row.classList.toggle('is-custom', !!(data.setting && data.setting.is_custom));
       var badge = qs('[data-custom-badge]', row);
       if (badge) badge.hidden = !(data.setting && data.setting.is_custom);
@@ -61,6 +85,7 @@
           else input.value = data.setting.value || '';
         }
       }
+      rememberValue(row);
       row.classList.remove('is-custom');
       var badge = qs('[data-custom-badge]', row);
       if (badge) badge.hidden = true;
@@ -122,7 +147,11 @@
 
       var saveVisible = event.target.closest && event.target.closest('[data-settings-save-visible]');
       if (saveVisible) {
-        var rows = qsa('.settings-panel.is-active [data-setting-row]');
+        var rows = qsa('.settings-panel.is-active [data-setting-row]').filter(isDirty);
+        if (!rows.length) {
+          window.alert('No visible settings have unsaved changes.');
+          return;
+        }
         saveVisible.disabled = true;
         rows.reduce(function (promise, row) {
           return promise.then(function () { return saveRow(row); });
@@ -135,12 +164,13 @@
 
   function initDirtyStates() {
     qsa('[data-setting-row]').forEach(function (row) {
+      rememberValue(row);
       qsa('[data-setting-input]', row).forEach(function (input) {
         input.addEventListener('input', function () {
-          setState(row, 'Unsaved changes', null);
+          updateDirtyState(row);
         });
         input.addEventListener('change', function () {
-          setState(row, 'Unsaved changes', null);
+          updateDirtyState(row);
         });
       });
     });

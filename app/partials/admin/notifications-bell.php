@@ -7,7 +7,11 @@ if ($notificationUserId > 0) {
     try {
         $unreadCount = Notification::unreadCount($notificationUserId);
         $notifications = array_map([Notification::class, 'payload'], Notification::forUser($notificationUserId, 10));
-    } catch (Throwable) {
+    } catch (Throwable $exception) {
+        Logger::error('Notification bell preload failed', [
+            'user_id' => $notificationUserId,
+            'error' => $exception->getMessage(),
+        ]);
         $notifications = [];
         $unreadCount = 0;
     }

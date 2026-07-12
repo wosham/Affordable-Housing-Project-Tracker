@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_approvals';
 $activeTab = Security::cleanString((string)($_GET['tab'] ?? 'ipcs'));
@@ -172,7 +172,7 @@ function approval_status_options(string $tab): array
     return match ($tab) {
         'variations' => ['pending', 'approved', 'rejected'],
         'eots' => ['pending', 'granted', 'partially-granted', 'rejected'],
-        'history' => ['endorsed', 'certified', 'approved', 'rejected'],
+        'history' => ['endorsed', 'certified', 'approved', 'paid', 'rejected'],
         default => ['submitted', 'clerk-endorsed', 'certified', 'endorsed', 'approved', 'rejected', 'paid'],
     };
 }

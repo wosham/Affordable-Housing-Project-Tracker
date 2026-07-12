@@ -1,6 +1,6 @@
 (function () {
   const app = document.querySelector('[data-documents-app]');
-  if (!app) {
+  if (!app || !window.AHPTC) {
     return;
   }
 
@@ -9,12 +9,7 @@
   const title = modal ? modal.querySelector('[data-modal-title]') : null;
   const item = modal ? modal.querySelector('[data-modal-item]') : null;
   const note = modal ? modal.querySelector('textarea[name="note"]') : null;
-  const endpoint = app.dataset.endpoint || '';
-
-  function csrfToken() {
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') || '' : '';
-  }
+  const endpoint = app.dataset.endpoint || 'api/consultant/document-action.php';
 
   function openModal(button) {
     if (!modal || !form) {
@@ -45,6 +40,10 @@
   }
 
   function toast(message, isError) {
+    if (window.AHPTC && typeof window.AHPTC.toast === 'function') {
+      window.AHPTC.toast(message, isError ? 'error' : 'success');
+      return;
+    }
     const node = document.createElement('div');
     node.className = 'doc-toast' + (isError ? ' is-error' : '');
     node.textContent = message;
@@ -54,7 +53,19 @@
 
   async function submitAction(event) {
     event.preventDefault();
-    if (!form || !endpoint) {
+    if (!form) {
+      return;
+    }
+
+    const payload = {
+      type: form.type.value,
+      id: form.id.value,
+      action: form.action.value,
+      note: (form.note.value || '').trim(),
+    };
+    if (['return', 'flag', 'close'].includes(payload.action) && !payload.note) {
+      toast('Add a clear review note before saving.', true);
+      if (note) note.focus();
       return;
     }
 
@@ -66,25 +77,10 @@
     }
 
     try {
-      const payload = {
-        type: form.type.value,
-        id: form.id.value,
-        action: form.action.value,
-        note: form.note.value,
-      };
-      const response = await fetch(endpoint, {
+      const data = await window.AHPTC.request(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-CSRF-Token': csrfToken(),
-        },
-        body: JSON.stringify(payload),
+        body: payload,
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || 'Review could not be saved.');
-      }
       toast(data.message || 'Review saved.', false);
       closeModal();
       window.setTimeout(() => window.location.reload(), 650);

@@ -18,9 +18,11 @@
   }
 
   function apiUrl(path) {
-    var parts = window.location.pathname.split('/admin/');
-    var base = parts.length > 1 ? parts[0] : '';
-    return base.replace(/\/$/, '') + '/' + path.replace(/^\/+/, '');
+    var pathname = window.location.pathname.replace(/\/{2,}/g, '/');
+    var marker = '/admin/';
+    var index = pathname.indexOf(marker);
+    var base = index >= 0 ? pathname.slice(0, index) : '';
+    return (base.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '')).replace(/\/{2,}/g, '/');
   }
 
   function request(path, options) {

@@ -2,8 +2,13 @@
   'use strict';
 
   const panel = document.querySelector('[data-attendance-detail]');
-  const request = window.AHPTC && window.AHPTC.request ? window.AHPTC.request : null;
-  if (!panel || !request) return;
+  const api = window.AHPTC || null;
+  if (!api || typeof api.request !== 'function') {
+    console.error('AHPTC.request is required for attendance detail.');
+    return;
+  }
+  const request = api.request.bind(api);
+  if (!panel) return;
 
   function qs(selector, root) {
     return (root || document).querySelector(selector);

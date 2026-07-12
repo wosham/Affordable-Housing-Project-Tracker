@@ -32,8 +32,21 @@ $attachmentTokens = array_values(array_filter(array_map('strval', (array)($input
 if ($body === '') {
     Response::json(['success' => false, 'message' => 'Message body is required.'], 422);
 }
-if ($projectId > 0 && $role !== 'superadmin' && !ProjectAssignment::canManageProject($userId, $projectId, $role)) {
-    Response::json(['success' => false, 'message' => 'You cannot link messages to this project.'], 403);
+
+$projectContext = $projectId > 0 ? $projectId : null;
+if ($projectContext !== null) {
+    $canLinkProject = $role === 'superadmin'
+        || ProjectAssignment::canManageProject($userId, $projectContext, $role)
+        || ProjectAccess::canViewProject($userId, $role, $projectContext)
+        || $role === 'finance';
+    if (!$canLinkProject) {
+        Response::json(['success' => false, 'message' => 'You cannot link messages to this project.'], 403);
+    }
+}
+
+// Project channels require a project context.
+if ($type === 'project-channel' && $projectContext === null) {
+    Response::json(['success' => false, 'message' => 'Choose a project for a project-channel conversation.'], 422);
 }
 
 try {
@@ -49,13 +62,25 @@ try {
             $role,
             $recipients,
             $audienceTargets,
-            $projectId > 0 ? $projectId : null
+            $projectContext
         );
+
+        // Hard policy gate: every recipient must pass canMessageUser.
+        $recipients = array_values(array_filter(
+            $recipients,
+            static fn (int $rid): bool => MessageThread::canMessageUser($userId, $role, $rid, $projectContext)
+        ));
+
         if ($recipients === []) {
-            throw new RuntimeException('Choose at least one allowed active recipient, role group or project team.');
+            throw new RuntimeException('Choose at least one allowed recipient. Staff outside your projects cannot be messaged.');
         }
 
-        $threadId = MessageThread::createThread($subject, $type, $userId, $projectId > 0 ? $projectId : null, $priority);
+        // Mass-broadcast soft limit for non-directors.
+        if ($role !== 'superadmin' && count($recipients) > 40) {
+            throw new RuntimeException('Too many recipients for your role. Use a project team or split the message.');
+        }
+
+        $threadId = MessageThread::createThread($subject, $type, $userId, $projectContext, $priority);
         MessageParticipant::add($threadId, $userId, $role, true);
         foreach ($recipients as $recipientId) {
             $recipient = User::findDetailed($recipientId) ?: [];

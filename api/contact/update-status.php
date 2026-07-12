@@ -4,7 +4,7 @@ require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
 ApiMiddleware::handle([
     'methods' => ['POST'],
-    'roles' => ['superadmin'],
+    'roles' => ['superadmin', 'manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern'],
     'csrf_form' => 'contact_inbox',
 ]);
 
@@ -28,9 +28,15 @@ if (!$message) {
 }
 
 $userId = (int)Auth::id();
+$role = (string)(Auth::role() ?: '');
+if (!ContactSubmission::canAccess($message, $userId, $role)) {
+    Response::json(['success' => false, 'message' => 'This contact message is not assigned to you.'], 403);
+}
+
 $status = match ($action) {
     'read' => 'read',
     'unread' => 'new',
+    'in_progress' => 'in_progress',
     'replied' => 'replied',
     'archive' => 'archived',
     'restore' => 'read',
@@ -47,6 +53,8 @@ try {
         ContactSubmission::markUnread($id, $userId);
     } elseif ($action === 'read') {
         ContactSubmission::markRead($id, $userId);
+    } elseif ($action === 'in_progress') {
+        ContactSubmission::updateStatus($id, 'in_progress', $userId);
     } elseif ($action === 'replied') {
         ContactSubmission::recordResponse($id, $responseNote, $userId);
     } else {

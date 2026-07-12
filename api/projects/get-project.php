@@ -2,6 +2,12 @@
 
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
+ApiMiddleware::handle([
+    'methods' => ['GET'],
+    'roles' => ['superadmin'],
+    'csrf' => false,
+]);
+
 $id = Security::cleanString((string)($_GET['id'] ?? ''));
 $slug = Security::cleanString((string)($_GET['slug'] ?? $_GET['project'] ?? ''));
 $lookup = $id !== '' ? $id : $slug;

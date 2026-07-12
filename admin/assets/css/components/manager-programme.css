@@ -3,6 +3,30 @@
   gap: 1rem;
 }
 
+/* Programme uses global .modal — needs .is-open + overlay (see gantt.js) */
+.modal.is-open[data-programme-modal] {
+  z-index: 1200;
+  background: var(--admin-overlay, rgba(15, 23, 42, .45));
+}
+
+.modal.is-open[data-programme-modal] .modal__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal.is-open[data-programme-modal] .modal__dialog,
+.modal.is-open[data-programme-modal] .programme-modal {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: var(--admin-surface, #fff);
+}
+
 .manager-programme-page .programme-hero,
 .manager-programme-page .programme-project-strip,
 .manager-programme-page .programme-board,

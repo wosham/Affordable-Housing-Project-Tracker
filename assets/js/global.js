@@ -47,6 +47,78 @@
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
+  function getMeta(name, fallback = '') {
+    const meta = document.querySelector(`meta[name="${name}"]`);
+    return meta ? meta.getAttribute('content') || fallback : fallback;
+  }
+
+  function appBaseUrl() {
+    return (getMeta('app-base-url', '') || '').replace(/\/$/, '');
+  }
+
+  function toUrl(path = '') {
+    if (/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(path) || /^[a-z][a-z0-9+.-]*:/i.test(path)) {
+      return path;
+    }
+    const cleanPath = String(path).replace(/^\/+/, '');
+    const base = appBaseUrl();
+    return base ? `${base}/${cleanPath}` : cleanPath;
+  }
+
+  function ensureToastHost() {
+    let host = document.querySelector('[data-toast-host]');
+    if (!host) {
+      host = document.createElement('div');
+      host.className = 'toast-host';
+      host.setAttribute('data-toast-host', '');
+      host.setAttribute('aria-live', 'polite');
+      host.setAttribute('aria-atomic', 'true');
+      document.body.appendChild(host);
+    }
+    return host;
+  }
+
+  function toast(message, type = 'info', timeout = 4200) {
+    const host = ensureToastHost();
+    const item = document.createElement('div');
+    item.className = `toast toast--${type}`;
+    item.innerHTML = `<span>${message}</span><button type="button" aria-label="Dismiss message">&times;</button>`;
+    host.appendChild(item);
+    requestAnimationFrame(() => item.classList.add('is-visible'));
+    const remove = () => {
+      item.classList.remove('is-visible');
+      setTimeout(() => item.remove(), 180);
+    };
+    item.querySelector('button').addEventListener('click', remove);
+    if (timeout > 0) setTimeout(remove, timeout);
+  }
+
+  async function request(path, options = {}) {
+    const headers = new Headers(options.headers || {});
+    headers.set('Accept', 'application/json');
+    if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    const response = await fetch(toUrl(path), {
+      credentials: 'same-origin',
+      ...options,
+      headers,
+    });
+
+    const contentType = response.headers.get('content-type') || '';
+    const payload = contentType.includes('application/json') ? await response.json() : await response.text();
+
+    if (!response.ok) {
+      const message = typeof payload === 'object' && payload !== null
+        ? payload.message || payload.error || 'Request failed.'
+        : 'Request failed.';
+      throw Object.assign(new Error(message), { response, payload });
+    }
+
+    return payload;
+  }
+
   /* ========================================================
      1. Custom Cursor â€” dot follows instantly, ring lerps behind
      ======================================================== */
@@ -55,6 +127,7 @@
     const ring = document.getElementById('cursorRing');
     if (!dot || !ring) return;
     if (!window.matchMedia('(hover: hover)').matches) return;
+    if (prefersReducedMotion()) return;
 
     let mouseX = 0, mouseY = 0;
     let ringX  = 0, ringY  = 0;
@@ -88,18 +161,20 @@
      ======================================================== */
   function initMobileNav() {
     const toggle = document.querySelector('.navbar-toggle');
-    const mobileMenu = document.querySelector('.navbar-mobile');
-    const backdrop = document.querySelector('.navbar-mobile-backdrop');
+    const mobileMenu = document.getElementById('mobile-menu') || document.querySelector('.navbar-mobile');
+    const backdrop = document.getElementById('mob-backdrop') || document.querySelector('.navbar-mobile-backdrop');
     if (!toggle || !mobileMenu) return;
+    let lastFocus = null;
 
     function openMenu() {
+      lastFocus = document.activeElement;
       toggle.classList.add('is-open');
       toggle.setAttribute('aria-expanded', 'true');
       mobileMenu.classList.add('is-open');
       mobileMenu.setAttribute('aria-hidden', 'false');
+      mobileMenu.removeAttribute('inert');
       if (backdrop) backdrop.classList.add('is-visible');
       document.body.style.overflow = 'hidden';
-      // Focus first link for accessibility
       const firstLink = mobileMenu.querySelector('a, button');
       if (firstLink) firstLink.focus();
     }
@@ -109,10 +184,13 @@
       toggle.setAttribute('aria-expanded', 'false');
       mobileMenu.classList.remove('is-open');
       mobileMenu.setAttribute('aria-hidden', 'true');
+      mobileMenu.setAttribute('inert', '');
       if (backdrop) backdrop.classList.remove('is-visible');
       document.body.style.overflow = '';
-      toggle.focus();
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
     }
+
+    mobileMenu.setAttribute('inert', '');
 
     toggle.addEventListener('click', () => {
       if (mobileMenu.classList.contains('is-open')) {
@@ -134,6 +212,20 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && mobileMenu.classList.contains('is-open')) {
         closeMenu();
+      }
+      if (e.key === 'Tab' && mobileMenu.classList.contains('is-open')) {
+        const focusable = Array.from(mobileMenu.querySelectorAll('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+          .filter((el) => !el.hasAttribute('disabled'));
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     });
 
@@ -271,6 +363,17 @@
         top: 0,
         behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       });
+    });
+  }
+
+  function initTicker() {
+    const track = document.getElementById('tickerTrack');
+    if (!track) return;
+    ['mouseenter', 'focusin'].forEach((eventName) => {
+      track.addEventListener(eventName, () => track.classList.add('is-paused'));
+    });
+    ['mouseleave', 'focusout'].forEach((eventName) => {
+      track.addEventListener(eventName, () => track.classList.remove('is-paused'));
     });
   }
 
@@ -416,6 +519,10 @@
 
   /* Expose for page scripts */
   window.TNAH = window.TNAH || {};
+  window.TNAH.config = {
+    baseUrl: appBaseUrl(),
+    env: getMeta('app-env', 'local'),
+  };
   window.TNAH.utils = {
     debounce,
     throttle,
@@ -423,6 +530,9 @@
     formatDate,
     prefersReducedMotion,
     animateCounter,
+    toUrl,
+    request,
+    toast,
   };
 
   /* ========================================================
@@ -435,6 +545,7 @@
     highlightActiveNav();
     initSmoothScroll();
     initBackToTop();
+    initTicker();
     initScrollReveal();
     initDropdowns();
     initSearchToggle();

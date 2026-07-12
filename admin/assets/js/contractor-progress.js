@@ -1,18 +1,18 @@
 (function () {
   const page = document.querySelector('[data-progress-page]');
   const form = document.querySelector('[data-progress-form]');
-  if (!page || !form) {
+  if (!page || !form || !window.AHPTC) {
     return;
   }
 
-  const endpoint = page.dataset.endpoint || '';
+  const endpoint = page.dataset.endpoint || 'api/projects/update-progress.php';
   const mediaListEndpoint = page.dataset.mediaListEndpoint || 'api/media/list.php';
   const mediaUploadEndpoint = page.dataset.mediaUploadEndpoint || 'api/media/upload.php';
+  const myProjectUrl = page.dataset.myProjectUrl || 'admin/contractor/my-project.php';
   const number = form.querySelector('[data-progress-number]');
   const range = form.querySelector('[data-progress-range]');
   const photo = form.querySelector('[data-progress-photo]');
   const uploadLabel = form.querySelector('[data-upload-label]');
-  const uploadBox = form.querySelector('[data-upload-box]');
   const evidencePicker = form.querySelector('[data-evidence-picker]');
   const evidenceModal = document.querySelector('[data-evidence-modal]');
   const evidenceGrid = document.querySelector('[data-evidence-grid]');
@@ -27,19 +27,22 @@
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
   const maxBytes = 10 * 1024 * 1024;
 
-  function csrfToken() {
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') || '' : '';
+  function toast(message, type) {
+    if (window.AHPTC && typeof window.AHPTC.toast === 'function') {
+      window.AHPTC.toast(message, type || 'success');
+      return;
+    }
+    const node = document.createElement('div');
+    node.className = 'contractor-toast' + (type === 'error' ? ' is-error' : '');
+    node.textContent = message;
+    document.body.appendChild(node);
+    window.setTimeout(() => node.remove(), 3600);
   }
 
   function setProgress(value, source) {
     value = Math.max(0, Math.min(100, parseInt(value || '0', 10) || 0));
-    if (number && source !== number) {
-      number.value = value;
-    }
-    if (range && source !== range) {
-      range.value = value;
-    }
+    if (number && source !== number) number.value = value;
+    if (range && source !== range) range.value = value;
     if (warning) {
       const delta = value - original;
       if (delta < 0) {
@@ -53,14 +56,6 @@
         warning.textContent = '';
       }
     }
-  }
-
-  function toast(message, isError) {
-    const node = document.createElement('div');
-    node.className = 'contractor-toast' + (isError ? ' is-error' : '');
-    node.textContent = message;
-    document.body.appendChild(node);
-    window.setTimeout(() => node.remove(), 3600);
   }
 
   function escapeHtml(value) {
@@ -118,11 +113,7 @@
     evidenceGrid.innerHTML = '<div class="empty-state empty-state--compact" style="grid-column:1/-1"><strong class="empty-state__title">Loading media...</strong></div>';
     setEvidenceStatus('Loading your site evidence...');
     try {
-      const response = await fetch(mediaListEndpoint + '?' + params.toString(), { headers: { 'Accept': 'application/json' } });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || 'Could not load media.');
-      }
+      const data = await window.AHPTC.request(mediaListEndpoint + '?' + params.toString(), { method: 'GET' });
       renderEvidence(data.media || []);
       setEvidenceStatus(((data.pagination && data.pagination.total) || 0) + ' site evidence file(s)');
     } catch (error) {
@@ -147,28 +138,21 @@
   async function uploadEvidence(file) {
     if (!file) return;
     const body = new FormData();
-    body.append('csrf_form', 'contractor_progress');
+    body.append('csrf_form', (window.AHPTC.csrfForm && window.AHPTC.csrfForm()) || 'contractor_progress');
     body.append('folder', 'site-photos');
     body.append('title', file.name.replace(/\.[^.]+$/, ''));
     body.append('alt_text', file.name.replace(/\.[^.]+$/, ''));
     body.append('file', file);
     setEvidenceStatus('Uploading evidence...');
     try {
-      const response = await fetch(mediaUploadEndpoint, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-CSRF-Token': csrfToken() },
-        body
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || 'Upload failed.');
-      }
+      const data = await window.AHPTC.request(mediaUploadEndpoint, { method: 'POST', body: body });
       setSelectedEvidence(data.media || null);
-      toast(data.message || 'Evidence uploaded.', false);
+      if (photo) photo.value = '';
+      toast(data.message || 'Evidence uploaded.', 'success');
       closeEvidenceModal();
       loadEvidence();
     } catch (error) {
-      toast(error.message || 'Evidence upload failed.', true);
+      toast(error.message || 'Evidence upload failed.', 'error');
       setEvidenceStatus(error.message || 'Upload failed.');
     }
   }
@@ -176,56 +160,30 @@
   const projectJump = form.querySelector('[data-project-jump]');
   if (projectJump) {
     projectJump.addEventListener('change', function () {
-      if (projectJump.value) {
-        window.location.href = projectJump.value;
-      }
+      if (projectJump.value) window.location.href = projectJump.value;
     });
   }
 
-  if (number) {
-    number.addEventListener('input', function () {
-      setProgress(number.value, number);
-    });
-  }
-  if (range) {
-    range.addEventListener('input', function () {
-      setProgress(range.value, range);
-    });
-  }
+  if (number) number.addEventListener('input', function () { setProgress(number.value, number); });
+  if (range) range.addEventListener('input', function () { setProgress(range.value, range); });
+
   if (photo && uploadLabel) {
     photo.addEventListener('change', function () {
       const file = photo.files && photo.files[0] ? photo.files[0] : null;
       if (!file) {
-        uploadLabel.textContent = 'Upload JPG, PNG or WebP evidence up to the configured limit.';
-        if (uploadBox) uploadBox.classList.remove('has-file');
+        uploadLabel.textContent = 'JPG, PNG or WebP evidence up to the configured limit.';
         return;
       }
       if (!allowedTypes.includes(file.type)) {
         photo.value = '';
-        uploadLabel.textContent = 'Upload JPG, PNG or WebP evidence up to the configured limit.';
-        if (uploadBox) uploadBox.classList.remove('has-file');
-        toast('Use a JPG, PNG or WebP site photo.', true);
+        toast('Use a JPG, PNG or WebP site photo.', 'error');
         return;
       }
       if (file.size > maxBytes) {
         photo.value = '';
-        uploadLabel.textContent = 'Upload JPG, PNG or WebP evidence up to the configured limit.';
-        if (uploadBox) uploadBox.classList.remove('has-file');
-        toast('Site photo must be 10MB or less.', true);
+        toast('Site photo must be 10MB or less.', 'error');
         return;
       }
-      uploadLabel.textContent = file.name;
-      if (uploadBox) uploadBox.classList.add('has-file');
-      if (mediaIdInput) mediaIdInput.value = '';
-      if (preview && previewImage && previewTitle) {
-        preview.hidden = false;
-        previewTitle.textContent = file.name;
-        previewImage.alt = file.name;
-        const reader = new FileReader();
-        reader.onload = function () { previewImage.src = reader.result; };
-        reader.readAsDataURL(file);
-      }
-      if (evidencePicker) evidencePicker.classList.add('has-file');
       uploadEvidence(file);
     });
   }
@@ -233,17 +191,12 @@
   document.querySelectorAll('[data-evidence-library-open]').forEach(function (button) {
     button.addEventListener('click', openEvidenceModal);
   });
-
   document.querySelectorAll('[data-evidence-upload-trigger], [data-evidence-modal-upload]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      if (photo) photo.click();
-    });
+    button.addEventListener('click', function () { if (photo) photo.click(); });
   });
-
   document.querySelectorAll('[data-evidence-modal-close]').forEach(function (button) {
     button.addEventListener('click', closeEvidenceModal);
   });
-
   document.querySelectorAll('[data-evidence-clear]').forEach(function (button) {
     button.addEventListener('click', function () {
       if (photo) photo.value = '';
@@ -260,7 +213,7 @@
           setSelectedEvidence(JSON.parse(card.getAttribute('data-evidence-payload') || '{}'));
           closeEvidenceModal();
         } catch (error) {
-          toast('Selected evidence could not be read.', true);
+          toast('Selected evidence could not be read.', 'error');
         }
       }
     });
@@ -274,21 +227,19 @@
     });
   }
 
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && evidenceModal && !evidenceModal.hidden) closeEvidenceModal();
+  });
+
   form.addEventListener('reset', function () {
     window.setTimeout(function () {
       setProgress(original, null);
-      if (uploadLabel) uploadLabel.textContent = 'Upload JPG, PNG or WebP evidence up to the configured limit.';
-      if (uploadBox) uploadBox.classList.remove('has-file');
       setSelectedEvidence(null);
     }, 0);
   });
 
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
-    if (!endpoint) {
-      return;
-    }
-
     const submit = form.querySelector('button[type="submit"]');
     const oldText = submit ? submit.innerHTML : '';
     if (submit) {
@@ -312,24 +263,20 @@
       if (Math.abs(value - original) >= 20 && workSummary.length < 40) {
         throw new Error('For a large progress change, add a fuller work summary.');
       }
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'X-CSRF-Token': csrfToken(),
-        },
-        body,
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || 'Progress update could not be submitted.');
+      // Prefer media library id once uploaded; avoid double-sending file
+      if (selectedMediaId && file) {
+        body.delete('progress_photo');
       }
-      toast(data.message || 'Progress update submitted.', false);
+      const data = await window.AHPTC.request(endpoint, { method: 'POST', body: body });
+      toast(data.message || 'Progress update submitted.', 'success');
+      const projectId = body.get('project_id') || '';
+      const sep = String(myProjectUrl).indexOf('?') >= 0 ? '&' : '?';
+      const target = myProjectUrl + sep + 'project_id=' + encodeURIComponent(projectId);
       window.setTimeout(function () {
-        window.location.href = 'my-project.php?project_id=' + encodeURIComponent(body.get('project_id') || '');
+        window.location.href = target;
       }, 800);
     } catch (error) {
-      toast(error.message || 'Progress update could not be submitted.', true);
+      toast(error.message || 'Progress update could not be submitted.', 'error');
     } finally {
       if (submit) {
         submit.disabled = false;

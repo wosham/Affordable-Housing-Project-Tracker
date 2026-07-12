@@ -11,6 +11,14 @@
     return String(value || '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
   }
 
+  function appPath(path) {
+    const base = (window.AHPTC && typeof window.AHPTC.baseUrl === 'function')
+      ? String(window.AHPTC.baseUrl() || '').replace(/\/$/, '')
+      : '';
+    const clean = String(path || '').replace(/^\/+/, '');
+    return base ? (base + '/' + clean) : ('/' + clean);
+  }
+
   function openDrawer() {
     drawer.hidden = false;
   }
@@ -84,6 +92,17 @@
           <div class="form-actions"><button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Note</button></div>
         </form>
       </section>
+
+      <section class="manager-project-section manager-project-section--links">
+        <h3>Open in modules</h3>
+        <div class="manager-project-deep-links">
+          <a class="btn btn--outline btn--sm" href="${escapeHtml(appPath('admin/manager/milestones.php?project_id=' + project.id))}"><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Milestones</a>
+          <a class="btn btn--outline btn--sm" href="${escapeHtml(appPath('admin/manager/programme-of-works.php?project_id=' + project.id))}"><i class="fa-solid fa-chart-gantt" aria-hidden="true"></i> Programme</a>
+          <a class="btn btn--outline btn--sm" href="${escapeHtml(appPath('admin/manager/boq.php?project_id=' + project.id))}"><i class="fa-solid fa-list-check" aria-hidden="true"></i> BOQ</a>
+          <a class="btn btn--outline btn--sm" href="${escapeHtml(appPath('admin/manager/ipc-queue.php?project_id=' + project.id))}"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> IPC Queue</a>
+          <a class="btn btn--outline btn--sm" href="${escapeHtml(appPath('admin/manager/assignments.php?project_id=' + project.id))}"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Assignments</a>
+        </div>
+      </section>
     `;
   }
 
@@ -119,7 +138,13 @@
     button.disabled = true;
     const payload = Object.fromEntries(new FormData(form).entries());
     try {
-      const data = await request('api/manager/project-note.php', { method: 'POST', body: payload });
+      const data = await request('api/manager/project-note.php', {
+        method: 'POST',
+        body: payload,
+        headers: {
+          'X-CSRF-Form': (window.AHPTC && window.AHPTC.csrfForm && window.AHPTC.csrfForm()) || 'manager_projects'
+        }
+      });
       if (!data.success) throw new Error(data.message || 'Note could not be saved.');
       loadDetail(payload.project_id);
     } catch (error) {
@@ -127,4 +152,15 @@
       button.disabled = false;
     }
   });
+
+  // Deep-link: open drawer from ?open= or ?project_id=
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    const openId = params.get('open') || params.get('project_id');
+    if (openId && /^\d+$/.test(openId)) {
+      loadDetail(openId);
+    }
+  } catch (error) {
+    // ignore bad query strings
+  }
 })();

@@ -8,13 +8,16 @@
     if (quillReady) return quillReady;
 
     quillReady = new Promise(function (resolve) {
+      var baseMeta = document.querySelector('meta[name="app-base-url"]');
+      var base = baseMeta ? String(baseMeta.getAttribute('content') || '').replace(/\/$/, '') : '';
+
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = 'https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css';
+      link.href = base + '/admin/assets/vendor/quill/quill.snow.css';
       document.head.appendChild(link);
 
       var script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js';
+      script.src = base + '/admin/assets/vendor/quill/quill.js';
       script.onload = resolve;
       script.onerror = resolve;
       document.head.appendChild(script);

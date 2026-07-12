@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -14,7 +14,7 @@ $filters = array_filter([
     'coverage' => Security::cleanString((string)($_GET['coverage'] ?? '')),
 ], static fn ($value): bool => $value !== '' && $value !== 0 && $value !== null);
 
-$perPage = 12;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $total = ManagerProject::count($userId, $role, $filters);
 $totalPages = max(1, (int)ceil($total / $perPage));
@@ -46,7 +46,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-building" aria-hidden="true"></i> Assigned portfolio</span>
     <h2>Project monitoring</h2>
-    <p>Track assigned sites, delivery risk, team coverage, IPC signals and programme movement.</p>
+    <p>Track only projects assigned to you, including delivery risk, team coverage, IPC signals and programme movement.</p>
   </div>
   <div class="manager-projects-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/assignments.php')) ?>"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Assignments</a>
@@ -70,7 +70,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div class="card__header">
     <div>
       <h2 class="card__title">Assigned Projects</h2>
-      <p class="card__subtitle">Filter by status, risk, team coverage and progress, then open a project for details.</p>
+      <p class="card__subtitle">Assignment-scoped list. Filter by status, risk, coverage and progress, then open a project for details.</p>
     </div>
     <span class="badge badge--lime"><?= Security::e(format_number($total)) ?> projects</span>
   </div>
@@ -100,11 +100,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td><strong><?= Security::e(format_number($project['clerk_count'])) ?> clerk / <?= Security::e(format_number($project['intern_count'])) ?> intern</strong><small><?= Security::e($project['contractor_name'] ?: 'No contractor') ?></small></td>
           <td><strong><?= Security::e(format_number($project['open_ipcs'])) ?> IPCs</strong><small><?= Security::e(format_number($project['overdue_tasks'])) ?> overdue tasks, <?= Security::e(format_number($project['present_today'])) ?> present today</small></td>
           <td>
-            <div class="manager-project-actions">
+            <div class="manager-table-actions manager-project-actions">
               <button class="btn btn--icon btn--primary" type="button" data-project-detail="<?= (int)$project['id'] ?>" title="Open project monitor" aria-label="Open project monitor"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
               <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/milestones.php?project_id=' . (int)$project['id'])) ?>" title="Milestones" aria-label="Milestones"><i class="fa-solid fa-bullseye" aria-hidden="true"></i></a>
               <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/programme-of-works.php?project_id=' . (int)$project['id'])) ?>" title="Programme" aria-label="Programme"><i class="fa-solid fa-chart-gantt" aria-hidden="true"></i></a>
               <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/boq.php?project_id=' . (int)$project['id'])) ?>" title="BOQ" aria-label="BOQ"><i class="fa-solid fa-list-check" aria-hidden="true"></i></a>
+              <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/ipc-queue.php?project_id=' . (int)$project['id'])) ?>" title="IPC queue" aria-label="IPC queue"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></a>
               <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/assignments.php?project_id=' . (int)$project['id'])) ?>" title="Assignments" aria-label="Assignments"><i class="fa-solid fa-user-plus" aria-hidden="true"></i></a>
             </div>
           </td>
@@ -114,12 +115,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </table>
   </div>
 
-<?php if ($totalPages > 1): ?>
   <nav class="pagination" aria-label="Manager project pagination">
-    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> projects</p>
-    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_projects_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_projects_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> projects (10 per page)</p>
+    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_projects_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_projects_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
   </nav>
-<?php endif; ?>
 </section>
 
 <aside class="manager-project-drawer" data-project-drawer hidden>

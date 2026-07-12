@@ -128,9 +128,9 @@ try {
         'net' => $net,
     ]);
 
-    Notification::pushRole('clerk', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' for ' . ($project['name'] ?? 'a project') . ' is ready for site verification.', 'admin/clerk/ipc-verify.php');
-    Notification::pushRole('consultant', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' for ' . ($project['name'] ?? 'a project') . ' has entered the review workflow.', 'admin/consultant/ipc-inbox.php');
-    Notification::pushRole('manager', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' for ' . ($project['name'] ?? 'a project') . ' has entered the claims workflow.', 'admin/manager/ipc-queue.php');
+    Notification::pushRole('clerk', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' for ' . ($project['name'] ?? 'a project') . ' is ready for review.', 'admin/clerk/ipc-verify.php');
+    Notification::pushRole('consultant', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' for ' . ($project['name'] ?? 'a project') . ' is ready for review.', 'admin/consultant/ipc-inbox.php');
+    Notification::pushRole('manager', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' for ' . ($project['name'] ?? 'a project') . ' is ready for review.', 'admin/manager/ipc-queue.php');
     Notification::pushRole('superadmin', 'ipc_submitted', 'IPC submitted', 'IPC #' . $ipcNumber . ' has been submitted for ' . ($project['name'] ?? 'a project') . '.', 'admin/superadmin/ipcs.php');
 } catch (Throwable) {
     Response::json(['success' => false, 'message' => 'IPC could not be submitted.'], 500);
@@ -151,14 +151,7 @@ function ipc_submit_input(): array
 
 function ipc_submit_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach (['contractor_ipc', 'contractor_ipcs', 'contractor_ipc_submit', 'default'] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
-    }
-
-    return false;
+    return ApiCsrf::checkAny(['contractor_ipc', 'contractor_ipcs', 'contractor_ipc_submit', 'default']);
 }
 
 function ipc_submit_date(mixed $value): ?string

@@ -101,14 +101,7 @@ function ipc_endorse_input(): array
 
 function ipc_endorse_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach (['clerk_ipcs', 'clerk_ipc_verify', 'manager_ipcs', 'manager_ipc_queue', 'superadmin_ipcs', 'superadmin_approvals', 'default'] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
-    }
-
-    return false;
+    return ApiCsrf::checkAny(['clerk_ipcs', 'clerk_ipc_verify', 'manager_ipcs', 'manager_ipc_queue', 'superadmin_ipcs', 'superadmin_approvals', 'default']);
 }
 
 function ipc_endorse_audit(string $action, string $module, int $targetId, array $details = []): void

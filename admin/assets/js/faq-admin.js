@@ -1,26 +1,24 @@
 (function () {
   'use strict';
 
-  var quillPromise = null;
-
   function loadQuill() {
     if (window.Quill) return Promise.resolve(true);
-    if (quillPromise) return quillPromise;
 
-    quillPromise = new Promise(function (resolve) {
+    return new Promise(function (resolve) {
+      var baseMeta = document.querySelector('meta[name="app-base-url"]');
+      var base = baseMeta ? String(baseMeta.getAttribute('content') || '').replace(/\/$/, '') : '';
+
       var stylesheet = document.createElement('link');
       stylesheet.rel = 'stylesheet';
-      stylesheet.href = 'https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css';
+      stylesheet.href = base + '/admin/assets/vendor/quill/quill.snow.css';
       document.head.appendChild(stylesheet);
 
       var script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js';
+      script.src = base + '/admin/assets/vendor/quill/quill.js';
       script.onload = function () { resolve(!!window.Quill); };
       script.onerror = function () { resolve(false); };
       document.head.appendChild(script);
     });
-
-    return quillPromise;
   }
 
   function initEditors() {
@@ -32,6 +30,7 @@
         if (!available) {
           editor.hidden = true;
           textarea.classList.remove('is-enhanced');
+          textarea.hidden = false;
           return;
         }
 

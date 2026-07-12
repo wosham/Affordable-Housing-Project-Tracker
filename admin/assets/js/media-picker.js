@@ -214,8 +214,24 @@
     close();
   }
 
+  function setMediaIdTarget(wrap, item) {
+    if (!wrap) return;
+    var mediaIdInput = qs('[data-media-id-target], input[name="media_id"]', wrap);
+    if (!mediaIdInput) return;
+    if (!item) {
+      mediaIdInput.value = '';
+      return;
+    }
+    if (Array.isArray(item)) {
+      mediaIdInput.value = item.length ? String(item[0].id || '') : '';
+      return;
+    }
+    mediaIdInput.value = item.id ? String(item.id) : '';
+  }
+
   function updateControl(item, wrap) {
     if (!wrap || !item) return;
+    setMediaIdTarget(wrap, item);
     if (Array.isArray(item)) {
       var multiName = qs('[data-cms-asset-name]', wrap);
       if (multiName) multiName.textContent = item.length ? item.length + ' assets selected' : 'No assets selected';

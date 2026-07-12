@@ -23,7 +23,7 @@ $pageKeywords = (string)($aboutPage['seo_keywords'] ?? 'Trans-Nzoia affordable h
 $pageAuthor = 'Trans-Nzoia County Government - Department of Land, Housing & Physical Planning';
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = (string)($aboutPage['canonical_url'] ?? 'https://housing.transnzoia.go.ke/about.php');
+$canonicalUrl = trim((string)($aboutPage['canonical_url'] ?? '')) ?: Url::canonical('about.php');
 $heroImage = CmsLoader::text($hero, 'background_image', (string)($aboutPage['hero_image'] ?? 'uploads/gallery/maili-tatu-2.jpg'));
 $pageStyles = [
     'assets/css/global.css',
@@ -59,15 +59,10 @@ include __DIR__ . '/app/partials/head.php';
 <?php if (CmsLoader::visible($aboutPage, 'about_hero')): ?>
     <section class="ab-hero" aria-label="About the programme">
       <div class="ab-hero-bg" aria-hidden="true">
-        <img src="<?= Security::e($heroImage) ?>" alt="<?= Security::e(CmsLoader::text($hero, 'background_alt', 'Affordable housing construction works in Trans-Nzoia County')) ?>" loading="eager" onerror="this.style.display='none'">
+        <img <?= public_image_attrs($heroImage, CmsLoader::text($hero, 'background_alt', 'Affordable housing construction works in Trans-Nzoia County'), ['loading' => 'eager', 'fetchpriority' => 'high', 'onerror' => "this.style.display='none'"]) ?>>
         <div class="ab-hero-overlay"></div>
       </div>
       <div class="container">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <a href="index.php" class="breadcrumb-link">Home</a>
-          <span class="breadcrumb-sep" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
-          <span class="breadcrumb-current" aria-current="page">About</span>
-        </nav>
         <div class="ab-hero-body">
           <div class="ab-hero-eyebrow">
             <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
@@ -238,14 +233,22 @@ include __DIR__ . '/app/partials/head.php';
           <h2 class="ab-section-title ab-section-title--light"><?= Security::e(CmsLoader::text($partners, 'title', 'Implementing Partners & Stakeholders')) ?></h2>
           <p class="ab-section-sub ab-section-sub--light"><?= Security::e(CmsLoader::text($partners, 'subtitle', 'Delivered through collaboration between national and county government agencies, financial institutions and regulatory bodies.')) ?></p>
         </div>
+        <?php $partnerRows = about_partner_rows((int)($partners['display_count'] ?? 5)); ?>
         <div class="ab-partners-grid">
-          <?php foreach (about_partner_rows((int)($partners['display_count'] ?? 5)) as $partner): ?>
+          <?php foreach ($partnerRows as $partner): ?>
           <div class="ab-partner-card">
             <div class="ab-partner-icon" aria-hidden="true"><i class="fa-solid <?= Security::e(about_icon($partner['icon'] ?? 'fa-handshake')) ?>"></i></div>
             <h3 class="ab-partner-name"><?= Security::e($partner['name']) ?></h3>
             <p class="ab-partner-role"><?= Security::e($partner['description']) ?></p>
           </div>
           <?php endforeach; ?>
+          <?php if (!$partnerRows): ?>
+          <div class="ab-partner-card">
+            <div class="ab-partner-icon" aria-hidden="true"><i class="fa-solid fa-handshake"></i></div>
+            <h3 class="ab-partner-name"><?= Security::e(CmsLoader::text($partners, 'empty_title', 'Partner records pending')) ?></h3>
+            <p class="ab-partner-role"><?= Security::e(CmsLoader::text($partners, 'empty_text', 'Published stakeholder records will appear here after they are added in the backend.')) ?></p>
+          </div>
+          <?php endif; ?>
         </div>
       </div>
     </section>
@@ -260,8 +263,9 @@ include __DIR__ . '/app/partials/head.php';
             <h2 class="ab-section-title"><?= Security::e(CmsLoader::text($faqTeaser, 'title', 'Frequently Asked Questions')) ?></h2>
             <p class="ab-section-sub"><?= Security::e(CmsLoader::text($faqTeaser, 'subtitle', 'Quick answers to the most common questions about the programme.')) ?></p>
           </div>
+          <?php $faqRows = about_faq_rows((int)($faqTeaser['display_count'] ?? 4)); ?>
           <div class="ab-faq-list">
-            <?php foreach (about_faq_rows((int)($faqTeaser['display_count'] ?? 4)) as $index => $faq): ?>
+            <?php foreach ($faqRows as $index => $faq): ?>
             <div class="ab-faq-item">
               <button class="ab-faq-trigger" aria-expanded="false" aria-controls="faq-<?= (int)$index + 1 ?>" id="faq-trigger-<?= (int)$index + 1 ?>">
                 <span><?= Security::e($faq['question']) ?></span>
@@ -272,6 +276,13 @@ include __DIR__ . '/app/partials/head.php';
               </div>
             </div>
             <?php endforeach; ?>
+            <?php if (!$faqRows): ?>
+            <div class="ab-faq-item">
+              <div class="ab-faq-body" style="display:block">
+                <p><?= Security::e(CmsLoader::text($faqTeaser, 'empty_text', 'Published FAQ records will appear here after they are added in the backend.')) ?></p>
+              </div>
+            </div>
+            <?php endif; ?>
           </div>
           <div class="ab-faq-footer">
             <a href="<?= Security::e(CmsLoader::text($faqTeaser, 'link_url', 'faq.php')) ?>" class="ab-text-link">
@@ -291,8 +302,9 @@ include __DIR__ . '/app/partials/head.php';
             <div class="ab-section-eyebrow"><?= Security::e(CmsLoader::text($leadership, 'eyebrow', 'National Programme Leadership')) ?></div>
             <h2 class="ab-section-title"><?= Security::e(CmsLoader::text($leadership, 'title', 'Programme Leadership')) ?></h2>
             <p class="ab-leadership-sub"><?= Security::e(CmsLoader::text($leadership, 'subtitle', about_defaults('leadership_contact')['subtitle'])) ?></p>
+            <?php $leaderRows = about_leadership_rows(); ?>
             <div class="ab-leaders-grid">
-              <?php foreach (about_leadership_rows() as $leader): ?>
+              <?php foreach ($leaderRows as $leader): ?>
               <div class="ab-leader-card">
                 <div class="ab-leader-avatar" aria-hidden="true"><i class="fa-solid <?= Security::e(about_icon($leader['icon'] ?? 'fa-user-tie')) ?>"></i></div>
                 <div class="ab-leader-info">
@@ -302,6 +314,16 @@ include __DIR__ . '/app/partials/head.php';
                 </div>
               </div>
               <?php endforeach; ?>
+              <?php if (!$leaderRows): ?>
+              <div class="ab-leader-card">
+                <div class="ab-leader-avatar" aria-hidden="true"><i class="fa-solid fa-user-tie"></i></div>
+                <div class="ab-leader-info">
+                  <span class="ab-leader-role"><?= Security::e(CmsLoader::text($leadership, 'empty_role', 'Leadership registry')) ?></span>
+                  <h3 class="ab-leader-name"><?= Security::e(CmsLoader::text($leadership, 'empty_title', 'No leadership records published yet')) ?></h3>
+                  <span class="ab-leader-dept"><?= Security::e(CmsLoader::text($leadership, 'empty_text', 'Published leadership records will appear here after they are added in the backend.')) ?></span>
+                </div>
+              </div>
+              <?php endif; ?>
             </div>
             <a href="<?= Security::e(CmsLoader::text($leadership, 'link_url', 'leadership.php')) ?>" class="ab-text-link" style="margin-top:var(--space-6);display:inline-flex;align-items:center;gap:var(--space-2)">
               <?= Security::e(CmsLoader::text($leadership, 'link_label', 'Meet the full leadership team')) ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
@@ -516,13 +538,7 @@ function about_partner_rows(int $limit): array
         }, $rows);
     }
 
-    return [
-        ['icon' => 'fa-building-columns', 'name' => 'State Dept. of Housing', 'description' => 'Lead implementing agency for project oversight, contractor management and national housing policy direction.'],
-        ['icon' => 'fa-landmark-flag', 'name' => 'Trans-Nzoia County Government', 'description' => 'Land allocation, community engagement, site coordination and county-level programme support.'],
-        ['icon' => 'fa-hand-holding-dollar', 'name' => 'Kenya Mortgage Refinance Company', 'description' => 'Long-term mortgage financing that supports affordable repayments for eligible beneficiaries.'],
-        ['icon' => 'fa-house-circle-check', 'name' => 'Boma Yangu Portal', 'description' => 'National beneficiary registration, savings tracking and transparent unit allocation ballot.'],
-        ['icon' => 'fa-helmet-safety', 'name' => 'National Construction Authority', 'description' => 'Contractor registration, site inspection compliance and occupational safety oversight.'],
-    ];
+    return [];
 }
 
 function about_faq_rows(int $limit): array
@@ -539,12 +555,7 @@ function about_faq_rows(int $limit): array
         $rows = [];
     }
 
-    return $rows ?: [
-        ['question' => 'What is the Affordable Housing Programme?', 'answer' => 'The Affordable Housing Programme is a government initiative to deliver subsidised homes for low-to-middle-income earners.'],
-        ['question' => 'Who qualifies to apply for a unit?', 'answer' => 'Eligible Kenyan citizens can apply through the Boma Yangu portal and follow the national allocation process.'],
-        ['question' => 'How are units allocated?', 'answer' => 'Units are allocated through the official Boma Yangu process using transparent eligibility and ballot controls.'],
-        ['question' => 'Where can I apply?', 'answer' => 'Applications are submitted through the national Boma Yangu portal.'],
-    ];
+    return $rows ?: [];
 }
 
 function about_leadership_rows(): array
@@ -570,10 +581,7 @@ function about_leadership_rows(): array
         ], $rows);
     }
 
-    return [
-        ['icon' => 'fa-user-tie', 'title' => 'County Director', 'name' => 'Moses Owuor', 'organisation' => 'State Dept. of Housing & Urban Development - Trans-Nzoia Representative'],
-        ['icon' => 'fa-building-columns', 'title' => 'Lead National Agency', 'name' => 'State Dept. of Housing & Urban Development', 'organisation' => 'Ministry of Lands, Housing & Urban Development - National Government'],
-    ];
+    return [];
 }
 
 function about_contact_item(string $icon, string $label, string $value, string $scheme = ''): void

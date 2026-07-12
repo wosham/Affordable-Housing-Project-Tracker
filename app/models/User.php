@@ -61,6 +61,7 @@ class User extends Model
 
     public static function emailExists(string $email, ?int $exceptId = null): bool
     {
+        $email = self::normaliseEmail($email);
         $bindings = [$email];
         $sql = 'SELECT id FROM users WHERE email = ?';
         if ($exceptId !== null) {
@@ -69,6 +70,60 @@ class User extends Model
         }
 
         return Database::fetch($sql . ' LIMIT 1', $bindings) !== null;
+    }
+
+    public static function phoneExists(string $phone, ?int $exceptId = null): bool
+    {
+        $phone = self::normalisePhone($phone);
+        if ($phone === '') {
+            return false;
+        }
+
+        $bindings = [$phone];
+        $sql = 'SELECT id FROM users WHERE phone = ?';
+        if ($exceptId !== null) {
+            $sql .= ' AND id <> ?';
+            $bindings[] = $exceptId;
+        }
+
+        return Database::fetch($sql . ' LIMIT 1', $bindings) !== null;
+    }
+
+    public static function normaliseEmail(string $email): string
+    {
+        return strtolower(trim($email));
+    }
+
+    public static function isValidGmail(string $email): bool
+    {
+        $email = self::normaliseEmail($email);
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false && str_ends_with($email, '@gmail.com');
+    }
+
+    public static function normalisePhone(string $phone): string
+    {
+        $phone = trim($phone);
+        if ($phone === '') {
+            return '';
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone) ?: '';
+        if (preg_match('/^0([17]\d{8})$/', $digits, $match)) {
+            return '+254' . $match[1];
+        }
+        if (preg_match('/^254([17]\d{8})$/', $digits, $match)) {
+            return '+254' . $match[1];
+        }
+        if (preg_match('/^([17]\d{8})$/', $digits, $match)) {
+            return '+254' . $match[1];
+        }
+
+        return $phone;
+    }
+
+    public static function isValidKenyanPhone(string $phone): bool
+    {
+        return (bool)preg_match('/^\+254[17][0-9]{8}$/', self::normalisePhone($phone));
     }
 
     public static function activeSuperadminCount(): int
@@ -126,7 +181,12 @@ class User extends Model
                 CONCAT(u.first_name, ' ', u.last_name) AS name,
                 r.name AS role_name,
                 r.slug AS role_slug,
-                r.color AS role_color
+                r.color AS role_color,
+                (
+                    SELECT COUNT(*)
+                    FROM project_assignments pa
+                    WHERE pa.user_id = u.id AND pa.status = 'active'
+                ) AS active_project_count
             FROM users u
             LEFT JOIN roles r ON r.id = u.role_id
         ";
@@ -145,6 +205,31 @@ class User extends Model
         if (!empty($filters['status'])) {
             $where[] = 'u.status = ?';
             $bindings[] = $filters['status'];
+        }
+
+        if (!empty($filters['project_id'])) {
+            $where[] = '(r.slug IN ("superadmin", "finance") OR EXISTS (SELECT 1 FROM project_assignments pa_filter WHERE pa_filter.user_id = u.id AND pa_filter.project_id = ? AND pa_filter.status = "active"))';
+            $bindings[] = (int)$filters['project_id'];
+        }
+
+        if (!empty($filters['constituency_id'])) {
+            $where[] = '(r.slug IN ("superadmin", "finance") OR EXISTS (
+                SELECT 1
+                FROM project_assignments pa_filter
+                INNER JOIN projects p_filter ON p_filter.id = pa_filter.project_id
+                WHERE pa_filter.user_id = u.id
+                  AND pa_filter.status = "active"
+                  AND p_filter.constituency_id = ?
+            ))';
+            $bindings[] = (int)$filters['constituency_id'];
+        }
+
+        if (!empty($filters['assignment_state'])) {
+            if ($filters['assignment_state'] === 'assigned') {
+                $where[] = '(r.slug IN ("superadmin", "finance") OR EXISTS (SELECT 1 FROM project_assignments pa_filter WHERE pa_filter.user_id = u.id AND pa_filter.status = "active"))';
+            } elseif ($filters['assignment_state'] === 'unassigned') {
+                $where[] = 'r.slug NOT IN ("superadmin", "finance") AND NOT EXISTS (SELECT 1 FROM project_assignments pa_filter WHERE pa_filter.user_id = u.id AND pa_filter.status = "active")';
+            }
         }
 
         $q = trim((string)($filters['q'] ?? ''));

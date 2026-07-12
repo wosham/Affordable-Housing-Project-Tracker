@@ -1,10 +1,9 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_faq';
-faq_admin_ensure_schema();
 
 if (Security::isPost()) {
     if (!Csrf::verify(Csrf::fromRequest(), $csrfForm)) {
@@ -72,7 +71,7 @@ $componentCss = ['faq-admin'];
 $pageScripts = ['faq-admin'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'FAQ Manager'],
 ];
 
@@ -246,71 +245,6 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php include __DIR__ . '/../../app/partials/admin/shell-end.php'; ?>
 
 <?php
-function faq_admin_ensure_schema(): void
-{
-    Database::query("CREATE TABLE IF NOT EXISTS faq_categories (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(120) NOT NULL,
-        slug VARCHAR(140) NOT NULL UNIQUE,
-        icon VARCHAR(80) NULL,
-        description TEXT NULL,
-        sort_order SMALLINT UNSIGNED DEFAULT 0,
-        status ENUM('published','draft') NOT NULL DEFAULT 'published',
-        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-    foreach ([
-        'category_id' => 'INT UNSIGNED NULL AFTER id',
-        'slug' => 'VARCHAR(180) NULL AFTER category_id',
-        'is_popular' => 'TINYINT(1) NOT NULL DEFAULT 0 AFTER sort_order',
-        'status' => "ENUM('published','draft') NOT NULL DEFAULT 'published' AFTER is_popular",
-        'search_keywords' => 'TEXT NULL AFTER status',
-        'created_by' => 'INT UNSIGNED NULL AFTER search_keywords',
-        'updated_by' => 'INT UNSIGNED NULL AFTER created_by',
-        'created_at' => 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP AFTER updated_by',
-        'updated_at' => 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at',
-    ] as $column => $definition) {
-        faq_admin_add_column('faq_items', $column, $definition);
-    }
-
-    $defaults = [
-        ['Eligibility', 'eligibility', 'fa-user-check', 'Who qualifies for the programme and what conditions apply.', 10],
-        ['Application Process', 'application', 'fa-file-pen', 'Step-by-step guidance on registration and applications.', 20],
-        ['Payments & Housing Levy', 'payments', 'fa-coins', 'Housing levy, savings, refunds and repayment questions.', 30],
-        ['Unit Allocation', 'allocation', 'fa-house-circle-check', 'How units are assigned, balloted and handed over.', 40],
-        ['Construction & Timeline', 'construction', 'fa-helmet-safety', 'Progress updates, timelines and site quality controls.', 50],
-        ['Legal & Documents', 'legal', 'fa-scale-balanced', 'Ownership titles, tenancy agreements and legal protections.', 60],
-        ['Beneficiary Rights', 'rights', 'fa-shield-halved', 'Applicant rights, complaints and malpractice reporting.', 70],
-        ['Contact & Support', 'contact', 'fa-phone', 'How to reach the AHP field office and housing desk.', 80],
-    ];
-
-    foreach ($defaults as $category) {
-        Database::query(
-            "INSERT INTO faq_categories (name, slug, icon, description, sort_order, status)
-             VALUES (?, ?, ?, ?, ?, 'published')
-             ON DUPLICATE KEY UPDATE name = VALUES(name), icon = VALUES(icon), description = VALUES(description), sort_order = VALUES(sort_order)",
-            $category
-        );
-    }
-
-    $fallback = Database::fetch("SELECT id FROM faq_categories WHERE slug = 'eligibility' LIMIT 1");
-    if ($fallback) {
-        Database::query("UPDATE faq_items SET category_id = ?, status = CASE WHEN is_visible = 1 THEN 'published' ELSE 'draft' END WHERE category_id IS NULL", [(int)$fallback['id']]);
-    }
-}
-
-function faq_admin_add_column(string $table, string $column, string $definition): void
-{
-    $row = Database::fetch(
-        'SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
-        [$table, $column]
-    );
-    if ((int)($row['total'] ?? 0) === 0) {
-        Database::query("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
-    }
-}
-
 function faq_admin_save_category(): void
 {
     $id = Security::cleanInt($_POST['id'] ?? 0);

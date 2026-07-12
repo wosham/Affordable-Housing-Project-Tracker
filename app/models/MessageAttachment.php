@@ -24,6 +24,15 @@ class MessageAttachment extends Model
             throw new RuntimeException('Attachment is too large.');
         }
 
+        if (!is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
+            throw new RuntimeException('Attachment upload source is invalid.');
+        }
+
+        $detectedMime = mime_content_type((string)$file['tmp_name']) ?: (string)($file['type'] ?? 'application/octet-stream');
+        if (!self::extensionAllowsMime($extension, $detectedMime)) {
+            throw new RuntimeException('Attachment content does not match the allowed file type.');
+        }
+
         $folder = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'secure-uploads' . DIRECTORY_SEPARATOR . 'message-attachments';
         if (!is_dir($folder) && !mkdir($folder, 0775, true) && !is_dir($folder)) {
             throw new RuntimeException('Attachment storage is not available.');
@@ -36,7 +45,7 @@ class MessageAttachment extends Model
             throw new RuntimeException('Attachment could not be saved.');
         }
 
-        $mime = mime_content_type($target) ?: (string)($file['type'] ?? 'application/octet-stream');
+        $mime = mime_content_type($target) ?: $detectedMime;
         $path = 'secure-uploads/message-attachments/' . $filename;
         $id = (int)self::create([
             'message_id' => null,
@@ -91,7 +100,27 @@ class MessageAttachment extends Model
             'name' => (string)($row['original_name'] ?? $row['filename'] ?? ''),
             'size' => (int)($row['size'] ?? 0),
             'type' => (string)($row['mime_type'] ?? $row['type'] ?? ''),
-            'url' => Url::to((string)($row['path'] ?? '')),
+            'url' => Url::to('api/messages/download-attachment.php?id=' . (int)($row['id'] ?? 0)),
         ];
+    }
+
+    private static function extensionAllowsMime(string $extension, string $mime): bool
+    {
+        $mime = strtolower(trim($mime));
+        $map = [
+            'pdf' => ['application/pdf'],
+            'doc' => ['application/msword', 'application/octet-stream'],
+            'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'],
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'png' => ['image/png'],
+            'webp' => ['image/webp'],
+            'gif' => ['image/gif'],
+            'mp4' => ['video/mp4', 'application/mp4'],
+            'webm' => ['video/webm'],
+            'mov' => ['video/quicktime', 'video/mp4'],
+        ];
+
+        return in_array($mime, $map[$extension] ?? [], true);
     }
 }

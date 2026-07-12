@@ -124,14 +124,7 @@ function project_progress_input(): array
 
 function project_progress_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach (['manager_projects', 'manager_dashboard', 'contractor_project', 'contractor_progress', 'clerk_site_records', 'superadmin_projects', 'default'] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
-    }
-
-    return false;
+    return ApiCsrf::checkAny(ApiCsrf::forms('project_progress'));
 }
 
 function project_progress_can_update(int $userId, string $role, int $projectId, array $project): bool

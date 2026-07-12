@@ -48,7 +48,14 @@ class ApiMiddleware
         Response::json([
             'success' => false,
             'message' => 'Method not allowed.',
+            'data' => new stdClass(),
+            'errors' => new stdClass(),
             'allowed_methods' => $allowed,
+            'meta' => [
+                'request_id' => class_exists('PublicApi') ? PublicApi::requestId() : substr(sha1(uniqid('', true)), 0, 16),
+                'generated_at' => date(DATE_ATOM),
+                'allowed_methods' => $allowed,
+            ],
         ], 405);
     }
 

@@ -1,0 +1,131 @@
+﻿api\assignments\available-users.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\assignments\bulk-assign.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf_form' => 'assignments', 
+api\assignments\create.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf_form' => 'assignments', 
+api\assignments\export.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\assignments\list.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\assignments\remove.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf_form' => 'assignments', 
+api\assignments\update.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf_form' => 'assignments', 
+api\attendance\daily-report.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager', 'clerk'], 
+api\attendance\gateway-close.php |  'methods' => ['POST'], 'roles' => ['clerk'], 'csrf_form' => 'attendance_gateway', 
+api\attendance\gateway-open.php |  'methods' => ['POST'], 'roles' => ['clerk'], 'csrf_form' => 'attendance_gateway', 
+api\attendance\gateway-status.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\attendance\sign-in.php |  'methods' => ['POST'], 'roles' => ['intern'], 'csrf_form' => 'attendance_signin', 
+api\audit\detail.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\audit\export.php | NO_API_MW
+api\auth\forgot-password.php |  'methods' => ['POST'], 'csrf_form' => 'forgot_password', 
+api\auth\reset-password.php |  'methods' => ['GET'], 'csrf' => false, 
+api\boq\get-boq.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager', 'consultant', 'contractor', 'finance', 'clerk'], 'csrf' => false, 
+api\boq\update-item.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager', 'consultant', 'clerk', 'finance'], 'csrf' => false, 
+api\clerk\daily-diary-save.php | DELEGATES: require_once __DIR__ . '/_daily-record-handler.php'
+api\clerk\defect-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\document-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\equipment-check-save.php | DELEGATES: require_once __DIR__ . '/_daily-record-handler.php'
+api\clerk\hs-incident-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\ipc-verify.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\itp-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\labour-verification-save.php | DELEGATES: require_once __DIR__ . '/_daily-record-handler.php'
+api\clerk\material-delivery-save.php | DELEGATES: require_once __DIR__ . '/_daily-record-handler.php'
+api\clerk\ncr-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\photo-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\quality-test-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\site-meeting-save.php | DELEGATES: require_once __DIR__ . '/_quality-evidence-handler.php'
+api\clerk\weather-log-save.php | DELEGATES: require_once __DIR__ . '/_daily-record-handler.php'
+api\clerk\_daily-record-handler.php |  'methods' => ['POST'], 'roles' => ['clerk'], 'csrf_form' => 'clerk_daily_records', 
+api\clerk\_quality-evidence-handler.php |  'methods' => ['POST'], 'roles' => ['clerk'], 'csrf_form' => 'clerk_quality_evidence', 
+api\cms\get-page-data.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\cms\save-page.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'cms_editor', 
+api\cms\save-section.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'cms_editor', 
+api\cms\save-setting.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'cms_editor', 
+api\cms\toggle-section.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'cms_editor', 
+api\cms\upload-image.php | NO_API_MW
+api\consultant\contract-action.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'consultant'], 'csrf' => false, 
+api\consultant\document-action.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'consultant'], 'csrf' => false, 
+api\consultant\quality-action.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'consultant'], 'csrf' => false, 
+api\consultant\technical-action.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'consultant'], 'csrf' => false, 
+api\contact\assign.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'contact_inbox', 
+api\contact\download-attachment.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\contact\get-message.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\contact\send-reply.php |  "methods" => ["POST"], "auth" => true, "csrf_form" => "contact_inbox", 
+api\contact\start-thread.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => 'contact_inbox', 
+api\contact\update-status.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => 'contact_inbox', 
+api\contractor\document-save.php | DELEGATES: require_once __DIR__ . '/_site-record-handler.php'
+api\contractor\eot-submit.php | DELEGATES: require_once __DIR__ . '/_submission-handler.php'
+api\contractor\equipment-save.php | DELEGATES: require_once __DIR__ . '/_site-record-handler.php'
+api\contractor\hs-incident-save.php | DELEGATES: require_once __DIR__ . '/_site-record-handler.php'
+api\contractor\labour-save.php | DELEGATES: require_once __DIR__ . '/_site-record-handler.php'
+api\contractor\material-approval-submit.php | DELEGATES: require_once __DIR__ . '/_submission-handler.php'
+api\contractor\material-delivery-save.php | DELEGATES: require_once __DIR__ . '/_site-record-handler.php'
+api\contractor\rfi-submit.php | DELEGATES: require_once __DIR__ . '/_submission-handler.php'
+api\contractor\shop-drawing-submit.php | DELEGATES: require_once __DIR__ . '/_submission-handler.php'
+api\contractor\subcontractor-save.php | DELEGATES: require_once __DIR__ . '/_site-record-handler.php'
+api\contractor\variation-submit.php | DELEGATES: require_once __DIR__ . '/_submission-handler.php'
+api\contractor\_site-record-handler.php |  'methods' => ['POST'], 'roles' => ['contractor'], 'csrf' => false, 
+api\contractor\_submission-handler.php |  'methods' => ['POST'], 'roles' => ['contractor'], 'csrf' => false, 
+api\eot\approve.php | 'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'superadmin_approvals'
+api\eot\reject.php | 'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'superadmin_approvals'
+api\finance\export-report.php | NO_API_MW
+api\finance\generate-report.php |  'methods' => ['GET', 'POST'], 'roles' => ['finance'], 'csrf_form' => 'finance_reports', 
+api\finance\payment-detail.php |  'methods' => ['GET'], 'roles' => ['finance'], 'csrf' => false, 
+api\finance\process-payment.php |  'methods' => ['POST'], 'roles' => ['finance'], 'csrf_form' => 'finance_payments', 
+api\intern\photo-delete.php |  'methods' => ['POST'], 'roles' => ['intern'], 'csrf_form' => 'intern_work', 
+api\intern\photo-upload.php |  'methods' => ['POST'], 'roles' => ['intern'], 'csrf_form' => 'intern_work', 
+api\intern\site-data-save.php |  'methods' => ['POST'], 'roles' => ['intern'], 'csrf_form' => 'intern_work', 
+api\ipcs\approve.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\ipcs\certify.php |  "methods" => ["POST"], "roles" => ["superadmin", "consultant"], "csrf_form" => "consultant_ipc_certify", 
+api\ipcs\endorse.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager', 'clerk'], 'csrf' => false, 
+api\ipcs\reject.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager', 'consultant', 'clerk'], 'csrf' => false, 
+api\ipcs\submit.php |  'methods' => ['POST'], 'roles' => ['contractor'], 'csrf' => false, 
+api\manager\boq-detail.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 
+api\manager\community-liaison-save.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\community-liaison-status.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\eot-review.php | 'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false
+api\manager\hs-incident-save.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\hs-incident-status.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\ipc-detail.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 
+api\manager\liquidated-damage-save.php | 'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false
+api\manager\liquidated-damage-status.php | 'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false
+api\manager\project-detail.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\project-note.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf_form' => 'manager_projects', 
+api\manager\projects.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\site-meeting-save.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\site-meeting-status.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false, 
+api\manager\subcontractor-save.php | 'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false
+api\manager\subcontractor-status.php | 'methods' => ['POST'], 'roles' => ['superadmin', 'manager'], 'csrf' => false
+api\media\delete.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => $_POST['csrf_form'] ?? 'media_library', 
+api\media\get.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\media\list.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'contractor'], 'csrf' => false, 
+api\media\sync.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => $_POST['csrf_form'] ?? 'media_library', 
+api\media\update.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => $_POST['csrf_form'] ?? 'media_library', 
+api\media\upload.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'contractor'], 'csrf_form' => $_POST['csrf_form'] ?? (((string)Auth::role() === 'contractor') ? 'contractor_progress' : 'cms_editor'), 
+api\media\usage.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\messages\delete.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => 'messages', 
+api\messages\download-attachment.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\messages\inbox.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\messages\mark-read.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => 'messages', 
+api\messages\send.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => 'messages', 
+api\messages\thread.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\messages\upload-attachment.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => 'messages', 
+api\notifications\fetch.php |  'methods' => ['GET'], 'auth' => true, 'csrf' => false, 
+api\notifications\mark-all-read.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => (string)($_SERVER['HTTP_X_CSRF_FORM'] ?? 'default'), 
+api\notifications\mark-read.php |  'methods' => ['POST'], 'auth' => true, 'csrf_form' => (string)($_SERVER['HTTP_X_CSRF_FORM'] ?? 'default'), 
+api\programme\get-gantt.php |  'methods' => ['GET'], 'roles' => ['superadmin', 'manager', 'consultant', 'contractor', 'clerk', 'finance'], 'csrf' => false, 
+api\programme\update-task.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager', 'contractor'], 'csrf' => false, 
+api\projects\get-all.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\projects\get-project.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\projects\update-milestone.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager', 'clerk'], 'csrf' => false, 
+api\projects\update-progress.php |  'methods' => ['POST'], 'roles' => ['superadmin', 'manager', 'contractor', 'clerk'], 'csrf' => false, 
+api\public\contact-submit.php |  'methods' => ['POST'], 'csrf' => false, 
+api\public\projects.php |  'methods' => ['GET'], 'csrf' => false, 
+api\public\search.php |  'methods' => ['GET'], 'csrf' => false, 
+api\public\subscribe.php |  'methods' => ['POST'], 'csrf' => false, 
+api\public\unsubscribe.php | NO_API_MW
+api\reports\generate.php | CSRF_ONLY
+api\settings\reset.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'settings', 
+api\settings\save.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'settings', 
+api\subscribers\export.php | NO_API_MW
+api\subscribers\update-status.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'subscribers', 
+api\superadmin\dashboard-summary.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\system-health\log-tail.php |  'methods' => ['GET'], 'roles' => ['superadmin'], 'csrf' => false, 
+api\system-health\refresh.php |  'methods' => ['POST'], 'roles' => ['superadmin'], 
+api\variations\approve.php | 'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'superadmin_approvals'
+api\variations\reject.php | 'methods' => ['POST'], 'roles' => ['superadmin'], 'csrf_form' => 'superadmin_approvals'

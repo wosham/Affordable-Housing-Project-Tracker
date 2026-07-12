@@ -21,6 +21,15 @@ if ($key === '') {
 }
 
 try {
+    $existing = SystemSetting::getRaw($key);
+    if ($existing && (int)($existing['is_sensitive'] ?? 0) === 1 && trim((string)$value) === '') {
+        Response::json([
+            'success' => true,
+            'message' => 'Saved value kept hidden.',
+            'setting' => SystemSetting::payload($existing),
+        ]);
+    }
+
     $setting = SystemSetting::setValue($key, $value, (int)Auth::id());
     Response::json([
         'success' => true,

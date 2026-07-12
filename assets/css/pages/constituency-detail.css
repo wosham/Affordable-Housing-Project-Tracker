@@ -84,7 +84,7 @@
   font-weight: var(--weight-extrabold);
   color: var(--white);
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   margin-bottom: var(--space-4);
 }
 
@@ -132,7 +132,7 @@
   font-weight: var(--weight-extrabold);
   color: var(--white);
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .cd-kpi-lbl {
@@ -150,7 +150,7 @@
 .cd-projects-section {
   background: var(--white);
   padding: var(--space-14) 0;
-  border-top: 3px solid var(--neutral-100);
+  border-top: 1px solid var(--neutral-100);
 }
 
 .cd-section-header {
@@ -168,7 +168,7 @@
   font-size: clamp(1.5rem, 2.8vw, 2.2rem);
   font-weight: var(--weight-extrabold);
   color: var(--neutral-900);
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   line-height: 1.1;
   margin-bottom: var(--space-2);
 }
@@ -422,7 +422,7 @@
   font-size: clamp(1.5rem, 3vw, 2.4rem);
   font-weight: var(--weight-extrabold);
   color: var(--white);
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
   line-height: 1.1;
   margin-bottom: var(--space-4);
 }
@@ -447,7 +447,7 @@
   font-size: clamp(3rem, 7vw, 5rem);
   font-weight: var(--weight-extrabold);
   color: var(--lime);
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -489,7 +489,7 @@
   font-size: 1.4rem;
   font-weight: var(--weight-extrabold);
   color: var(--white);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -519,7 +519,7 @@
 .cd-related-card {
   background: var(--neutral-50);
   border: 1.5px solid var(--neutral-100);
-  border-top: 3px solid var(--neutral-200);
+  border-top: 1px solid var(--neutral-100);
   border-radius: var(--radius-xl);
   padding: var(--space-5);
   text-decoration: none;
@@ -530,7 +530,6 @@
 }
 
 .cd-related-card:hover {
-  border-top-color: var(--lime);
   border-color: var(--primary-200);
   box-shadow: 0 6px 20px rgba(22,51,0,0.09);
   transform: translateY(-2px);
@@ -548,7 +547,7 @@
   font-size: 1.05rem;
   font-weight: var(--weight-extrabold);
   color: var(--neutral-900);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1.1;
 }
 
@@ -576,7 +575,7 @@
   font-size: 1.1rem;
   font-weight: var(--weight-extrabold);
   color: var(--primary-700);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1;
 }
 
@@ -664,7 +663,7 @@
   font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   font-weight: var(--weight-extrabold);
   color: var(--white);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   margin-bottom: var(--space-2);
 }
 
@@ -749,7 +748,106 @@
 }
 
 /* ---------------------------------------------------------
-   9. RESPONSIVE
+   9. POLISH / CONTENT SAFETY
+   --------------------------------------------------------- */
+.cd-hero-body,
+.cd-projects-grid,
+.cd-facts-inner,
+.cd-related-grid,
+.proj-card,
+.cd-fact-card,
+.cd-related-card {
+  min-width: 0;
+}
+
+.cd-hero-desc,
+.cd-section-sub,
+.proj-card-title,
+.proj-contractor,
+.proj-milestone,
+.cd-fact-value,
+.cd-related-name,
+.cd-related-pop {
+  overflow-wrap: anywhere;
+}
+
+.cd-projects-section,
+.cd-facts-section,
+.cd-related-section {
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+}
+
+.cd-projects-grid {
+  align-items: stretch;
+}
+
+.proj-card {
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 12px rgba(22,51,0,0.05);
+}
+
+.proj-card-body {
+  padding: var(--space-6);
+}
+
+.proj-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.proj-stat {
+  background: var(--neutral-50);
+  border: 1px solid var(--neutral-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.proj-milestone {
+  max-width: 100%;
+}
+
+.proj-card-footer {
+  gap: var(--space-4);
+}
+
+.proj-cta {
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-lg);
+}
+
+.proj-cta:hover {
+  background: var(--neutral-50);
+}
+
+.cd-fact-card,
+.cd-related-card {
+  min-height: 100%;
+}
+
+.cd-related-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.cd-related-stat {
+  min-width: 0;
+}
+
+.cd-empty-text {
+  width: 100%;
+  padding: var(--space-8);
+  border: 1px dashed var(--neutral-200);
+  border-radius: var(--radius-xl);
+  background: var(--neutral-50);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------
+   10. RESPONSIVE
    --------------------------------------------------------- */
 @media (max-width: 1024px) {
   .cd-hero-kpis { grid-template-columns: repeat(2, 1fr); }
@@ -769,6 +867,19 @@
   .cd-facts-grid { grid-template-columns: 1fr; }
   .cd-section-header { flex-direction: column; align-items: flex-start; }
   .cd-related-grid { grid-template-columns: 1fr 1fr; }
+  .cd-projects-section,
+  .cd-facts-section,
+  .cd-related-section {
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-10);
+  }
+  .proj-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .proj-cta {
+    justify-content: center;
+  }
   .cd-apply-inner { flex-direction: column; align-items: flex-start; }
   .cd-apply-icon { display: none; }
   .cd-apply-ctas { width: 100%; }
@@ -778,4 +889,293 @@
 @media (max-width: 480px) {
   .cd-related-grid { grid-template-columns: 1fr; }
   .cd-hero-kpis { grid-template-columns: repeat(2, 1fr); }
+  .cd-related-stats {
+    grid-template-columns: 1fr;
+  }
+  .cd-prog-stats-row {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+}
+/* ---------------------------------------------------------
+   11. DETAIL PAGE REFINEMENT
+   Keeps constituency detail accurate for mixed project types.
+   --------------------------------------------------------- */
+.cd-hero {
+  min-height: 56vh;
+}
+
+.cd-hero .container {
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+
+.cd-hero-eyebrow,
+.cd-ward-pill,
+.con-browse-status,
+.proj-status-badge,
+.proj-con-tag {
+  letter-spacing: 0.06em;
+}
+
+.cd-hero-desc {
+  max-width: 680px;
+}
+
+.cd-hero-kpis {
+  gap: clamp(14px, 1.6vw, 22px);
+}
+
+.cd-kpi-card {
+  border-radius: 8px;
+  min-height: 132px;
+  justify-content: center;
+}
+
+.cd-kpi-lbl,
+.cd-prog-stat-lbl,
+.cd-related-stat-lbl,
+.proj-stat-lbl {
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.cd-ward-strip {
+  padding: var(--space-5) 0;
+}
+
+.cd-ward-strip-inner {
+  gap: 8px;
+}
+
+.cd-ward-pill {
+  min-height: 30px;
+  border-radius: 999px;
+}
+
+.cd-projects-section,
+.cd-facts-section,
+.cd-related-section {
+  padding-top: clamp(56px, 7vw, 84px);
+  padding-bottom: clamp(56px, 7vw, 84px);
+}
+
+.cd-section-header {
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.cd-section-sub {
+  max-width: 70ch;
+  line-height: 1.65;
+}
+
+.cd-view-all,
+.cd-btn-lime,
+.cd-btn-outline-light,
+.proj-cta {
+  border-radius: 8px;
+}
+
+.cd-projects-grid {
+  gap: clamp(20px, 2.4vw, 32px);
+}
+
+.proj-card {
+  border-radius: 8px;
+  border-color: #dbe8d2;
+  box-shadow: 0 10px 24px rgba(20, 54, 6, 0.07);
+}
+
+.proj-card-img {
+  height: 210px;
+}
+
+.proj-card-title {
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.proj-stat {
+  min-height: 74px;
+  justify-content: center;
+}
+
+.proj-milestone {
+  white-space: normal;
+  line-height: 1.45;
+  min-height: 38px;
+}
+
+.proj-card-footer {
+  align-items: center;
+}
+
+.proj-cta {
+  color: var(--white);
+  background: var(--primary-700);
+  justify-content: center;
+  min-width: 124px;
+}
+
+.proj-cta:hover {
+  color: var(--white);
+  background: var(--primary-900);
+}
+
+.cd-empty-text {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border-color: #cfe3c4;
+  background: linear-gradient(135deg, #f8fbf5 0%, #eef6e8 100%);
+  color: var(--primary-700);
+  font-weight: var(--weight-semibold);
+}
+
+.cd-progress-section {
+  padding: clamp(48px, 6vw, 72px) 0;
+}
+
+.cd-prog-inner {
+  gap: clamp(32px, 5vw, 72px);
+}
+
+.cd-prog-sub {
+  max-width: 68ch;
+}
+
+.cd-prog-right {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(159,232,112,0.18);
+  border-radius: 8px;
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.cd-prog-pct-display {
+  font-size: clamp(3.2rem, 6vw, 4.6rem);
+}
+
+.cd-prog-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.cd-prog-stat {
+  min-width: 0;
+}
+
+.cd-facts-inner {
+  gap: clamp(36px, 5vw, 72px);
+}
+
+.cd-fact-card {
+  border-radius: 8px;
+  min-height: 150px;
+}
+
+.cd-fact-card--wide {
+  grid-column: 1 / -1;
+}
+
+.cd-fact-ward-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-1);
+}
+
+.cd-fact-ward-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 51, 0, 0.14);
+  background: rgba(22, 51, 0, 0.055);
+  color: var(--primary-700);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+}
+
+.cd-mini-map-wrap {
+  border-radius: 8px;
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.cd-mini-map-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 360px;
+}
+
+.cd-related-grid {
+  gap: clamp(16px, 2vw, 24px);
+}
+
+.cd-related-card {
+  border-radius: 8px;
+  background: #f8fbf5;
+  border-color: #dbe8d2;
+  box-shadow: 0 8px 18px rgba(20, 54, 6, 0.05);
+}
+
+.cd-related-head {
+  min-height: 44px;
+}
+
+.cd-related-stats {
+  min-height: 70px;
+  align-items: center;
+}
+
+.cd-related-stat-lbl {
+  overflow-wrap: anywhere;
+}
+
+.cd-related-cta {
+  min-height: 34px;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--neutral-100);
+}
+
+.cd-apply-banner {
+  padding: clamp(36px, 5vw, 56px) 0;
+}
+
+.cd-apply-inner {
+  gap: clamp(20px, 4vw, 48px);
+}
+
+@media (max-width: 1024px) {
+  .cd-mini-map-wrap svg {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 767px) {
+  .cd-hero {
+    min-height: auto;
+  }
+  .cd-hero-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cd-kpi-card {
+    min-height: 116px;
+    padding: var(--space-5) var(--space-3);
+  }
+  .cd-prog-stats-row {
+    grid-template-columns: 1fr;
+  }
+  .cd-fact-card--wide {
+    grid-column: auto;
+  }
+  .cd-related-grid {
+    grid-template-columns: 1fr;
+  }
 }

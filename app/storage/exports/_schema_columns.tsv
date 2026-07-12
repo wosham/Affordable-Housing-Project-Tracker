@@ -1,0 +1,1383 @@
+﻿TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	COLUMN_KEY	COLUMN_DEFAULT	EXTRA
+announcements	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+announcements	author_id	int(10) unsigned	NO	MUL	NULL	
+announcements	title	varchar(255)	NO	UNI	NULL	
+announcements	body	text	NO		NULL	
+announcements	type	varchar(60)	YES	MUL	'info'	
+announcements	status	enum('draft','published','archived')	YES	MUL	'draft'	
+announcements	priority	enum('low','normal','high','urgent')	YES	MUL	'normal'	
+announcements	target_roles_json	text	YES		NULL	
+announcements	is_pinned	tinyint(1)	YES	MUL	0	
+announcements	cta_label	varchar(120)	YES		NULL	
+announcements	cta_url	varchar(255)	YES		NULL	
+announcements	created_at	timestamp	NO		current_timestamp()	
+announcements	published_at	datetime	YES	MUL	NULL	
+announcements	updated_at	datetime	YES		NULL	
+announcements	expires_at	datetime	YES	MUL	NULL	
+announcements	archived_at	datetime	YES		NULL	
+announcements	metadata_json	longtext	YES		NULL	
+attendance_gateways	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+attendance_gateways	project_id	int(10) unsigned	YES	MUL	NULL	
+attendance_gateways	work_location_id	int(10) unsigned	YES	MUL	NULL	
+attendance_gateways	date	date	NO		NULL	
+attendance_gateways	opened_by	int(10) unsigned	NO	MUL	NULL	
+attendance_gateways	opened_at	datetime	NO		NULL	
+attendance_gateways	closes_at	datetime	NO		NULL	
+attendance_gateways	is_open	tinyint(1)	YES		1	
+attendance_gateways	notes	text	YES		NULL	
+attendance_records	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+attendance_records	user_id	int(10) unsigned	NO	MUL	NULL	
+attendance_records	project_id	int(10) unsigned	YES	MUL	NULL	
+attendance_records	work_location_id	int(10) unsigned	YES	MUL	NULL	
+attendance_records	role_at_signin	varchar(60)	YES		NULL	
+attendance_records	gateway_id	int(10) unsigned	NO	MUL	NULL	
+attendance_records	date	date	NO	MUL	NULL	
+attendance_records	signin_time	time	YES		NULL	
+attendance_records	latitude	decimal(10,8)	YES		NULL	
+attendance_records	longitude	decimal(11,8)	YES		NULL	
+attendance_records	distance_from_site_m	decimal(8,1)	YES		NULL	
+attendance_records	accuracy_meters	decimal(8,1)	YES		NULL	
+attendance_records	status	enum('present','absent','geo-fail','outside-window','late')	YES		'absent'	
+attendance_records	review_status	enum('pending','accepted','flagged')	YES		'pending'	
+attendance_records	reviewed_by	int(10) unsigned	YES	MUL	NULL	
+attendance_records	reviewed_at	datetime	YES		NULL	
+attendance_records	created_at	timestamp	NO		current_timestamp()	
+audit_logs	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+audit_logs	user_id	int(10) unsigned	YES	MUL	NULL	
+audit_logs	actor_role	varchar(80)	YES	MUL	NULL	
+audit_logs	action	varchar(100)	NO	MUL	NULL	
+audit_logs	module	varchar(80)	NO	MUL	NULL	
+audit_logs	target_id	int(10) unsigned	YES		0	
+audit_logs	details_json	text	YES		NULL	
+audit_logs	ip	varchar(45)	YES	MUL	NULL	
+audit_logs	user_agent	varchar(255)	YES		NULL	
+audit_logs	request_method	varchar(10)	YES		NULL	
+audit_logs	route	varchar(255)	YES		NULL	
+audit_logs	severity	enum('info','warning','critical')	YES	MUL	'info'	
+audit_logs	event_hash	char(64)	YES	MUL	NULL	
+audit_logs	metadata_json	longtext	YES		NULL	
+audit_logs	created_at	timestamp	NO	MUL	current_timestamp()	
+boq_items	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+boq_items	project_id	int(10) unsigned	NO	MUL	NULL	
+boq_items	section	varchar(150)	NO		NULL	
+boq_items	item_no	varchar(20)	NO	MUL	NULL	
+boq_items	description	text	NO		NULL	
+boq_items	unit	varchar(30)	NO		NULL	
+boq_items	quantity	decimal(12,3)	YES		0.000	
+boq_items	rate	decimal(12,2)	YES		0.00	
+boq_items	amount	decimal(15,2)	YES		0.00	
+boq_items	certified_qty	decimal(12,3)	YES		0.000	
+boq_items	paid_qty	decimal(12,3)	YES		0.000	
+boq_items	status	varchar(40)	YES		'active'	
+boq_items	review_status	varchar(30)	NO		'pending'	
+boq_items	risk_status	varchar(30)	NO		'normal'	
+boq_items	manager_note	text	YES		NULL	
+boq_items	last_reviewed_by	int(10) unsigned	YES	MUL	NULL	
+boq_items	last_reviewed_at	datetime	YES		NULL	
+boq_items	certified_updated_by	int(10) unsigned	YES		NULL	
+boq_items	paid_updated_by	int(10) unsigned	YES		NULL	
+boq_items	updated_by	int(10) unsigned	YES		NULL	
+boq_items	last_certified_at	datetime	YES		NULL	
+boq_items	last_paid_at	datetime	YES		NULL	
+boq_items	notes	text	YES		NULL	
+boq_items	created_at	timestamp	NO		current_timestamp()	
+boq_items	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+boq_review_updates	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+boq_review_updates	boq_item_id	int(10) unsigned	NO	MUL	NULL	
+boq_review_updates	project_id	int(10) unsigned	NO	MUL	NULL	
+boq_review_updates	user_id	int(10) unsigned	YES	MUL	NULL	
+boq_review_updates	old_certified_qty	decimal(12,3)	YES		NULL	
+boq_review_updates	new_certified_qty	decimal(12,3)	YES		NULL	
+boq_review_updates	old_paid_qty	decimal(12,3)	YES		NULL	
+boq_review_updates	new_paid_qty	decimal(12,3)	YES		NULL	
+boq_review_updates	old_review_status	varchar(30)	YES		NULL	
+boq_review_updates	new_review_status	varchar(30)	YES		NULL	
+boq_review_updates	old_risk_status	varchar(30)	YES		NULL	
+boq_review_updates	new_risk_status	varchar(30)	YES		NULL	
+boq_review_updates	note	text	YES		NULL	
+boq_review_updates	created_at	timestamp	NO		current_timestamp()	
+cms_pages	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+cms_pages	slug	varchar(100)	NO	UNI	NULL	
+cms_pages	template	varchar(80)	YES		NULL	
+cms_pages	route_path	varchar(255)	YES		NULL	
+cms_pages	status	enum('published','draft','maintenance','hidden')	YES		'published'	
+cms_pages	seo_title	varchar(255)	YES		NULL	
+cms_pages	seo_description	text	YES		NULL	
+cms_pages	seo_keywords	text	YES		NULL	
+cms_pages	og_image_id	int(10) unsigned	YES		NULL	
+cms_pages	canonical_url	varchar(500)	YES		NULL	
+cms_pages	hero_image	varchar(255)	YES		NULL	
+cms_pages	updated_by	int(10) unsigned	YES		NULL	
+cms_pages	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+cms_revisions	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+cms_revisions	page_id	int(10) unsigned	NO	MUL	NULL	
+cms_revisions	section_id	int(10) unsigned	YES	MUL	NULL	
+cms_revisions	revision_type	enum('page','section','setting')	YES	MUL	'section'	
+cms_revisions	target_key	varchar(120)	YES		NULL	
+cms_revisions	snapshot_json	longtext	NO		NULL	
+cms_revisions	created_by	int(10) unsigned	YES	MUL	NULL	
+cms_revisions	created_at	timestamp	NO		current_timestamp()	
+cms_sections	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+cms_sections	page_id	int(10) unsigned	NO	MUL	NULL	
+cms_sections	section_key	varchar(80)	NO		NULL	
+cms_sections	label	varchar(150)	NO		NULL	
+cms_sections	section_type	varchar(60)	YES		'rich_text'	
+cms_sections	sort_order	smallint(5) unsigned	YES		0	
+cms_sections	editor_mode	varchar(40)	YES		'structured'	
+cms_sections	is_visible	tinyint(1)	YES		1	
+cms_sections	is_locked	tinyint(1)	YES		0	
+cms_sections	content_json	longtext	YES		NULL	
+cms_sections	updated_by	int(10) unsigned	YES		NULL	
+cms_sections	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+cms_settings	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+cms_settings	key	varchar(100)	NO	UNI	NULL	
+cms_settings	value	longtext	YES		NULL	
+cms_settings	type	enum('text','number','boolean','json','image','color')	YES		'text'	
+cms_settings	label	varchar(150)	NO		NULL	
+cms_settings	group	varchar(80)	NO		'global'	
+cms_settings	updated_by	int(10) unsigned	YES		NULL	
+cms_settings	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+community_liaison	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+community_liaison	project_id	int(10) unsigned	NO	MUL	NULL	
+community_liaison	log_date	date	NO		NULL	
+community_liaison	engagement_type	varchar(100)	YES		NULL	
+community_liaison	community_rep	varchar(150)	YES		NULL	
+community_liaison	issues_raised	text	YES		NULL	
+community_liaison	resolution	text	YES		NULL	
+community_liaison	follow_up_date	date	YES		NULL	
+community_liaison	recorded_by	int(10) unsigned	NO	MUL	NULL	
+community_liaison	created_at	timestamp	NO		current_timestamp()	
+community_liaison	status	enum('open','follow-up','resolved','closed')	YES	MUL	'open'	
+community_liaison	updated_by	int(10) unsigned	YES		NULL	
+community_liaison	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+community_liaison	closed_at	datetime	YES		NULL	
+constituencies	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+constituencies	name	varchar(100)	NO		NULL	
+constituencies	slug	varchar(100)	NO	UNI	NULL	
+constituencies	mp	varchar(120)	YES		NULL	
+constituencies	mp_photo	varchar(255)	YES		NULL	
+constituencies	description	text	YES		NULL	
+constituencies	population	int(10) unsigned	YES		NULL	
+constituencies	total_units	int(10) unsigned	YES		0	
+constituencies	total_projects	int(10) unsigned	YES		0	
+constituencies	avg_completion	tinyint(3) unsigned	YES		0	
+constituencies	status	enum('planning','active','completed')	YES		'planning'	
+constituencies	hero_image	varchar(255)	YES		NULL	
+constituencies	sort_order	smallint(5) unsigned	NO		90	
+constituencies	is_public	tinyint(1)	NO		1	
+constituencies	created_at	timestamp	NO		current_timestamp()	
+constituencies	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+contact_departments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+contact_departments	name	varchar(150)	NO	UNI	NULL	
+contact_departments	subject_key	varchar(80)	YES	MUL	NULL	
+contact_departments	role	varchar(255)	YES		NULL	
+contact_departments	email	varchar(150)	YES		NULL	
+contact_departments	phone	varchar(50)	YES		NULL	
+contact_departments	icon	varchar(80)	YES		NULL	
+contact_departments	accent	varchar(30)	YES		NULL	
+contact_departments	sort_order	smallint(5) unsigned	YES		0	
+contact_departments	is_visible	tinyint(1)	YES	MUL	1	
+contact_replies	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+contact_replies	contact_submission_id	int(10) unsigned	NO	MUL	NULL	
+contact_replies	sender_user_id	int(10) unsigned	YES	MUL	NULL	
+contact_replies	recipient_email	varchar(160)	NO		NULL	
+contact_replies	subject	varchar(220)	NO		NULL	
+contact_replies	body	text	NO		NULL	
+contact_replies	delivery_status	enum('pending','sent','failed')	NO	MUL	'pending'	
+contact_replies	provider_message_id	varchar(120)	YES		NULL	
+contact_replies	error_message	varchar(500)	YES		NULL	
+contact_replies	created_at	timestamp	NO		current_timestamp()	
+contact_submissions	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+contact_submissions	name	varchar(150)	NO		NULL	
+contact_submissions	email	varchar(160)	NO	MUL	NULL	
+contact_submissions	phone	varchar(30)	YES		NULL	
+contact_submissions	subject	varchar(200)	YES		NULL	
+contact_submissions	message	text	NO		NULL	
+contact_submissions	attachment_path	varchar(255)	YES		NULL	
+contact_submissions	is_read	tinyint(1)	YES	MUL	0	
+contact_submissions	status	enum('new','read','replied','archived')	NO	MUL	'new'	
+contact_submissions	assigned_to	int(10) unsigned	YES	MUL	NULL	
+contact_submissions	internal_thread_id	int(10) unsigned	YES	MUL	NULL	
+contact_submissions	replied_at	datetime	YES		NULL	
+contact_submissions	response_note	text	YES		NULL	
+contact_submissions	read_at	datetime	YES		NULL	
+contact_submissions	archived_at	datetime	YES		NULL	
+contact_submissions	ip_address	varchar(64)	YES	MUL	NULL	
+contact_submissions	user_agent	varchar(255)	YES		NULL	
+contact_submissions	source_url	varchar(500)	YES		NULL	
+contact_submissions	updated_by	int(10) unsigned	YES		NULL	
+contact_submissions	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+contact_submissions	created_at	timestamp	NO	MUL	current_timestamp()	
+contractors	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+contractors	company_name	varchar(200)	NO		NULL	
+contractors	slug	varchar(220)	NO	UNI	NULL	
+contractors	initials	varchar(12)	YES		NULL	
+contractors	nca_grade	varchar(80)	YES		NULL	
+contractors	contact_person	varchar(160)	YES		NULL	
+contractors	email	varchar(180)	YES		NULL	
+contractors	phone	varchar(80)	YES		NULL	
+contractors	website	varchar(255)	YES		NULL	
+contractors	project_id	int(10) unsigned	YES	MUL	NULL	
+contractors	constituency_id	int(10) unsigned	YES	MUL	NULL	
+contractors	status	enum('active','tendering','inactive','completed')	NO	MUL	'active'	
+contractors	progress_pct	tinyint(3) unsigned	NO		0	
+contractors	quote	text	YES		NULL	
+contractors	logo_path	varchar(255)	YES		NULL	
+contractors	sort_order	smallint(5) unsigned	NO		0	
+contractors	created_at	timestamp	YES		current_timestamp()	
+contractors	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+contractor_submission_attachments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+contractor_submission_attachments	submission_type	enum('eot','variation','rfi','shop_drawing','material')	NO	MUL	NULL	
+contractor_submission_attachments	submission_id	int(10) unsigned	NO		NULL	
+contractor_submission_attachments	project_id	int(10) unsigned	NO	MUL	NULL	
+contractor_submission_attachments	media_id	int(10) unsigned	YES	MUL	NULL	
+contractor_submission_attachments	path	varchar(255)	YES		NULL	
+contractor_submission_attachments	title	varchar(180)	YES		NULL	
+contractor_submission_attachments	uploaded_by	int(10) unsigned	NO	MUL	NULL	
+contractor_submission_attachments	created_at	timestamp	NO		current_timestamp()	
+defects	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+defects	defect_reference	varchar(80)	YES		NULL	
+defects	project_id	int(10) unsigned	NO	MUL	NULL	
+defects	raised_by	int(10) unsigned	NO	MUL	NULL	
+defects	raised_date	date	NO		NULL	
+defects	location	varchar(200)	YES		NULL	
+defects	description	text	NO		NULL	
+defects	severity	enum('minor','major','critical')	YES		'minor'	
+defects	photo_path	varchar(255)	YES		NULL	
+defects	evidence_media_id	int(10) unsigned	YES		NULL	
+defects	assigned_to	int(10) unsigned	YES	MUL	NULL	
+defects	due_date	date	YES		NULL	
+defects	closed_date	date	YES		NULL	
+defects	status	enum('open','in-progress','resolved','closed')	YES		'open'	
+defects	rectification_notes	text	YES		NULL	
+defects	verified_fixed_by	int(10) unsigned	YES		NULL	
+defects	verified_fixed_at	datetime	YES		NULL	
+defects	created_at	timestamp	NO		current_timestamp()	
+defects	consultant_review_status	varchar(30)	NO		'pending'	
+defects	consultant_review_note	text	YES		NULL	
+defects	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+defects	consultant_reviewed_at	datetime	YES		NULL	
+defects	consultant_severity	varchar(30)	NO		'minor'	
+defects	consultant_documents_checked	tinyint(1)	NO		0	
+defects	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+documents	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+documents	project_id	int(10) unsigned	NO	MUL	NULL	
+documents	uploaded_by	int(10) unsigned	NO	MUL	NULL	
+documents	category	enum('contract','drawing','spec','report','correspondence','shop-drawing','quality-test','other')	YES	MUL	'other'	
+documents	clerk_document_type	varchar(60)	YES		NULL	
+documents	filename	varchar(255)	NO		NULL	
+documents	original_name	varchar(255)	NO		NULL	
+documents	size	int(10) unsigned	NO		NULL	
+documents	version	varchar(20)	YES		'1.0'	
+documents	site_record_date	date	YES		NULL	
+documents	linked_record_type	varchar(60)	YES		NULL	
+documents	linked_record_id	int(10) unsigned	YES		NULL	
+documents	description	text	YES		NULL	
+documents	is_confidential	tinyint(1)	YES		0	
+documents	review_required	tinyint(1)	NO		0	
+documents	created_at	timestamp	NO		current_timestamp()	
+documents	consultant_review_status	varchar(30)	NO		'pending'	
+documents	consultant_review_note	text	YES		NULL	
+documents	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+documents	consultant_reviewed_at	datetime	YES		NULL	
+documents	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+email_logs	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+email_logs	provider	varchar(40)	YES		'resend'	
+email_logs	provider_message_id	varchar(120)	YES	MUL	NULL	
+email_logs	recipient_email	varchar(190)	NO	MUL	NULL	
+email_logs	recipient_user_id	int(10) unsigned	YES	MUL	NULL	
+email_logs	subject	varchar(255)	NO		NULL	
+email_logs	template_key	varchar(80)	YES		NULL	
+email_logs	status	enum('queued','sent','failed','skipped')	YES	MUL	'queued'	
+email_logs	error_message	text	YES		NULL	
+email_logs	payload_json	longtext	YES		NULL	
+email_logs	sent_at	datetime	YES		NULL	
+email_logs	created_at	timestamp	NO		current_timestamp()	
+environmental_logs	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+environmental_logs	project_id	int(10) unsigned	NO	MUL	NULL	
+environmental_logs	log_date	date	NO		NULL	
+environmental_logs	observation_type	varchar(100)	YES		NULL	
+environmental_logs	description	text	NO		NULL	
+environmental_logs	action_taken	text	YES		NULL	
+environmental_logs	recorded_by	int(10) unsigned	NO	MUL	NULL	
+environmental_logs	created_at	timestamp	NO		current_timestamp()	
+eot_requests	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+eot_requests	project_id	int(10) unsigned	NO	MUL	NULL	
+eot_requests	submitted_by	int(10) unsigned	NO	MUL	NULL	
+eot_requests	eot_number	smallint(5) unsigned	NO		NULL	
+eot_requests	days_requested	smallint(5) unsigned	NO		NULL	
+eot_requests	reason	text	NO		NULL	
+eot_requests	supporting_evidence	varchar(255)	YES		NULL	
+eot_requests	status	enum('pending','granted','partially-granted','rejected')	YES	MUL	'pending'	
+eot_requests	granted_days	smallint(5) unsigned	YES		NULL	
+eot_requests	approved_by	int(10) unsigned	YES	MUL	NULL	
+eot_requests	approved_at	datetime	YES		NULL	
+eot_requests	created_at	timestamp	NO		current_timestamp()	
+eot_requests	manager_recommendation	enum('pending','approve','partial','reject','clarification')	YES	MUL	'pending'	
+eot_requests	manager_recommended_days	smallint(5) unsigned	YES		NULL	
+eot_requests	manager_review_note	text	YES		NULL	
+eot_requests	manager_reviewed_by	int(10) unsigned	YES		NULL	
+eot_requests	manager_reviewed_at	datetime	YES		NULL	
+eot_requests	delay_category	varchar(80)	YES		NULL	
+eot_requests	impact_summary	text	YES		NULL	
+eot_requests	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+eot_requests	consultant_review_status	varchar(30)	NO		'pending'	
+eot_requests	consultant_review_note	text	YES		NULL	
+eot_requests	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+eot_requests	consultant_reviewed_at	datetime	YES		NULL	
+eot_requests	consultant_recommended_days	smallint(5) unsigned	YES		NULL	
+eot_requests	consultant_delay_category	varchar(80)	YES		NULL	
+eot_requests	consultant_documents_checked	tinyint(1)	NO		0	
+equipment_register	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+equipment_register	project_id	int(10) unsigned	NO	MUL	NULL	
+equipment_register	equipment_type	varchar(120)	NO		NULL	
+equipment_register	registration	varchar(60)	YES		NULL	
+equipment_register	owner	varchar(150)	YES		NULL	
+equipment_register	date_on_site	date	YES		NULL	
+equipment_register	date_off_site	date	YES		NULL	
+equipment_register	condition	varchar(60)	YES		'good'	
+equipment_register	status	enum('on-site','off-site','maintenance')	NO		'on-site'	
+equipment_register	check_status	enum('pending','present','missing','off-site','maintenance','queried')	NO		'pending'	
+equipment_register	checked_by	int(10) unsigned	YES		NULL	
+equipment_register	checked_at	datetime	YES		NULL	
+equipment_register	check_notes	text	YES		NULL	
+equipment_register	updated_by	int(10) unsigned	YES		NULL	
+equipment_register	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+equipment_register	created_at	timestamp	NO		current_timestamp()	
+faq_categories	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+faq_categories	name	varchar(120)	NO		NULL	
+faq_categories	slug	varchar(140)	NO	UNI	NULL	
+faq_categories	icon	varchar(80)	YES		NULL	
+faq_categories	description	text	YES		NULL	
+faq_categories	sort_order	smallint(5) unsigned	YES		0	
+faq_categories	status	enum('published','draft')	NO		'published'	
+faq_categories	created_at	timestamp	YES		current_timestamp()	
+faq_categories	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+faq_items	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+faq_items	category_id	int(10) unsigned	YES		NULL	
+faq_items	slug	varchar(180)	YES		NULL	
+faq_items	question	text	NO		NULL	
+faq_items	answer	longtext	NO		NULL	
+faq_items	category	varchar(100)	YES		NULL	
+faq_items	sort_order	smallint(5) unsigned	YES		0	
+faq_items	is_popular	tinyint(1)	NO		0	
+faq_items	status	enum('published','draft')	NO		'published'	
+faq_items	search_keywords	text	YES		NULL	
+faq_items	created_by	int(10) unsigned	YES		NULL	
+faq_items	updated_by	int(10) unsigned	YES		NULL	
+faq_items	created_at	timestamp	YES		current_timestamp()	
+faq_items	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+faq_items	is_visible	tinyint(1)	YES		1	
+gallery_categories	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+gallery_categories	name	varchar(100)	NO		NULL	
+gallery_categories	slug	varchar(100)	NO	UNI	NULL	
+gallery_categories	project_id	int(10) unsigned	YES	MUL	NULL	
+gallery_categories	sort_order	smallint(5) unsigned	YES		0	
+gallery_images	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+gallery_images	category_id	int(10) unsigned	YES	MUL	NULL	
+gallery_images	image_id	int(10) unsigned	YES		NULL	
+gallery_images	thumbnail_media_id	int(10) unsigned	YES		NULL	
+gallery_images	project_id	int(10) unsigned	YES		NULL	
+gallery_images	constituency_id	int(10) unsigned	YES		NULL	
+gallery_images	title	varchar(255)	YES		NULL	
+gallery_images	caption	varchar(255)	YES		NULL	
+gallery_images	alt_text	varchar(255)	YES		NULL	
+gallery_images	credit	varchar(180)	YES		NULL	
+gallery_images	taken_at	date	YES		NULL	
+gallery_images	location	varchar(200)	YES		NULL	
+gallery_images	site_key	varchar(100)	YES	MUL	NULL	
+gallery_images	year	smallint(5) unsigned	YES	MUL	NULL	
+gallery_images	media_type	enum('image','video')	YES	MUL	'image'	
+gallery_images	video_url	varchar(500)	YES		NULL	
+gallery_images	duration	varchar(30)	YES		NULL	
+gallery_images	external_url	varchar(500)	YES		NULL	
+gallery_images	highlight_summary	text	YES		NULL	
+gallery_images	is_featured	tinyint(1)	YES		0	
+gallery_images	is_highlight	tinyint(1)	NO		0	
+gallery_images	status	enum('draft','published','hidden')	NO	MUL	'published'	
+gallery_images	sort_order	smallint(5) unsigned	YES		0	
+gallery_images	updated_at	timestamp	YES		NULL	on update current_timestamp()
+gallery_media	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+gallery_media	gallery_id	int(10) unsigned	NO	MUL	NULL	
+gallery_media	media_id	int(10) unsigned	YES	MUL	NULL	
+gallery_media	thumbnail_media_id	int(10) unsigned	YES	MUL	NULL	
+gallery_media	media_type	enum('image','video')	NO	MUL	'image'	
+gallery_media	video_url	varchar(500)	YES		NULL	
+gallery_media	caption	varchar(255)	YES		NULL	
+gallery_media	alt_text	varchar(255)	YES		NULL	
+gallery_media	sort_order	smallint(5) unsigned	YES		0	
+gallery_media	created_at	timestamp	YES		current_timestamp()	
+gallery_media	updated_at	timestamp	YES		NULL	on update current_timestamp()
+geo_fences	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+geo_fences	project_id	int(10) unsigned	NO	MUL	NULL	
+geo_fences	site_name	varchar(150)	NO		NULL	
+geo_fences	latitude	decimal(10,8)	NO		NULL	
+geo_fences	longitude	decimal(11,8)	NO		NULL	
+geo_fences	radius_meters	int(10) unsigned	YES		200	
+geo_fences	status	enum('configured','missing','needs-review')	YES		'configured'	
+geo_fences	created_by	int(10) unsigned	NO	MUL	NULL	
+geo_fences	verified_by	int(10) unsigned	YES	MUL	NULL	
+geo_fences	verified_at	datetime	YES		NULL	
+geo_fences	notes	text	YES		NULL	
+geo_fences	created_at	timestamp	NO		current_timestamp()	
+hs_incidents	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+hs_incidents	project_id	int(10) unsigned	NO	MUL	NULL	
+hs_incidents	incident_date	date	NO		NULL	
+hs_incidents	incident_type	enum('near-miss','first-aid','medical','fatality')	NO		NULL	
+hs_incidents	description	text	NO		NULL	
+hs_incidents	persons_involved	text	YES		NULL	
+hs_incidents	cause	text	YES		NULL	
+hs_incidents	corrective_action	text	YES		NULL	
+hs_incidents	immediate_action	text	YES		NULL	
+hs_incidents	lost_time_hours	decimal(6,2)	NO		0.00	
+hs_incidents	reported_by	int(10) unsigned	NO	MUL	NULL	
+hs_incidents	severity	enum('low','medium','high','critical')	YES		'medium'	
+hs_incidents	created_at	timestamp	NO		current_timestamp()	
+hs_incidents	status	enum('open','investigating','action-pending','resolved','closed')	YES	MUL	'open'	
+hs_incidents	follow_up_date	date	YES	MUL	NULL	
+hs_incidents	closed_at	datetime	YES		NULL	
+hs_incidents	updated_by	int(10) unsigned	YES		NULL	
+hs_incidents	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+hs_incidents	attachment_path	varchar(255)	YES		NULL	
+hs_incidents	evidence_media_id	int(10) unsigned	YES		NULL	
+inspection_test_plans	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+inspection_test_plans	project_id	int(10) unsigned	NO	MUL	NULL	
+inspection_test_plans	activity	varchar(200)	NO		NULL	
+inspection_test_plans	inspection_area	varchar(180)	YES		NULL	
+inspection_test_plans	hold_point	varchar(100)	YES		NULL	
+inspection_test_plans	inspection_date	date	YES		NULL	
+inspection_test_plans	inspected_by	int(10) unsigned	YES	MUL	NULL	
+inspection_test_plans	outcome	varchar(100)	YES		NULL	
+inspection_test_plans	clerk_notes	text	YES		NULL	
+inspection_test_plans	witness_required	tinyint(1)	YES		0	
+inspection_test_plans	document_path	varchar(255)	YES		NULL	
+inspection_test_plans	evidence_media_id	int(10) unsigned	YES		NULL	
+inspection_test_plans	inspection_status	enum('pending','passed','failed','rework-required')	NO		'pending'	
+inspection_test_plans	verified_by	int(10) unsigned	YES		NULL	
+inspection_test_plans	verified_at	datetime	YES		NULL	
+inspection_test_plans	created_at	timestamp	NO		current_timestamp()	
+inspection_test_plans	consultant_review_status	varchar(30)	NO		'pending'	
+inspection_test_plans	consultant_review_note	text	YES		NULL	
+inspection_test_plans	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+inspection_test_plans	consultant_reviewed_at	datetime	YES		NULL	
+inspection_test_plans	consultant_severity	varchar(30)	NO		'minor'	
+inspection_test_plans	consultant_documents_checked	tinyint(1)	NO		0	
+inspection_test_plans	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+intern_site_entries	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+intern_site_entries	project_id	int(10) unsigned	NO	MUL	NULL	
+intern_site_entries	user_id	int(10) unsigned	NO	MUL	NULL	
+intern_site_entries	entry_date	date	NO		NULL	
+intern_site_entries	entry_title	varchar(180)	YES		NULL	
+intern_site_entries	work_observed	text	YES		NULL	
+intern_site_entries	labour_observed	text	YES		NULL	
+intern_site_entries	materials_observed	text	YES		NULL	
+intern_site_entries	equipment_observed	text	YES		NULL	
+intern_site_entries	weather_condition	varchar(180)	YES		NULL	
+intern_site_entries	issues	text	YES		NULL	
+intern_site_entries	safety_observations	text	YES		NULL	
+intern_site_entries	progress_note	text	YES		NULL	
+intern_site_entries	milestone_id	int(10) unsigned	YES	MUL	NULL	
+intern_site_entries	media_id	int(10) unsigned	YES	MUL	NULL	
+intern_site_entries	status	enum('draft','submitted','reviewed','needs-correction')	NO	MUL	'submitted'	
+intern_site_entries	reviewed_by	int(10) unsigned	YES	MUL	NULL	
+intern_site_entries	reviewed_at	datetime	YES		NULL	
+intern_site_entries	review_note	text	YES		NULL	
+intern_site_entries	created_at	timestamp	NO		current_timestamp()	
+intern_site_entries	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+intern_site_photos	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+intern_site_photos	project_id	int(10) unsigned	NO	MUL	NULL	
+intern_site_photos	user_id	int(10) unsigned	NO	MUL	NULL	
+intern_site_photos	media_id	int(10) unsigned	NO	MUL	NULL	
+intern_site_photos	caption	varchar(500)	YES		NULL	
+intern_site_photos	category	enum('progress','material','equipment','safety','issue','general')	NO		'general'	
+intern_site_photos	latitude	decimal(10,8)	YES		NULL	
+intern_site_photos	longitude	decimal(11,8)	YES		NULL	
+intern_site_photos	status	enum('submitted','reviewed','deleted')	NO		'submitted'	
+intern_site_photos	reviewed_by	int(10) unsigned	YES	MUL	NULL	
+intern_site_photos	reviewed_at	datetime	YES		NULL	
+intern_site_photos	review_note	text	YES		NULL	
+intern_site_photos	deleted_at	datetime	YES		NULL	
+intern_site_photos	created_at	timestamp	NO		current_timestamp()	
+ipcs	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+ipcs	project_id	int(10) unsigned	NO	MUL	NULL	
+ipcs	contractor_id	int(10) unsigned	NO	MUL	NULL	
+ipcs	ipc_number	smallint(5) unsigned	NO		NULL	
+ipcs	contractor_reference	varchar(100)	YES		NULL	
+ipcs	period_from	date	NO		NULL	
+ipcs	period_to	date	NO		NULL	
+ipcs	gross_amount	decimal(15,2)	YES		0.00	
+ipcs	retention_amount	decimal(15,2)	YES		0.00	
+ipcs	net_amount	decimal(15,2)	YES		0.00	
+ipcs	declaration_accepted	tinyint(1)	NO		0	
+ipcs	status	enum('draft','submitted','clerk-endorsed','certified','endorsed','approved','rejected','paid')	YES	MUL	'draft'	
+ipcs	current_stage	varchar(60)	NO		'contractor_submission'	
+ipcs	submitted_at	datetime	YES	MUL	NULL	
+ipcs	certified_at	datetime	YES		NULL	
+ipcs	certified_by	int(10) unsigned	YES		NULL	
+ipcs	certification_comment	text	YES		NULL	
+ipcs	clerk_verification_comment	text	YES		NULL	
+ipcs	clerk_checklist_json	text	YES		NULL	
+ipcs	clerk_verified_by	int(10) unsigned	YES		NULL	
+ipcs	clerk_verified_at	datetime	YES		NULL	
+ipcs	approved_at	datetime	YES	MUL	NULL	
+ipcs	approved_by	int(10) unsigned	YES		NULL	
+ipcs	rejected_by	int(10) unsigned	YES		NULL	
+ipcs	rejected_at	datetime	YES		NULL	
+ipcs	rejection_reason	text	YES		NULL	
+ipcs	paid_at	datetime	YES	MUL	NULL	
+ipcs	paid_by	int(10) unsigned	YES		NULL	
+ipcs	payment_status	varchar(30)	NO	MUL	'unpaid'	
+ipcs	payment_reference	varchar(100)	YES		NULL	
+ipcs	payment_comment	text	YES		NULL	
+ipcs	created_at	timestamp	NO		current_timestamp()	
+ipcs	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+ipc_approvals	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+ipc_approvals	ipc_id	int(10) unsigned	NO	MUL	NULL	
+ipc_approvals	step	tinyint(3) unsigned	NO		NULL	
+ipc_approvals	action_by	int(10) unsigned	NO	MUL	NULL	
+ipc_approvals	action	enum('endorsed','certified','approved','paid','rejected')	NO	MUL	NULL	
+ipc_approvals	comments	text	YES		NULL	
+ipc_approvals	actioned_at	datetime	NO	MUL	NULL	
+ipc_attachments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+ipc_attachments	ipc_id	int(10) unsigned	NO	MUL	NULL	
+ipc_attachments	media_id	int(10) unsigned	YES	MUL	NULL	
+ipc_attachments	path	varchar(255)	YES		NULL	
+ipc_attachments	title	varchar(180)	YES		NULL	
+ipc_attachments	uploaded_by	int(10) unsigned	NO	MUL	NULL	
+ipc_attachments	created_at	timestamp	NO		current_timestamp()	
+ipc_lines	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+ipc_lines	ipc_id	int(10) unsigned	NO	MUL	NULL	
+ipc_lines	boq_item_id	int(10) unsigned	YES	MUL	NULL	
+ipc_lines	description	text	NO		NULL	
+ipc_lines	qty_this_period	decimal(12,3)	YES		0.000	
+ipc_lines	cumulative_qty	decimal(12,3)	YES		0.000	
+ipc_lines	clerk_verified_qty	decimal(12,3)	YES		NULL	
+ipc_lines	clerk_variance_qty	decimal(12,3)	YES		NULL	
+ipc_lines	rate	decimal(12,2)	YES		0.00	
+ipc_lines	amount	decimal(15,2)	YES		0.00	
+ipc_lines	clerk_note	text	YES		NULL	
+ipc_lines	clerk_verified_by	int(10) unsigned	YES		NULL	
+ipc_lines	clerk_verified_at	datetime	YES		NULL	
+labour_register	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+labour_register	project_id	int(10) unsigned	NO	MUL	NULL	
+labour_register	diary_date	date	NO		NULL	
+labour_register	skilled_count	smallint(5) unsigned	YES		0	
+labour_register	unskilled_count	smallint(5) unsigned	YES		0	
+labour_register	supervisor_count	smallint(5) unsigned	YES		0	
+labour_register	total	smallint(5) unsigned	YES		0	
+labour_register	clerk_skilled_count	smallint(5) unsigned	YES		NULL	
+labour_register	clerk_unskilled_count	smallint(5) unsigned	YES		NULL	
+labour_register	clerk_supervisor_count	smallint(5) unsigned	YES		NULL	
+labour_register	clerk_total	smallint(5) unsigned	YES		NULL	
+labour_register	variance_total	smallint(6)	YES		NULL	
+labour_register	recorded_by	int(10) unsigned	NO	MUL	NULL	
+labour_register	status	enum('submitted','reviewed')	NO		'submitted'	
+labour_register	verification_status	enum('pending','verified','queried')	NO		'pending'	
+labour_register	verified_by	int(10) unsigned	YES		NULL	
+labour_register	verified_at	datetime	YES		NULL	
+labour_register	verification_notes	text	YES		NULL	
+labour_register	updated_by	int(10) unsigned	YES		NULL	
+labour_register	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+leadership_profiles	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+leadership_profiles	slug	varchar(180)	YES	UNI	NULL	
+leadership_profiles	profile_type	varchar(60)	NO	MUL	'national'	
+leadership_profiles	parent_id	int(10) unsigned	YES		NULL	
+leadership_profiles	tier	smallint(5) unsigned	NO		1	
+leadership_profiles	icon	varchar(80)	YES		NULL	
+leadership_profiles	initials	varchar(12)	YES		NULL	
+leadership_profiles	appointment_label	varchar(180)	YES		NULL	
+leadership_profiles	appointment_source	varchar(220)	YES		NULL	
+leadership_profiles	name	varchar(150)	NO		NULL	
+leadership_profiles	title	varchar(150)	NO		NULL	
+leadership_profiles	organisation	varchar(200)	YES		NULL	
+leadership_profiles	photo_id	int(10) unsigned	YES		NULL	
+leadership_profiles	photo_path	varchar(255)	YES		NULL	
+leadership_profiles	bio	text	YES		NULL	
+leadership_profiles	quote	text	YES		NULL	
+leadership_profiles	responsibilities_json	longtext	YES		NULL	
+leadership_profiles	email	varchar(180)	YES		NULL	
+leadership_profiles	phone	varchar(80)	YES		NULL	
+leadership_profiles	office_location	varchar(220)	YES		NULL	
+leadership_profiles	sort_order	smallint(5) unsigned	YES		0	
+leadership_profiles	is_visible	tinyint(1)	YES		1	
+leadership_profiles	show_in_org_chart	tinyint(1)	NO		1	
+leadership_profiles	show_in_cards	tinyint(1)	NO		1	
+leadership_profiles	show_in_spotlight	tinyint(1)	NO		0	
+leadership_profiles	status	enum('published','draft')	NO		'published'	
+leadership_profiles	social_links_json	text	YES		NULL	
+leadership_profiles	created_at	timestamp	YES		current_timestamp()	
+leadership_profiles	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+leadership_quotes	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+leadership_quotes	quote_text	text	NO		NULL	
+leadership_quotes	author_name	varchar(160)	NO		NULL	
+leadership_quotes	author_title	varchar(220)	YES		NULL	
+leadership_quotes	source_type	varchar(60)	NO		'leader'	
+leadership_quotes	source_id	int(10) unsigned	YES		NULL	
+leadership_quotes	avatar_label	varchar(12)	YES		NULL	
+leadership_quotes	theme	varchar(40)	NO		'green'	
+leadership_quotes	status	enum('published','draft')	NO	MUL	'published'	
+leadership_quotes	is_featured	tinyint(1)	NO		1	
+leadership_quotes	sort_order	smallint(5) unsigned	NO		0	
+leadership_quotes	created_at	timestamp	YES		current_timestamp()	
+leadership_quotes	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+liquidated_damages	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+liquidated_damages	project_id	int(10) unsigned	NO	MUL	NULL	
+liquidated_damages	rate_per_day	decimal(12,2)	NO		NULL	
+liquidated_damages	days_overdue	smallint(5) unsigned	YES		0	
+liquidated_damages	total_ld	decimal(15,2)	YES		0.00	
+liquidated_damages	applied_to_ipc_id	int(10) unsigned	YES	MUL	NULL	
+liquidated_damages	notes	text	YES		NULL	
+liquidated_damages	created_at	timestamp	NO		current_timestamp()	
+liquidated_damages	status	enum('draft','pending','applied','suspended','waived')	YES	MUL	'draft'	
+liquidated_damages	calculated_by	int(10) unsigned	YES		NULL	
+liquidated_damages	updated_by	int(10) unsigned	YES		NULL	
+liquidated_damages	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+liquidated_damages	applied_at	datetime	YES		NULL	
+manager_project_notes	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+manager_project_notes	project_id	int(10) unsigned	NO	MUL	NULL	
+manager_project_notes	manager_id	int(10) unsigned	NO	MUL	NULL	
+manager_project_notes	note_type	varchar(40)	NO		'monitoring'	
+manager_project_notes	title	varchar(180)	NO		NULL	
+manager_project_notes	body	text	YES		NULL	
+manager_project_notes	severity	varchar(30)	NO	MUL	'normal'	
+manager_project_notes	status	varchar(30)	NO		'open'	
+manager_project_notes	created_at	timestamp	NO		current_timestamp()	
+manager_project_notes	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+material_approvals	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+material_approvals	project_id	int(10) unsigned	NO	MUL	NULL	
+material_approvals	material	varchar(150)	NO		NULL	
+material_approvals	specification	text	YES		NULL	
+material_approvals	submitted_by	int(10) unsigned	NO	MUL	NULL	
+material_approvals	submitted_date	date	NO		NULL	
+material_approvals	approved_by	int(10) unsigned	YES	MUL	NULL	
+material_approvals	approved_date	date	YES		NULL	
+material_approvals	status	enum('pending','approved','rejected')	YES	MUL	'pending'	
+material_approvals	notes	text	YES		NULL	
+material_approvals	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+material_deliveries	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+material_deliveries	project_id	int(10) unsigned	NO	MUL	NULL	
+material_deliveries	material	varchar(150)	NO		NULL	
+material_deliveries	supplier	varchar(150)	YES		NULL	
+material_deliveries	delivery_date	date	NO		NULL	
+material_deliveries	quantity	decimal(12,3)	NO		NULL	
+material_deliveries	verified_quantity	decimal(12,3)	YES		NULL	
+material_deliveries	unit	varchar(30)	NO		NULL	
+material_deliveries	delivery_note_no	varchar(60)	YES		NULL	
+material_deliveries	received_by	int(10) unsigned	NO	MUL	NULL	
+material_deliveries	condition	varchar(60)	YES		'good'	
+material_deliveries	approved	tinyint(1)	YES		0	
+material_deliveries	status	enum('submitted','accepted','queried')	NO		'submitted'	
+material_deliveries	verification_status	enum('pending','accepted','queried','rejected')	NO		'pending'	
+material_deliveries	verified_by	int(10) unsigned	YES		NULL	
+material_deliveries	verified_at	datetime	YES		NULL	
+material_deliveries	verification_notes	text	YES		NULL	
+material_deliveries	updated_by	int(10) unsigned	YES		NULL	
+material_deliveries	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+material_deliveries	created_at	timestamp	NO		current_timestamp()	
+media_library	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+media_library	filename	varchar(255)	NO		NULL	
+media_library	original_name	varchar(255)	NO		NULL	
+media_library	title	varchar(180)	YES		NULL	
+media_library	path	varchar(255)	NO	MUL	NULL	
+media_library	url	varchar(500)	NO		NULL	
+media_library	type	varchar(100)	NO	MUL	NULL	
+media_library	size	int(10) unsigned	NO		NULL	
+media_library	width	int(10) unsigned	YES		NULL	
+media_library	height	int(10) unsigned	YES		NULL	
+media_library	extension	varchar(20)	YES		NULL	
+media_library	alt_text	varchar(255)	YES		NULL	
+media_library	caption	text	YES		NULL	
+media_library	tags_json	longtext	YES		NULL	
+media_library	uploaded_by	int(10) unsigned	NO	MUL	NULL	
+media_library	folder	varchar(100)	YES	MUL	'general'	
+media_library	source	varchar(60)	NO		'upload'	
+media_library	is_protected	tinyint(1)	NO		0	
+media_library	created_at	timestamp	NO		current_timestamp()	
+media_library	updated_at	timestamp	YES		NULL	on update current_timestamp()
+media_library	deleted_at	datetime	YES	MUL	NULL	
+media_usage	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+media_usage	media_id	int(10) unsigned	NO	MUL	NULL	
+media_usage	module	varchar(80)	NO		NULL	
+media_usage	owner_type	varchar(80)	NO		NULL	
+media_usage	owner_id	int(10) unsigned	YES		NULL	
+media_usage	field_name	varchar(120)	YES		NULL	
+media_usage	label	varchar(180)	YES		NULL	
+media_usage	url	varchar(500)	YES		NULL	
+media_usage	created_at	timestamp	NO		current_timestamp()	
+messages	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+messages	thread_id	int(10) unsigned	NO	MUL	NULL	
+messages	sender_id	int(10) unsigned	NO	MUL	NULL	
+messages	parent_id	int(10) unsigned	YES		NULL	
+messages	body	text	NO		NULL	
+messages	created_at	timestamp	NO		current_timestamp()	
+messages	edited_at	datetime	YES		NULL	
+messages	is_deleted	tinyint(1)	YES		0	
+messages	deleted_by	int(10) unsigned	YES		NULL	
+messages	deleted_at	datetime	YES		NULL	
+messages	metadata_json	longtext	YES		NULL	
+message_attachments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+message_attachments	message_id	int(10) unsigned	YES	MUL	NULL	
+message_attachments	uploaded_by	int(10) unsigned	YES		NULL	
+message_attachments	filename	varchar(255)	NO		NULL	
+message_attachments	original_name	varchar(255)	NO		NULL	
+message_attachments	size	int(10) unsigned	NO		NULL	
+message_attachments	type	varchar(100)	NO		NULL	
+message_attachments	mime_type	varchar(120)	YES		NULL	
+message_attachments	path	varchar(255)	NO		NULL	
+message_attachments	created_at	timestamp	NO		current_timestamp()	
+message_attachments	download_count	int(10) unsigned	YES		0	
+message_attachments	checksum	varchar(128)	YES		NULL	
+message_attachments	upload_token	varchar(64)	YES	MUL	NULL	
+message_participants	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+message_participants	thread_id	int(10) unsigned	NO	MUL	NULL	
+message_participants	user_id	int(10) unsigned	NO	MUL	NULL	
+message_participants	role_at_join	varchar(50)	YES		NULL	
+message_participants	joined_at	timestamp	NO		current_timestamp()	
+message_participants	last_read_at	datetime	YES		NULL	
+message_participants	is_admin	tinyint(1)	YES		0	
+message_participants	is_muted	tinyint(1)	YES		0	
+message_participants	is_archived	tinyint(1)	YES		0	
+message_participants	archived_at	datetime	YES		NULL	
+message_reads	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+message_reads	message_id	int(10) unsigned	NO	MUL	NULL	
+message_reads	user_id	int(10) unsigned	NO	MUL	NULL	
+message_reads	read_at	timestamp	NO		current_timestamp()	
+message_threads	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+message_threads	subject	varchar(255)	NO		NULL	
+message_threads	type	enum('direct','group','project-channel')	YES		'direct'	
+message_threads	status	enum('open','archived')	YES		'open'	
+message_threads	priority	enum('normal','urgent')	YES		'normal'	
+message_threads	project_id	int(10) unsigned	YES	MUL	NULL	
+message_threads	created_by	int(10) unsigned	NO	MUL	NULL	
+message_threads	created_at	timestamp	NO		current_timestamp()	
+message_threads	last_message_id	int(10) unsigned	YES		NULL	
+message_threads	last_message_at	datetime	YES	MUL	NULL	
+message_threads	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+milestones	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+milestones	project_id	int(10) unsigned	NO	MUL	NULL	
+milestones	label	varchar(200)	NO		NULL	
+milestones	description	text	YES		NULL	
+milestones	target_date	date	YES	MUL	NULL	
+milestones	actual_date	date	YES		NULL	
+milestones	status	enum('pending','current','done')	YES		'pending'	
+milestones	progress_percent	tinyint(3) unsigned	NO		0	
+milestones	priority	varchar(20)	NO	MUL	'normal'	
+milestones	sequence	smallint(5) unsigned	YES		0	
+milestones	updated_by	int(10) unsigned	YES	MUL	NULL	
+milestones	completed_by	int(10) unsigned	YES		NULL	
+milestones	notes	text	YES		NULL	
+milestones	created_at	timestamp	NO		current_timestamp()	
+milestones	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+milestone_updates	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+milestone_updates	milestone_id	int(10) unsigned	NO	MUL	NULL	
+milestone_updates	project_id	int(10) unsigned	NO	MUL	NULL	
+milestone_updates	user_id	int(10) unsigned	YES	MUL	NULL	
+milestone_updates	old_status	varchar(30)	YES		NULL	
+milestone_updates	new_status	varchar(30)	YES		NULL	
+milestone_updates	old_target_date	date	YES		NULL	
+milestone_updates	new_target_date	date	YES		NULL	
+milestone_updates	old_progress_percent	tinyint(3) unsigned	YES		NULL	
+milestone_updates	new_progress_percent	tinyint(3) unsigned	YES		NULL	
+milestone_updates	note	text	YES		NULL	
+milestone_updates	created_at	timestamp	NO		current_timestamp()	
+navigation_links	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+navigation_links	area	varchar(80)	NO	MUL	'main'	
+navigation_links	label	varchar(120)	NO		NULL	
+navigation_links	href	varchar(255)	NO		NULL	
+navigation_links	page_key	varchar(80)	YES		NULL	
+navigation_links	is_external	tinyint(1)	YES		0	
+navigation_links	sort_order	smallint(5) unsigned	YES		0	
+navigation_links	is_visible	tinyint(1)	YES		1	
+news_articles	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+news_articles	post_format	varchar(40)	NO	MUL	'article'	
+news_articles	category_id	int(10) unsigned	YES	MUL	NULL	
+news_articles	author_id	int(10) unsigned	NO	MUL	NULL	
+news_articles	title	varchar(255)	NO		NULL	
+news_articles	slug	varchar(255)	NO	UNI	NULL	
+news_articles	excerpt	text	YES		NULL	
+news_articles	read_time	varchar(50)	YES		NULL	
+news_articles	body	longtext	NO		NULL	
+news_articles	featured_image_id	int(10) unsigned	YES		NULL	
+news_articles	image_caption	varchar(500)	YES		NULL	
+news_articles	inline_image_id	int(10) unsigned	YES		NULL	
+news_articles	attachment_id	int(10) unsigned	YES		NULL	
+news_articles	external_url	varchar(500)	YES		NULL	
+news_articles	status	enum('draft','published','scheduled','archived')	YES	MUL	'draft'	
+news_articles	is_featured	tinyint(1)	YES		0	
+news_articles	is_visible	tinyint(1)	NO	MUL	1	
+news_articles	show_in_ticker	tinyint(1)	NO	MUL	0	
+news_articles	ticker_text	varchar(255)	YES		NULL	
+news_articles	ticker_url	varchar(500)	YES		NULL	
+news_articles	ticker_expires_at	datetime	YES		NULL	
+news_articles	ticker_priority	int(11)	NO		0	
+news_articles	published_at	datetime	YES	MUL	NULL	
+news_articles	scheduled_for	datetime	YES		NULL	
+news_articles	views	int(10) unsigned	YES		0	
+news_articles	seo_title	varchar(255)	YES		NULL	
+news_articles	seo_description	text	YES		NULL	
+news_articles	og_image_id	int(10) unsigned	YES		NULL	
+news_articles	metadata_json	longtext	YES		NULL	
+news_articles	created_at	timestamp	NO		current_timestamp()	
+news_articles	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+news_articles	deleted_at	datetime	YES	MUL	NULL	
+news_article_tags	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+news_article_tags	article_id	int(10) unsigned	NO	MUL	NULL	
+news_article_tags	tag_id	int(10) unsigned	NO	MUL	NULL	
+news_categories	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+news_categories	name	varchar(100)	NO		NULL	
+news_categories	slug	varchar(100)	NO	UNI	NULL	
+news_categories	description	text	YES		NULL	
+news_categories	color	varchar(20)	YES		'#163300'	
+news_categories	sort_order	smallint(5) unsigned	YES		0	
+news_tags	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+news_tags	name	varchar(80)	NO		NULL	
+news_tags	slug	varchar(80)	NO	UNI	NULL	
+non_conformance_reports	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+non_conformance_reports	ncr_reference	varchar(80)	YES		NULL	
+non_conformance_reports	project_id	int(10) unsigned	NO	MUL	NULL	
+non_conformance_reports	raised_by	int(10) unsigned	NO	MUL	NULL	
+non_conformance_reports	raised_date	date	NO		NULL	
+non_conformance_reports	location_on_site	varchar(180)	YES		NULL	
+non_conformance_reports	description	text	NO		NULL	
+non_conformance_reports	severity	enum('minor','major','critical')	YES		'minor'	
+non_conformance_reports	root_cause	text	YES		NULL	
+non_conformance_reports	corrective_action	text	YES		NULL	
+non_conformance_reports	target_close_date	date	YES		NULL	
+non_conformance_reports	evidence_media_id	int(10) unsigned	YES		NULL	
+non_conformance_reports	closed_by	int(10) unsigned	YES	MUL	NULL	
+non_conformance_reports	closed_date	date	YES		NULL	
+non_conformance_reports	status	enum('open','in-progress','closed')	YES		'open'	
+non_conformance_reports	created_at	timestamp	NO		current_timestamp()	
+non_conformance_reports	consultant_review_status	varchar(30)	NO		'pending'	
+non_conformance_reports	consultant_review_note	text	YES		NULL	
+non_conformance_reports	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+non_conformance_reports	consultant_reviewed_at	datetime	YES		NULL	
+non_conformance_reports	consultant_severity	varchar(30)	NO		'minor'	
+non_conformance_reports	consultant_documents_checked	tinyint(1)	NO		0	
+non_conformance_reports	updated_by	int(10) unsigned	YES		NULL	
+non_conformance_reports	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+notifications	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+notifications	user_id	int(10) unsigned	NO	MUL	NULL	
+notifications	type	varchar(80)	NO	MUL	NULL	
+notifications	priority	enum('normal','urgent')	YES		'normal'	
+notifications	title	varchar(255)	NO		NULL	
+notifications	body	text	YES		NULL	
+notifications	link	varchar(500)	YES		NULL	
+notifications	source_module	varchar(80)	YES	MUL	NULL	
+notifications	source_id	int(10) unsigned	YES		NULL	
+notifications	metadata_json	longtext	YES		NULL	
+notifications	is_read	tinyint(1)	YES		0	
+notifications	read_at	datetime	YES		NULL	
+notifications	created_at	timestamp	NO		current_timestamp()	
+password_resets	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+password_resets	user_id	int(10) unsigned	NO	MUL	NULL	
+password_resets	email	varchar(190)	YES	MUL	NULL	
+password_resets	token	char(64)	NO	UNI	NULL	
+password_resets	token_hash	char(64)	YES	MUL	NULL	
+password_resets	expires_at	datetime	NO		NULL	
+password_resets	used	tinyint(1)	YES		0	
+password_resets	used_at	datetime	YES		NULL	
+password_resets	created_ip	varchar(45)	YES	MUL	NULL	
+password_resets	created_user_agent	varchar(255)	YES		NULL	
+password_resets	created_at	timestamp	NO		current_timestamp()	
+payments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+payments	ipc_id	int(10) unsigned	NO	MUL	NULL	
+payments	project_id	int(10) unsigned	NO	MUL	NULL	
+payments	amount	decimal(15,2)	NO		NULL	
+payments	payment_date	date	NO		NULL	
+payments	reference_no	varchar(100)	YES	MUL	NULL	
+payments	voucher_no	varchar(100)	YES		NULL	
+payments	bank	varchar(150)	YES		NULL	
+payments	payment_method	varchar(60)	NO		'bank_transfer'	
+payments	processed_by	int(10) unsigned	NO	MUL	NULL	
+payments	processed_at	datetime	YES		NULL	
+payments	receipt_path	varchar(255)	YES		NULL	
+payments	status	enum('processed','void','reversed')	NO	MUL	'processed'	
+payments	notes	text	YES		NULL	
+payments	voided_by	int(10) unsigned	YES		NULL	
+payments	voided_at	datetime	YES		NULL	
+payments	void_reason	text	YES		NULL	
+payments	created_at	timestamp	NO		current_timestamp()	
+programme_tasks	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+programme_tasks	project_id	int(10) unsigned	NO	MUL	NULL	
+programme_tasks	task_name	varchar(200)	NO		NULL	
+programme_tasks	start_date	date	YES		NULL	
+programme_tasks	end_date	date	YES		NULL	
+programme_tasks	planned_start	date	YES		NULL	
+programme_tasks	planned_end	date	YES		NULL	
+programme_tasks	pct_complete	tinyint(3) unsigned	YES		0	
+programme_tasks	depends_on_task_id	int(10) unsigned	YES	MUL	NULL	
+programme_tasks	assigned_to	int(10) unsigned	YES	MUL	NULL	
+programme_tasks	status	varchar(40)	YES		'pending'	
+programme_tasks	sort_order	int(10) unsigned	YES		0	
+programme_tasks	critical_path	tinyint(1)	YES		0	
+programme_tasks	baseline_start	date	YES		NULL	
+programme_tasks	baseline_end	date	YES		NULL	
+programme_tasks	notes	text	YES		NULL	
+programme_tasks	consultant_review_status	varchar(30)	NO		'pending'	
+programme_tasks	consultant_review_note	text	YES		NULL	
+programme_tasks	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+programme_tasks	consultant_reviewed_at	datetime	YES		NULL	
+programme_tasks	updated_by	int(10) unsigned	YES		NULL	
+programme_tasks	created_at	timestamp	NO		current_timestamp()	
+programme_tasks	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+projects	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+projects	category_id	int(10) unsigned	NO	MUL	NULL	
+projects	constituency_id	int(10) unsigned	NO	MUL	NULL	
+projects	ward_id	int(10) unsigned	YES		NULL	
+projects	name	varchar(200)	NO		NULL	
+projects	slug	varchar(200)	NO	UNI	NULL	
+projects	location_label	varchar(200)	YES		NULL	
+projects	status	enum('planning','active','on_hold','stalled','completed','cancelled')	YES	MUL	'planning'	
+projects	pct_complete	tinyint(3) unsigned	YES		0	
+projects	contract_sum	decimal(15,2)	YES		NULL	
+projects	start_date	date	YES		NULL	
+projects	est_delivery	date	YES		NULL	
+projects	current_milestone	varchar(255)	YES		NULL	
+projects	contractor_name	varchar(180)	YES		NULL	
+projects	contractor_id	int(10) unsigned	YES	MUL	NULL	
+projects	consultant_id	int(10) unsigned	YES	MUL	NULL	
+projects	description	text	YES		NULL	
+projects	hero_image	varchar(255)	YES		NULL	
+projects	images_json	text	YES		NULL	
+projects	funding_source	varchar(150)	YES		NULL	
+projects	lead_agency	varchar(150)	YES		NULL	
+projects	site_engineer	varchar(150)	YES		NULL	
+projects	units	int(10) unsigned	YES		NULL	
+projects	is_featured	tinyint(1)	YES	MUL	0	
+projects	created_at	timestamp	NO		current_timestamp()	
+projects	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+project_assignments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+project_assignments	project_id	int(10) unsigned	NO	MUL	NULL	
+project_assignments	user_id	int(10) unsigned	NO	MUL	NULL	
+project_assignments	role	varchar(60)	NO		NULL	
+project_assignments	assignment_type	varchar(40)	NO		'site'	
+project_assignments	scope	varchar(80)	NO		'general'	
+project_assignments	status	varchar(30)	NO	MUL	'active'	
+project_assignments	start_date	date	YES		NULL	
+project_assignments	end_date	date	YES		NULL	
+project_assignments	is_primary	tinyint(1)	NO		0	
+project_assignments	notes	text	YES		NULL	
+project_assignments	revoked_by	int(10) unsigned	YES		NULL	
+project_assignments	revoked_at	datetime	YES		NULL	
+project_assignments	updated_by	int(10) unsigned	YES		NULL	
+project_assignments	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+project_assignments	assigned_by	int(10) unsigned	NO		NULL	
+project_assignments	assigned_at	timestamp	NO		current_timestamp()	
+project_categories	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+project_categories	name	varchar(100)	NO		NULL	
+project_categories	slug	varchar(100)	NO	UNI	NULL	
+project_categories	icon	varchar(80)	YES		NULL	
+project_categories	color	varchar(20)	YES		NULL	
+project_channels	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+project_channels	project_id	int(10) unsigned	NO	MUL	NULL	
+project_channels	name	varchar(150)	NO		NULL	
+project_channels	description	text	YES		NULL	
+project_channels	created_by	int(10) unsigned	NO	MUL	NULL	
+project_channels	created_at	timestamp	NO		current_timestamp()	
+project_progress_updates	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+project_progress_updates	project_id	int(10) unsigned	NO	MUL	NULL	
+project_progress_updates	submitted_by	int(10) unsigned	NO	MUL	NULL	
+project_progress_updates	old_progress	tinyint(3) unsigned	YES		NULL	
+project_progress_updates	new_progress	tinyint(3) unsigned	NO		0	
+project_progress_updates	current_milestone	varchar(255)	YES		NULL	
+project_progress_updates	note	text	YES		NULL	
+project_progress_updates	photo_path	varchar(255)	YES		NULL	
+project_progress_updates	media_id	int(10) unsigned	YES	MUL	NULL	
+project_progress_updates	weather_note	varchar(180)	YES		NULL	
+project_progress_updates	work_summary	text	YES		NULL	
+project_progress_updates	blockers	text	YES		NULL	
+project_progress_updates	status	varchar(30)	NO	MUL	'submitted'	
+project_progress_updates	reviewed_by	int(10) unsigned	YES	MUL	NULL	
+project_progress_updates	reviewed_at	datetime	YES		NULL	
+project_progress_updates	review_note	text	YES		NULL	
+project_progress_updates	created_at	timestamp	NO		current_timestamp()	
+project_progress_updates	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+public_frontend_content_snapshots	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+public_frontend_content_snapshots	page_slug	varchar(120)	NO	UNI	NULL	
+public_frontend_content_snapshots	page_label	varchar(180)	NO		NULL	
+public_frontend_content_snapshots	file_path	varchar(255)	NO	MUL	NULL	
+public_frontend_content_snapshots	source_hash	char(64)	NO	MUL	NULL	
+public_frontend_content_snapshots	raw_source	longtext	NO		NULL	
+public_frontend_content_snapshots	extracted_text	longtext	YES		NULL	
+public_frontend_content_snapshots	extracted_json	longtext	YES		NULL	
+public_frontend_content_snapshots	seeded_at	timestamp	YES		current_timestamp()	
+public_frontend_content_snapshots	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+quality_tests	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+quality_tests	project_id	int(10) unsigned	NO	MUL	NULL	
+quality_tests	test_type	varchar(100)	NO		NULL	
+quality_tests	test_date	date	NO		NULL	
+quality_tests	location_on_site	varchar(200)	YES		NULL	
+quality_tests	result	varchar(150)	YES		NULL	
+quality_tests	required_result	varchar(180)	YES		NULL	
+quality_tests	actual_result	varchar(180)	YES		NULL	
+quality_tests	clerk_observation	text	YES		NULL	
+quality_tests	pass_fail	enum('pass','fail','pending')	YES		'pending'	
+quality_tests	lab_ref	varchar(80)	YES		NULL	
+quality_tests	tested_by	int(10) unsigned	NO	MUL	NULL	
+quality_tests	document_path	varchar(255)	YES		NULL	
+quality_tests	evidence_media_id	int(10) unsigned	YES		NULL	
+quality_tests	verification_status	enum('pending','passed','failed','queried')	NO		'pending'	
+quality_tests	verified_by	int(10) unsigned	YES		NULL	
+quality_tests	verified_at	datetime	YES		NULL	
+quality_tests	created_at	timestamp	NO		current_timestamp()	
+quality_tests	consultant_review_status	varchar(30)	NO		'pending'	
+quality_tests	consultant_review_note	text	YES		NULL	
+quality_tests	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+quality_tests	consultant_reviewed_at	datetime	YES		NULL	
+quality_tests	consultant_severity	varchar(30)	NO		'minor'	
+quality_tests	consultant_documents_checked	tinyint(1)	NO		0	
+quality_tests	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+report_runs	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+report_runs	user_id	int(10) unsigned	YES	MUL	NULL	
+report_runs	report_type	varchar(80)	NO	MUL	NULL	
+report_runs	format	varchar(20)	NO		NULL	
+report_runs	filters_json	longtext	YES		NULL	
+report_runs	row_count	int(10) unsigned	YES		0	
+report_runs	status	enum('generated','failed')	YES		'generated'	
+report_runs	created_at	timestamp	NO		current_timestamp()	
+report_runs	scope_role	varchar(40)	YES	MUL	NULL	
+report_runs	scope_user_id	int(10) unsigned	YES		NULL	
+retention	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+retention	project_id	int(10) unsigned	NO	MUL	NULL	
+retention	ipc_id	int(10) unsigned	YES	MUL	NULL	
+retention	total_held	decimal(15,2)	YES		0.00	
+retention	released_amount	decimal(15,2)	YES		0.00	
+retention	release_date	date	YES		NULL	
+retention	release_reason	text	YES		NULL	
+retention	status	varchar(30)	NO	MUL	'held'	
+retention	processed_by	int(10) unsigned	YES	MUL	NULL	
+retention	created_at	timestamp	NO		current_timestamp()	
+retention	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+retention_release_history	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+retention_release_history	retention_id	int(10) unsigned	NO	MUL	NULL	
+retention_release_history	project_id	int(10) unsigned	NO	MUL	NULL	
+retention_release_history	ipc_id	int(10) unsigned	YES	MUL	NULL	
+retention_release_history	released_amount	decimal(15,2)	NO		0.00	
+retention_release_history	balance_after	decimal(15,2)	NO		0.00	
+retention_release_history	release_date	date	NO		NULL	
+retention_release_history	reason	text	YES		NULL	
+retention_release_history	processed_by	int(10) unsigned	YES	MUL	NULL	
+retention_release_history	created_at	timestamp	NO		current_timestamp()	
+rfis	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+rfis	project_id	int(10) unsigned	NO	MUL	NULL	
+rfis	raised_by	int(10) unsigned	NO	MUL	NULL	
+rfis	rfi_number	smallint(5) unsigned	NO		NULL	
+rfis	subject	varchar(200)	NO		NULL	
+rfis	description	text	NO		NULL	
+rfis	urgency	enum('low','normal','urgent')	YES		'normal'	
+rfis	responded_by	int(10) unsigned	YES	MUL	NULL	
+rfis	response	text	YES		NULL	
+rfis	raised_date	date	NO		NULL	
+rfis	response_date	date	YES		NULL	
+rfis	status	enum('open','answered','closed')	YES		'open'	
+rfis	created_at	timestamp	NO		current_timestamp()	
+rfis	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+roles	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+roles	name	varchar(60)	NO		NULL	
+roles	slug	varchar(60)	NO	UNI	NULL	
+roles	color	varchar(20)	NO		'#163300'	
+roles	permissions_json	text	YES		NULL	
+roles	created_at	timestamp	NO		current_timestamp()	
+shop_drawings	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+shop_drawings	project_id	int(10) unsigned	NO	MUL	NULL	
+shop_drawings	drawing_no	varchar(60)	NO		NULL	
+shop_drawings	title	varchar(200)	NO		NULL	
+shop_drawings	submitted_by	int(10) unsigned	NO	MUL	NULL	
+shop_drawings	submitted_date	date	NO		NULL	
+shop_drawings	revision	varchar(10)	YES		'A'	
+shop_drawings	status	enum('under-review','approved','rejected','resubmit')	YES	MUL	'under-review'	
+shop_drawings	reviewed_by	int(10) unsigned	YES	MUL	NULL	
+shop_drawings	review_date	date	YES		NULL	
+shop_drawings	review_note	text	YES		NULL	
+shop_drawings	document_path	varchar(255)	YES		NULL	
+shop_drawings	created_at	timestamp	NO		current_timestamp()	
+shop_drawings	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+site_diaries	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+site_diaries	project_id	int(10) unsigned	NO	MUL	NULL	
+site_diaries	diary_date	date	NO		NULL	
+site_diaries	work_done	text	YES		NULL	
+site_diaries	issues_raised	text	YES		NULL	
+site_diaries	safety_observations	text	YES		NULL	
+site_diaries	visitors_instructions	text	YES		NULL	
+site_diaries	next_day_plan	text	YES		NULL	
+site_diaries	recorded_by	int(10) unsigned	NO	MUL	NULL	
+site_diaries	approved_by	int(10) unsigned	YES		NULL	
+site_diaries	approved_at	datetime	YES		NULL	
+site_diaries	created_at	timestamp	NO		current_timestamp()	
+site_diaries	consultant_review_status	varchar(30)	NO		'pending'	
+site_diaries	consultant_review_note	text	YES		NULL	
+site_diaries	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+site_diaries	consultant_reviewed_at	datetime	YES		NULL	
+site_diaries	status	enum('draft','submitted','reviewed')	NO		'submitted'	
+site_diaries	updated_by	int(10) unsigned	YES		NULL	
+site_diaries	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+site_diaries	report_title	varchar(180)	YES		NULL	
+site_diaries	weather_summary	varchar(180)	YES		NULL	
+site_meeting_minutes	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+site_meeting_minutes	project_id	int(10) unsigned	NO	MUL	NULL	
+site_meeting_minutes	meeting_type	varchar(60)	NO		'site'	
+site_meeting_minutes	meeting_date	date	NO		NULL	
+site_meeting_minutes	venue	varchar(200)	YES		NULL	
+site_meeting_minutes	chairperson	varchar(150)	YES		NULL	
+site_meeting_minutes	attendees_json	text	YES		NULL	
+site_meeting_minutes	agenda	text	YES		NULL	
+site_meeting_minutes	minutes_text	longtext	YES		NULL	
+site_meeting_minutes	action_items_json	text	YES		NULL	
+site_meeting_minutes	document_path	varchar(255)	YES		NULL	
+site_meeting_minutes	recorded_by	int(10) unsigned	NO	MUL	NULL	
+site_meeting_minutes	created_at	timestamp	NO		current_timestamp()	
+site_meeting_minutes	status	enum('draft','recorded','reviewed','closed')	YES	MUL	'recorded'	
+site_meeting_minutes	action_status	enum('none','open','in-progress','completed','overdue')	YES	MUL	'none'	
+site_meeting_minutes	next_meeting_date	date	YES		NULL	
+site_meeting_minutes	updated_by	int(10) unsigned	YES		NULL	
+site_meeting_minutes	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+site_meeting_minutes	reviewed_at	datetime	YES		NULL	
+stakeholders	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+stakeholders	group_id	int(10) unsigned	YES	MUL	NULL	
+stakeholders	slug	varchar(180)	YES	UNI	NULL	
+stakeholders	organisation	varchar(200)	NO		NULL	
+stakeholders	category	varchar(100)	YES		NULL	
+stakeholders	partner_type	varchar(100)	YES		NULL	
+stakeholders	agreement_type	varchar(150)	YES		NULL	
+stakeholders	icon	varchar(80)	YES		NULL	
+stakeholders	role	varchar(150)	YES		NULL	
+stakeholders	description	text	YES		NULL	
+stakeholders	mandate	text	YES		NULL	
+stakeholders	logo_id	int(10) unsigned	YES		NULL	
+stakeholders	logo_path	varchar(255)	YES		NULL	
+stakeholders	website	varchar(255)	YES		NULL	
+stakeholders	metadata_json	longtext	YES		NULL	
+stakeholders	sort_order	smallint(5) unsigned	YES		0	
+stakeholders	is_visible	tinyint(1)	YES		1	
+stakeholders	status	enum('published','draft')	NO		'published'	
+stakeholders	featured_on_leadership	tinyint(1)	NO		1	
+stakeholders	is_formal_partner	tinyint(1)	NO	MUL	0	
+stakeholders	featured_on_stakeholders	tinyint(1)	NO		1	
+stakeholders	created_at	timestamp	YES		current_timestamp()	
+stakeholders	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+stakeholder_engagement_paths	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+stakeholder_engagement_paths	slug	varchar(100)	NO	UNI	NULL	
+stakeholder_engagement_paths	title	varchar(180)	NO		NULL	
+stakeholder_engagement_paths	icon	varchar(80)	YES		NULL	
+stakeholder_engagement_paths	description	text	YES		NULL	
+stakeholder_engagement_paths	steps_json	longtext	YES		NULL	
+stakeholder_engagement_paths	button_label	varchar(120)	YES		NULL	
+stakeholder_engagement_paths	button_url	varchar(255)	YES		NULL	
+stakeholder_engagement_paths	tone	varchar(40)	NO		'standard'	
+stakeholder_engagement_paths	status	enum('published','draft')	NO	MUL	'published'	
+stakeholder_engagement_paths	sort_order	smallint(5) unsigned	NO		0	
+stakeholder_engagement_paths	created_at	timestamp	YES		current_timestamp()	
+stakeholder_engagement_paths	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+stakeholder_groups	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+stakeholder_groups	slug	varchar(80)	NO	UNI	NULL	
+stakeholder_groups	name	varchar(160)	NO		NULL	
+stakeholder_groups	icon	varchar(80)	YES		NULL	
+stakeholder_groups	count_label	varchar(80)	YES		NULL	
+stakeholder_groups	summary	varchar(255)	YES		NULL	
+stakeholder_groups	description	text	YES		NULL	
+stakeholder_groups	tags_json	longtext	YES		NULL	
+stakeholder_groups	cta_label	varchar(120)	YES		NULL	
+stakeholder_groups	cta_url	varchar(255)	YES		NULL	
+stakeholder_groups	legal_basis	text	YES		NULL	
+stakeholder_groups	responsibilities_json	longtext	YES		NULL	
+stakeholder_groups	reporting_lines	text	YES		NULL	
+stakeholder_groups	sort_order	smallint(5) unsigned	NO		0	
+stakeholder_groups	status	enum('published','draft')	NO	MUL	'published'	
+stakeholder_groups	created_at	timestamp	YES		current_timestamp()	
+stakeholder_groups	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+stakeholder_milestones	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+stakeholder_milestones	group_id	int(10) unsigned	YES	MUL	NULL	
+stakeholder_milestones	milestone_date	date	YES		NULL	
+stakeholder_milestones	date_label	varchar(80)	YES		NULL	
+stakeholder_milestones	title	varchar(180)	NO		NULL	
+stakeholder_milestones	summary	text	YES		NULL	
+stakeholder_milestones	icon	varchar(80)	YES		NULL	
+stakeholder_milestones	badge_label	varchar(80)	YES		NULL	
+stakeholder_milestones	status	enum('published','draft')	NO	MUL	'published'	
+stakeholder_milestones	sort_order	smallint(5) unsigned	NO		0	
+stakeholder_milestones	created_at	timestamp	YES		current_timestamp()	
+stakeholder_milestones	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+stakeholder_testimonials	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+stakeholder_testimonials	group_id	int(10) unsigned	YES	MUL	NULL	
+stakeholder_testimonials	name	varchar(160)	NO		NULL	
+stakeholder_testimonials	role	varchar(220)	YES		NULL	
+stakeholder_testimonials	initials	varchar(12)	YES		NULL	
+stakeholder_testimonials	photo_path	varchar(255)	YES		NULL	
+stakeholder_testimonials	rating	tinyint(3) unsigned	NO		5	
+stakeholder_testimonials	quote	text	NO		NULL	
+stakeholder_testimonials	tags_json	longtext	YES		NULL	
+stakeholder_testimonials	status	enum('published','draft')	NO	MUL	'published'	
+stakeholder_testimonials	sort_order	smallint(5) unsigned	NO		0	
+stakeholder_testimonials	created_at	timestamp	YES		current_timestamp()	
+stakeholder_testimonials	updated_at	timestamp	YES		current_timestamp()	on update current_timestamp()
+subcontractors	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+subcontractors	project_id	int(10) unsigned	NO	MUL	NULL	
+subcontractors	company	varchar(200)	NO		NULL	
+subcontractors	scope_of_work	text	YES		NULL	
+subcontractors	contract_value	decimal(15,2)	YES		NULL	
+subcontractors	status	varchar(40)	YES		'active'	
+subcontractors	created_at	timestamp	NO		current_timestamp()	
+subcontractors	contact_person	varchar(150)	YES		NULL	
+subcontractors	phone	varchar(60)	YES		NULL	
+subcontractors	email	varchar(180)	YES		NULL	
+subcontractors	compliance_status	enum('pending','compliant','issue','expired')	YES	MUL	'pending'	
+subcontractors	risk_status	enum('normal','watch','high','critical')	YES		'normal'	
+subcontractors	performance_note	text	YES		NULL	
+subcontractors	updated_by	int(10) unsigned	YES		NULL	
+subcontractors	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+subscribers	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+subscribers	email	varchar(160)	NO	UNI	NULL	
+subscribers	name	varchar(150)	YES		NULL	
+subscribers	status	enum('active','unsubscribed')	YES	MUL	'active'	
+subscribers	subscribed_at	timestamp	NO	MUL	current_timestamp()	
+subscribers	ip	varchar(45)	YES	MUL	NULL	
+subscribers	source_url	varchar(500)	YES		NULL	
+subscribers	user_agent	varchar(255)	YES		NULL	
+subscribers	unsubscribed_at	datetime	YES		NULL	
+subscribers	reactivated_at	datetime	YES		NULL	
+subscribers	updated_by	int(10) unsigned	YES		NULL	
+subscribers	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+system_health_snapshots	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+system_health_snapshots	status	enum('healthy','warning','critical')	YES	MUL	'healthy'	
+system_health_snapshots	score	tinyint(3) unsigned	YES		100	
+system_health_snapshots	checks_json	longtext	YES		NULL	
+system_health_snapshots	db_json	longtext	YES		NULL	
+system_health_snapshots	storage_json	longtext	YES		NULL	
+system_health_snapshots	workflow_json	longtext	YES		NULL	
+system_health_snapshots	security_json	longtext	YES		NULL	
+system_health_snapshots	created_by	int(10) unsigned	YES	MUL	NULL	
+system_health_snapshots	created_at	timestamp	NO	MUL	current_timestamp()	
+system_settings	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+system_settings	setting_key	varchar(120)	NO	UNI	NULL	
+system_settings	setting_group	varchar(80)	NO	MUL	NULL	
+system_settings	label	varchar(160)	NO		NULL	
+system_settings	description	text	YES		NULL	
+system_settings	value	longtext	YES		NULL	
+system_settings	default_value	longtext	YES		NULL	
+system_settings	type	enum('text','number','boolean','time','json','select','email','url')	YES		'text'	
+system_settings	options_json	longtext	YES		NULL	
+system_settings	is_sensitive	tinyint(1)	YES		0	
+system_settings	is_public	tinyint(1)	YES	MUL	0	
+system_settings	sort_order	int(10) unsigned	YES		0	
+system_settings	updated_by	int(10) unsigned	YES	MUL	NULL	
+system_settings	created_at	timestamp	NO		current_timestamp()	
+system_settings	updated_at	timestamp	NO	MUL	current_timestamp()	on update current_timestamp()
+system_setting_revisions	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+system_setting_revisions	setting_key	varchar(120)	NO	MUL	NULL	
+system_setting_revisions	old_value	longtext	YES		NULL	
+system_setting_revisions	new_value	longtext	YES		NULL	
+system_setting_revisions	changed_by	int(10) unsigned	YES	MUL	NULL	
+system_setting_revisions	changed_at	timestamp	NO		current_timestamp()	
+system_setting_revisions	ip	varchar(45)	YES		NULL	
+system_setting_revisions	user_agent	varchar(255)	YES		NULL	
+users	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+users	first_name	varchar(80)	NO		NULL	
+users	last_name	varchar(80)	NO		NULL	
+users	email	varchar(160)	NO	UNI	NULL	
+users	phone	varchar(30)	YES	UNI	NULL	
+users	job_title	varchar(150)	YES		NULL	
+users	department	varchar(150)	YES		NULL	
+users	bio	text	YES		NULL	
+users	password_hash	varchar(255)	NO		NULL	
+users	avatar	varchar(255)	YES		NULL	
+users	is_public	tinyint(1)	YES		0	
+users	role_id	int(10) unsigned	NO	MUL	NULL	
+users	status	enum('active','inactive','suspended')	YES		'active'	
+users	assigned_projects_json	text	YES		NULL	
+users	last_login	datetime	YES		NULL	
+users	created_at	timestamp	NO		current_timestamp()	
+users	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+user_role_assignments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+user_role_assignments	user_id	int(10) unsigned	NO	MUL	NULL	
+user_role_assignments	role_id	int(10) unsigned	NO	MUL	NULL	
+user_role_assignments	project_id	int(10) unsigned	YES		NULL	
+user_role_assignments	assigned_by	int(10) unsigned	NO		NULL	
+user_role_assignments	assigned_at	timestamp	NO		current_timestamp()	
+user_sessions	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+user_sessions	user_id	int(10) unsigned	NO	MUL	NULL	
+user_sessions	token	varchar(255)	NO	UNI	NULL	
+user_sessions	ip	varchar(45)	YES		NULL	
+user_sessions	user_agent	varchar(255)	YES		NULL	
+user_sessions	last_activity	datetime	NO		NULL	
+user_sessions	expires_at	datetime	NO		NULL	
+user_sessions	revoked_at	datetime	YES		NULL	
+user_sessions	created_at	datetime	NO		current_timestamp()	
+variations	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+variations	project_id	int(10) unsigned	NO	MUL	NULL	
+variations	submitted_by	int(10) unsigned	NO	MUL	NULL	
+variations	vo_number	smallint(5) unsigned	NO		NULL	
+variations	description	text	NO		NULL	
+variations	reason	text	YES		NULL	
+variations	amount	decimal(15,2)	YES		0.00	
+variations	impact_on_time_days	smallint(6)	YES		0	
+variations	status	enum('pending','approved','rejected')	YES	MUL	'pending'	
+variations	approved_by	int(10) unsigned	YES	MUL	NULL	
+variations	approved_at	datetime	YES		NULL	
+variations	created_at	timestamp	NO		current_timestamp()	
+variations	consultant_review_status	varchar(30)	NO		'pending'	
+variations	consultant_review_note	text	YES		NULL	
+variations	consultant_reviewed_by	int(10) unsigned	YES		NULL	
+variations	consultant_reviewed_at	datetime	YES		NULL	
+variations	consultant_recommended_amount	decimal(15,2)	YES		NULL	
+variations	consultant_time_impact_days	smallint(5) unsigned	YES		NULL	
+variations	consultant_cost_impact_status	varchar(30)	NO		'moderate'	
+variations	consultant_documents_checked	tinyint(1)	NO		0	
+variations	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+wards	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+wards	constituency_id	int(10) unsigned	NO	MUL	NULL	
+wards	name	varchar(100)	NO		NULL	
+wards	slug	varchar(100)	NO		NULL	
+wards	sort_order	smallint(5) unsigned	NO		90	
+wards	is_public	tinyint(1)	NO		1	
+weather_logs	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+weather_logs	project_id	int(10) unsigned	NO	MUL	NULL	
+weather_logs	log_date	date	NO		NULL	
+weather_logs	morning_condition	varchar(60)	YES		NULL	
+weather_logs	afternoon_condition	varchar(60)	YES		NULL	
+weather_logs	rainfall_mm	decimal(5,1)	YES		0.0	
+weather_logs	temperature_min	decimal(4,1)	YES		NULL	
+weather_logs	temperature_max	decimal(4,1)	YES		NULL	
+weather_logs	working_hours	decimal(4,1)	YES		8.0	
+weather_logs	working_hours_lost	decimal(4,1)	NO		0.0	
+weather_logs	impact_level	enum('none','minor','moderate','severe')	NO		'none'	
+weather_logs	remarks	text	YES		NULL	
+weather_logs	recorded_by	int(10) unsigned	NO	MUL	NULL	
+weather_logs	updated_by	int(10) unsigned	YES		NULL	
+weather_logs	created_at	timestamp	NO		current_timestamp()	
+weather_logs	updated_at	timestamp	NO		current_timestamp()	on update current_timestamp()
+work_locations	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+work_locations	name	varchar(180)	NO		NULL	
+work_locations	slug	varchar(180)	NO	UNI	NULL	
+work_locations	location_type	varchar(60)	NO	MUL	'office'	
+work_locations	address	varchar(255)	YES		NULL	
+work_locations	latitude	decimal(10,8)	YES		NULL	
+work_locations	longitude	decimal(11,8)	YES		NULL	
+work_locations	radius_meters	int(10) unsigned	NO		150	
+work_locations	status	enum('configured','missing','needs-review','inactive')	NO	MUL	'missing'	
+work_locations	is_public	tinyint(1)	NO		0	
+work_locations	notes	text	YES		NULL	
+work_locations	created_by	int(10) unsigned	YES		NULL	
+work_locations	updated_by	int(10) unsigned	YES		NULL	
+work_locations	created_at	timestamp	NO		current_timestamp()	
+work_locations	updated_at	timestamp	YES		NULL	on update current_timestamp()
+work_location_assignments	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+work_location_assignments	work_location_id	int(10) unsigned	NO	MUL	NULL	
+work_location_assignments	user_id	int(10) unsigned	NO	MUL	NULL	
+work_location_assignments	role	varchar(60)	NO		NULL	
+work_location_assignments	assignment_type	varchar(40)	NO		'office'	
+work_location_assignments	scope	varchar(80)	NO		'attendance'	
+work_location_assignments	status	varchar(30)	NO		'active'	
+work_location_assignments	start_date	date	YES		NULL	
+work_location_assignments	end_date	date	YES		NULL	
+work_location_assignments	is_primary	tinyint(1)	NO		0	
+work_location_assignments	notes	text	YES		NULL	
+work_location_assignments	assigned_by	int(10) unsigned	YES		NULL	
+work_location_assignments	assigned_at	timestamp	NO		current_timestamp()	
+work_location_assignments	updated_by	int(10) unsigned	YES		NULL	
+work_location_assignments	updated_at	timestamp	YES		NULL	on update current_timestamp()
+work_location_assignments	revoked_by	int(10) unsigned	YES		NULL	
+work_location_assignments	revoked_at	datetime	YES		NULL	
+_migrations	id	int(10) unsigned	NO	PRI	NULL	auto_increment
+_migrations	migration	varchar(200)	NO	UNI	NULL	
+_migrations	ran_at	timestamp	NO		current_timestamp()	

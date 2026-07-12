@@ -8,10 +8,7 @@ ApiMiddleware::handle([
     'csrf' => false,
 ]);
 
-$csrf = Csrf::fromRequest();
-if (!Csrf::verify($csrf, 'manager_site_records') && !Csrf::verify($csrf, 'default')) {
-    Response::json(['success' => false, 'message' => 'CSRF token mismatch. Please refresh the page and try again.'], 419);
-}
+ApiCsrf::requireAny(ApiCsrf::forms('manager_site_records'));
 
 $input = $_POST ?: Security::jsonInput();
 $id = Security::cleanInt($input['id'] ?? 0);

@@ -109,7 +109,7 @@
       request('api/ipcs/reject.php', body).then(function (data) {
         notify(data.message || 'IPC rejected successfully.', 'success');
         window.setTimeout(function () {
-          window.location.href = (admin.baseUrl ? admin.baseUrl() + '/admin/consultant/ipc-inbox.php' : 'ipc-inbox.php');
+          window.location.href = admin.to ? admin.to('admin/consultant/ipc-inbox.php') : (admin.baseUrl ? admin.baseUrl() + '/admin/consultant/ipc-inbox.php' : 'ipc-inbox.php');
         }, 600);
       }).catch(function (error) {
         notify(error.message || 'Rejection could not be completed.', 'error');
@@ -143,7 +143,7 @@
       }).then(function (data) {
         notify(data.message || 'IPC certified successfully.', 'success');
         window.setTimeout(function () {
-          window.location.href = (admin.baseUrl ? admin.baseUrl() + '/admin/consultant/ipc-inbox.php' : 'ipc-inbox.php');
+          window.location.href = admin.to ? admin.to('admin/consultant/ipc-inbox.php') : (admin.baseUrl ? admin.baseUrl() + '/admin/consultant/ipc-inbox.php' : 'ipc-inbox.php');
         }, 700);
       }).catch(function (error) {
         notify(error.message || 'Certification could not be completed.', 'error');

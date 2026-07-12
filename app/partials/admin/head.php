@@ -16,8 +16,9 @@ $adminCss = $adminCss ?? 'admin/assets/css/dashboard-' . $roleClass . '.css';
 $fullTitle = $pageTitle . ' | ' . role_label((string)$adminRole) . ' | Trans-Nzoia AHP Tracker';
 $favicon = Url::asset('uploads/logos/afforadablehousinglogo.png');
 
+$sharedComponentCss = ['cards', 'tables', 'forms', 'modals'];
 $componentStyles = [];
-foreach ((array)$componentCss as $style) {
+foreach (array_merge($sharedComponentCss, (array)$componentCss) as $style) {
     $style = trim((string)$style);
     if ($style === '') {
         continue;
@@ -28,11 +29,11 @@ foreach ((array)$componentCss as $style) {
         : 'admin/assets/css/components/' . $style . '.css';
 }
 
-$stylesheets = array_merge(
+$stylesheets = array_values(array_unique(array_merge(
     ['admin/assets/css/admin-global.css', $adminCss],
     $componentStyles,
     (array)$pageStyles
-);
+)));
 
 $bodyClasses = trim('admin-body admin-body--' . $roleClass . ' ' . (string)$bodyClass);
 ?><!DOCTYPE html>
@@ -58,7 +59,8 @@ $bodyClasses = trim('admin-body admin-body--' . $roleClass . ' ' . (string)$body
 <?php foreach ($stylesheets as $stylesheet): ?>
 <?php $stylesheet = trim((string)$stylesheet); ?>
 <?php if ($stylesheet !== ''): ?>
-  <link rel="stylesheet" href="<?= Security::e(Url::asset($stylesheet)) ?>">
+<?php $href = Url::isAbsolute($stylesheet) ? $stylesheet : Url::asset($stylesheet) . '?v=' . rawurlencode(asset_version($stylesheet)); ?>
+  <link rel="stylesheet" href="<?= Security::e($href) ?>">
 <?php endif; ?>
 <?php endforeach; ?>
 </head>

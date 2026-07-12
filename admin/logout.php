@@ -1,11 +1,13 @@
 <?php
-require_once __DIR__ . '/../app/core/bootstrap.php';
+require_once __DIR__ . "/../app/core/bootstrap.php";
 
-$userId = Auth::id();
-if ($userId !== null) {
-    Logger::log('logout', 'auth', (int)$userId, ['email' => Auth::user()['email'] ?? '']);
+$user = Auth::user();
+if (is_array($user) && isset($user["id"])) {
+    Logger::log("logout", "auth", (int) $user["id"], [
+        "email" => $user["email"] ?? "",
+    ]);
 }
 
 Auth::logout();
-Session::flash('status', 'You have been signed out.');
-Response::redirect(Url::to('admin/login.php'));
+Session::flash("status", "You have been signed out.");
+Response::redirect(Url::to("admin/login.php"));

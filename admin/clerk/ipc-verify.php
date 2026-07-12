@@ -1,5 +1,5 @@
 <?php
-// Clerk of Works — IPC Verification (on-site quantity check)
-require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
-// TODO: Phase 4 — Verify contractor IPC quantities on-site, endorse or flag discrepancies
+require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
+Guard::exactRole('clerk');
+$qualityType = 'ipc';
+include dirname(__DIR__, 2) . '/app/partials/admin/clerk-quality-evidence-page.php';

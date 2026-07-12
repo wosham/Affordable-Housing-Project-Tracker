@@ -4,9 +4,15 @@
   const decisionModal = document.querySelector('[data-ipc-modal]');
   const decisionForm = document.querySelector('[data-ipc-form]');
   const detailPanel = document.querySelector('[data-ipc-detail-panel]');
-  const request = window.AHPTC && window.AHPTC.request ? window.AHPTC.request : null;
-
-  if (!request) return;
+  const api = window.AHPTC || null;
+  if (!api || typeof api.request !== 'function') {
+    console.error('AHPTC.request is required for IPC queue.');
+    return;
+  }
+  const request = api.request.bind(api);
+  const csrfHeaders = {
+    'X-CSRF-Form': (api.csrfForm && api.csrfForm()) || 'manager_ipc_queue'
+  };
 
   function qs(selector, root) {
     return (root || document).querySelector(selector);
@@ -189,7 +195,11 @@
       const payload = mode === 'reject'
         ? { ipc_id: field('ipc_id').value, reason: comment }
         : { ipc_id: field('ipc_id').value, comment: comment };
-      const data = await request(endpoint, { method: 'POST', body: payload });
+      const data = await request(endpoint, {
+        method: 'POST',
+        body: payload,
+        headers: csrfHeaders
+      });
       if (!data.success) throw new Error(data.message || 'IPC decision could not be saved.');
       setStatus(data.message || 'IPC decision saved.', 'success');
       window.setTimeout(function () {

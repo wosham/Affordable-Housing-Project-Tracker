@@ -1,16 +1,673 @@
-/* Clerk of Works Dashboard — Role-specific styles
-   TODO: Phase 3 — Full implementation */
-.clerk-sidebar { background: #4a3500; color: #fff; }
-.clerk-sidebar .nav-link { color: rgba(255,255,255,.8); }
-.clerk-sidebar .nav-link.active,
-.clerk-sidebar .nav-link:hover { color: #fdcb6e; background: rgba(255,255,255,.1); }
-
-/* Attendance gateway big button */
-.gateway-btn {
-    width: 100%; padding: 2rem; border-radius: 12px; font-size: 1.5rem; font-weight: 700;
-    cursor: pointer; transition: all .3s ease; border: none;
+/* contentClass is on the same <main> as .admin-content — use compound selectors, not descendants */
+.clerk-dashboard-page,
+.clerk-attendance-page {
+  --clerk-surface: #fff;
+  --clerk-soft: #f8fafc;
+  --clerk-page: #eef3f8;
+  --clerk-border: #d9e3ef;
+  --clerk-border-strong: #c6d3e1;
+  --clerk-text: #061124;
+  --clerk-muted: #62718d;
+  --clerk-brand: #173f07;
+  --clerk-accent: #a6f031;
+  --clerk-good-bg: #dcfce7;
+  --clerk-good: #166534;
+  --clerk-warn-bg: #fef3c7;
+  --clerk-warn: #92400e;
+  --clerk-section-gap: 1.25rem;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--clerk-section-gap);
+  min-height: 0;
 }
-.gateway-btn--open   { background: #c6f6d5; color: #22543d; border: 3px solid var(--admin-success); }
-.gateway-btn--closed { background: #fed7d7; color: #742a2a; border: 3px solid var(--admin-danger); }
-.gateway-btn--open:hover   { background: var(--admin-success); color: #fff; }
-.gateway-btn--closed:hover { background: var(--admin-danger);  color: #fff; }
+
+.clerk-dashboard-page > .admin-footer,
+.clerk-attendance-page > .admin-footer {
+  margin-top: auto;
+}
+
+/* Explicit gaps so sections never touch even if flex gap is overridden */
+.clerk-dashboard-page > .card,
+.clerk-dashboard-page > section,
+.clerk-dashboard-page > form,
+.clerk-dashboard-page > nav,
+.clerk-dashboard-page > .clerk-stats,
+.clerk-dashboard-page > .clerk-layout,
+.clerk-attendance-page > .card,
+.clerk-attendance-page > section,
+.clerk-attendance-page > form,
+.clerk-attendance-page > nav,
+.clerk-attendance-page > .clerk-stats,
+.clerk-attendance-page > .clerk-layout {
+  margin: 0;
+}
+
+.clerk-hero.card,
+.clerk-panel.card,
+.clerk-stat.card,
+.clerk-selector.card,
+.clerk-filter.card,
+.clerk-policy-banner.card {
+  border: 1px solid var(--clerk-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07);
+  background: var(--clerk-surface);
+}
+
+.clerk-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.35rem 1.4rem;
+}
+
+.clerk-hero > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: .35rem;
+}
+
+.clerk-hero h2 {
+  margin: 0;
+  color: var(--clerk-text);
+  font-size: 1.45rem;
+  line-height: 1.2;
+  font-weight: 850;
+}
+
+.clerk-hero p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--clerk-muted);
+  line-height: 1.55;
+  font-size: .95rem;
+}
+
+/* County Director policy banner */
+.clerk-policy-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .95fr);
+  align-items: center;
+  gap: 1.15rem 1.35rem;
+  padding: 1.2rem 1.35rem;
+  background:
+    linear-gradient(135deg, rgba(236, 255, 213, 0.55), rgba(248, 250, 252, 0.9) 48%, #fff),
+    var(--clerk-surface);
+  border-color: color-mix(in srgb, var(--clerk-brand) 18%, var(--clerk-border));
+}
+
+.clerk-policy-banner__copy {
+  min-width: 0;
+  display: grid;
+  gap: .4rem;
+}
+
+.clerk-policy-banner .sa-panel-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  margin: 0;
+  color: var(--clerk-brand);
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.clerk-policy-banner__title,
+.clerk-policy-banner > div:first-child > strong {
+  display: block;
+  margin: 0;
+  color: var(--clerk-text);
+  font-size: 1.05rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.clerk-policy-banner__status,
+.clerk-policy-banner > div:first-child > small {
+  display: block;
+  margin: 0;
+  max-width: 42rem;
+  color: var(--clerk-muted);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.clerk-policy-chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .65rem;
+  min-width: 0;
+}
+
+.clerk-policy-chips article {
+  min-width: 0;
+  display: grid;
+  gap: .28rem;
+  place-content: center;
+  min-height: 72px;
+  padding: .7rem .55rem;
+  border: 1px solid var(--clerk-border);
+  border-radius: 10px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.clerk-policy-chips small {
+  display: block;
+  margin: 0;
+  color: var(--clerk-muted);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.clerk-policy-chips strong {
+  display: block;
+  margin: 0;
+  color: var(--clerk-brand);
+  font-size: 1.05rem;
+  font-weight: 850;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.clerk-hero__actions,
+.clerk-gateway-form__actions,
+.clerk-filter__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.clerk-live-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  margin-top: 12px;
+  padding: 5px 12px;
+  border: 1px solid var(--clerk-border);
+  border-radius: 999px;
+  background: var(--clerk-soft);
+  color: var(--clerk-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.clerk-live-status.is-open {
+  border-color: #bbf7d0;
+  background: var(--clerk-good-bg);
+  color: var(--clerk-good);
+}
+
+.clerk-live-status.is-closed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.clerk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.clerk-stat {
+  min-height: 108px;
+  padding: 1.1rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.clerk-stat > span {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: #ecffd5;
+  color: var(--clerk-brand);
+}
+
+.clerk-stat > div {
+  min-width: 0;
+}
+
+.clerk-stat strong,
+.clerk-stat small,
+.clerk-stat em {
+  display: block;
+}
+
+.clerk-stat strong {
+  margin-bottom: 4px;
+  color: var(--clerk-text);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.clerk-stat small {
+  color: var(--clerk-text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.clerk-stat em {
+  margin-top: 3px;
+  color: var(--clerk-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.clerk-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 1.15rem;
+  align-items: start;
+  width: 100%;
+}
+
+.clerk-layout--balanced {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+}
+
+.clerk-panel {
+  padding: 1.25rem 1.3rem;
+  min-width: 0;
+}
+
+.clerk-panel > h2 {
+  margin: 0 0 1rem;
+  color: var(--clerk-text);
+  font-size: 1.1rem;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.clerk-panel .card__header {
+  margin-bottom: 1rem;
+  align-items: flex-start;
+}
+
+.clerk-panel .card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: var(--clerk-text);
+}
+
+.clerk-panel .card__subtitle {
+  margin: .3rem 0 0;
+  color: var(--clerk-muted);
+  font-size: .88rem;
+  line-height: 1.4;
+}
+
+.clerk-project-list,
+.clerk-people-list,
+.clerk-context {
+  display: grid;
+  gap: .8rem;
+}
+
+.clerk-project-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) minmax(90px, 0.4fr) minmax(120px, 0.55fr) auto;
+  gap: .85rem;
+  align-items: center;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--clerk-border);
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.clerk-project-row:hover {
+  border-color: rgba(22, 51, 0, .22);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .05);
+}
+
+.clerk-project-row__status {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.clerk-project-row__status.is-open {
+  background: var(--clerk-good-bg);
+  color: var(--clerk-good);
+}
+
+.clerk-project-row strong,
+.clerk-people-list strong,
+.clerk-context strong,
+.clerk-table strong {
+  display: block;
+  color: var(--clerk-text);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.clerk-project-row small,
+.clerk-people-list small,
+.clerk-context small,
+.clerk-table small {
+  display: block;
+  margin-top: 4px;
+  color: var(--clerk-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.clerk-actions {
+  display: grid;
+  gap: .75rem;
+}
+
+.clerk-people-list > span,
+.clerk-context > span {
+  display: grid;
+  gap: .2rem;
+  min-height: 52px;
+  padding: .85rem .95rem;
+  border: 1px solid var(--clerk-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--clerk-text);
+  align-content: center;
+}
+
+.clerk-actions a {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 52px;
+  padding: .8rem .95rem;
+  border: 1px solid var(--clerk-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--clerk-text);
+  text-decoration: none;
+}
+
+.clerk-actions a:hover {
+  border-color: var(--clerk-border-strong);
+  background: var(--clerk-soft);
+}
+
+.clerk-actions i {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: #ecffd5;
+  color: var(--clerk-brand);
+}
+
+.clerk-actions span {
+  font-weight: 800;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.pagination > div {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.pagination .is-disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.clerk-selector {
+  display: grid;
+  grid-template-columns: 140px minmax(220px, 1fr);
+  gap: .85rem;
+  align-items: center;
+  padding: 1rem 1.15rem;
+}
+
+.clerk-filter {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.25fr) minmax(130px, 0.65fr) minmax(200px, 1.2fr) minmax(120px, 0.6fr) minmax(140px, 0.7fr) auto;
+  gap: .85rem;
+  align-items: end;
+  padding: 1rem 1.15rem;
+}
+
+.clerk-filter label,
+.clerk-selector label,
+.clerk-gateway-form label {
+  display: grid;
+  gap: .4rem;
+  color: var(--clerk-muted);
+  font-size: .72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.clerk-filter input,
+.clerk-filter select,
+.clerk-selector select,
+.clerk-gateway-form input,
+.clerk-gateway-form select,
+.clerk-gateway-form textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--clerk-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--clerk-text);
+  padding: .65rem .75rem;
+  font: inherit;
+}
+
+.clerk-filter input:focus,
+.clerk-filter select:focus,
+.clerk-selector select:focus,
+.clerk-gateway-form input:focus,
+.clerk-gateway-form select:focus,
+.clerk-gateway-form textarea:focus {
+  border-color: var(--clerk-accent);
+  box-shadow: 0 0 0 3px rgba(166, 240, 49, 0.25);
+  outline: 0;
+}
+
+.clerk-filter__actions {
+  align-self: end;
+}
+
+.clerk-gateway-form {
+  padding: 1.1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .85rem;
+  border: 1px solid var(--clerk-border);
+  border-radius: 10px;
+  background: var(--clerk-soft);
+}
+
+.clerk-gateway-form .is-wide {
+  grid-column: 1 / -1;
+}
+
+.clerk-gateway-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.clerk-gateway-form__actions {
+  grid-column: 1 / -1;
+}
+
+.clerk-table-wrap {
+  border: 1px solid var(--clerk-border);
+  border-radius: 10px;
+  overflow-x: auto;
+  background: #fff;
+}
+
+.clerk-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+}
+
+.clerk-table th,
+.clerk-table td {
+  padding: .95rem 1rem;
+  border-bottom: 1px solid var(--clerk-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.clerk-table th {
+  background: var(--clerk-soft);
+  color: var(--clerk-muted);
+  font-size: .72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.clerk-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.clerk-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.clerk-table .empty-state {
+  border: 1px dashed var(--clerk-border-strong);
+  border-radius: 8px;
+  padding: 1.75rem 1.1rem;
+}
+
+.clerk-panel > .empty-state,
+.clerk-people-list .empty-state {
+  border: 1px dashed var(--clerk-border-strong);
+  border-radius: 10px;
+  padding: 1.4rem 1rem;
+}
+
+.clerk-panel .btn,
+.clerk-hero .btn,
+.clerk-filter .btn,
+.clerk-project-row .btn,
+.clerk-gateway-form .btn {
+  min-height: 40px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1500px) {
+  .clerk-stats {
+    grid-template-columns: repeat(3, minmax(168px, 1fr));
+  }
+
+  .clerk-filter {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1180px) {
+  .clerk-layout,
+  .clerk-layout--balanced {
+    grid-template-columns: 1fr;
+  }
+
+  .clerk-policy-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .clerk-policy-chips {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .clerk-project-row {
+    grid-template-columns: 42px minmax(220px, 1fr) minmax(90px, 0.4fr) minmax(100px, 0.4fr) auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .clerk-filter,
+  .clerk-selector,
+  .clerk-gateway-form {
+    grid-template-columns: 1fr;
+  }
+
+  .clerk-policy-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clerk-project-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .clerk-project-row .btn {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  .clerk-dashboard-page,
+  .clerk-attendance-page {
+    --clerk-section-gap: 1rem;
+  }
+
+  .clerk-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 1.1rem;
+  }
+
+  .clerk-policy-banner {
+    padding: 1.05rem;
+  }
+
+  .clerk-hero__actions,
+  .clerk-gateway-form__actions,
+  .clerk-filter__actions {
+    justify-content: flex-start;
+  }
+
+  .clerk-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .clerk-panel {
+    padding: 1.05rem;
+  }
+}

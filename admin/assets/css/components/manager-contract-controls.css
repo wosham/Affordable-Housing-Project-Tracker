@@ -82,8 +82,18 @@
 }
 
 .mcc-filter {
-  grid-template-columns: 1.35fr 1.15fr repeat(4, minmax(130px, 1fr)) auto;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   align-items: end;
+}
+
+.mcc-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mcc-card .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .mcc-table th,
@@ -92,11 +102,18 @@
 }
 
 .mcc-table td {
-  min-width: 120px;
+  min-width: 0;
 }
 
 .mcc-table td:first-child {
-  min-width: 230px;
+  min-width: 160px;
+  max-width: 260px;
+}
+
+.mcc-actions.manager-table-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .35rem;
 }
 
 .mcc-table small {

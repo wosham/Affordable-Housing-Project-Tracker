@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_announcements';
 
@@ -47,7 +47,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '');
 
-$perPage = 12;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalAnnouncements = Announcement::adminCount($filters);
 $totalPages = max(1, (int)ceil($totalAnnouncements / $perPage));
@@ -58,15 +58,15 @@ $stats = Announcement::adminStats();
 $showingFrom = $totalAnnouncements > 0 ? $offset + 1 : 0;
 $showingTo = min($offset + count($announcements), $totalAnnouncements);
 
-$pageTitle = 'Announcements';
+$pageTitle = 'Staff Announcements';
 $pageDescription = 'Manage staff announcements, pinned notices and role-targeted broadcasts.';
 $adminRole = 'superadmin';
 $contentClass = 'sa-announcements-page';
 $componentCss = ['announcements'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
-    ['label' => 'Announcements'],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'Staff Announcements'],
 ];
 
 include __DIR__ . '/../../app/partials/admin/shell-start.php';
@@ -75,17 +75,17 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <section class="card sa-announcement-hero">
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> Staff Broadcasts</span>
-    <h2>Announcements centre</h2>
-    <p>Manage operational updates, pinned notices, role broadcasts and archived messages.</p>
+    <h2>Staff announcements centre</h2>
+    <p>Manage internal portal notices, pinned updates, role broadcasts and archived messages. Public website announcements are published under News.</p>
   </div>
   <div class="sa-news-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/dashboard.php')) ?>"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> Dashboard</a>
-    <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/announcement-create.php')) ?>"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Announcement</a>
+    <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/announcement-create.php')) ?>"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Staff Announcement</a>
   </div>
 </section>
 
 <section class="stat-grid stat-grid--4" aria-label="Announcements summary">
-  <?php announcement_stat('fa-bullhorn', $stats['total'] ?? 0, 'Total', 'All announcements'); ?>
+  <?php announcement_stat('fa-bullhorn', $stats['total'] ?? 0, 'Total', 'All staff notices'); ?>
   <?php announcement_stat('fa-circle-check', $stats['published'] ?? 0, 'Published', 'Visible to staff'); ?>
   <?php announcement_stat('fa-thumbtack', $stats['pinned'] ?? 0, 'Pinned', 'Priority placement'); ?>
   <?php announcement_stat('fa-triangle-exclamation', $stats['urgent'] ?? 0, 'Urgent', 'Critical or urgent'); ?>
@@ -97,14 +97,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <h2 class="card__title">Announcement Registry</h2>
       <p class="card__subtitle">Search, filter, publish, pin or archive staff broadcasts.</p>
     </div>
-    <span class="badge badge--lime"><?= Security::e(format_number($totalAnnouncements)) ?> announcements</span>
+    <span class="badge badge--lime"><?= Security::e(format_number($totalAnnouncements)) ?> staff announcements</span>
   </div>
 
   <form class="filter-bar" method="get" action="<?= Security::e(Url::to('admin/superadmin/announcements.php')) ?>">
     <div class="filter-group"><label class="filter-label" for="q">Search</label><input class="form-input" type="search" id="q" name="q" value="<?= Security::e($filters['q'] ?? '') ?>" placeholder="Title or message..."></div>
     <div class="filter-group"><label class="filter-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All statuses</option><?php foreach (Announcement::STATUSES as $status): ?><option value="<?= Security::e($status) ?>" <?= (($filters['status'] ?? '') === $status) ? 'selected' : '' ?>><?= Security::e(status_label($status)) ?></option><?php endforeach; ?></select></div>
     <div class="filter-group"><label class="filter-label" for="type">Type</label><select class="form-select" id="type" name="type"><option value="">All types</option><?php foreach (Announcement::TYPES as $type => $meta): ?><option value="<?= Security::e($type) ?>" <?= (($filters['type'] ?? '') === $type) ? 'selected' : '' ?>><?= Security::e($meta['label']) ?></option><?php endforeach; ?></select></div>
-    <div class="filter-group"><label class="filter-label" for="role">Role</label><select class="form-select" id="role" name="role"><option value="">All roles</option><?php foreach (Announcement::ROLES as $role): ?><option value="<?= Security::e($role) ?>" <?= (($filters['role'] ?? '') === $role) ? 'selected' : '' ?>><?= Security::e(role_label($role)) ?></option><?php endforeach; ?></select></div>
+    <div class="filter-group"><label class="filter-label" for="role">Audience</label><select class="form-select" id="role" name="role"><option value="">Any audience</option><option value="all" <?= (($filters['role'] ?? '') === 'all') ? 'selected' : '' ?>>All staff broadcasts</option><?php foreach (Announcement::ROLES as $role): ?><option value="<?= Security::e($role) ?>" <?= (($filters['role'] ?? '') === $role) ? 'selected' : '' ?>><?= Security::e(role_label($role)) ?> (incl. all-staff)</option><?php endforeach; ?></select></div>
     <div class="filter-group"><label class="filter-label" for="visibility">Visibility</label><select class="form-select" id="visibility" name="visibility"><option value="">Any</option><option value="active" <?= (($filters['visibility'] ?? '') === 'active') ? 'selected' : '' ?>>Active only</option><option value="expired" <?= (($filters['visibility'] ?? '') === 'expired') ? 'selected' : '' ?>>Expired only</option></select></div>
     <div class="filter-actions"><button class="btn btn--primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i> Filter</button><a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/announcements.php')) ?>">Reset</a></div>
   </form>
@@ -114,7 +114,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <thead><tr><th>Announcement</th><th>Audience</th><th>Status</th><th>Timing</th><th>Actions</th></tr></thead>
       <tbody>
 <?php if ($announcements === []): ?>
-        <tr><td colspan="5"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span><strong class="empty-state__title">No announcements match these filters</strong><span class="empty-state__text">Create a notice or clear the filters.</span></div></td></tr>
+        <tr><td colspan="5"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span><strong class="empty-state__title">No staff announcements match these filters</strong><span class="empty-state__text">Create a notice or clear the filters.</span></div></td></tr>
 <?php endif; ?>
 <?php foreach ($announcements as $announcement): ?>
 <?php
@@ -127,10 +127,17 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
             <div class="stacked-cell">
               <strong><i class="fa-solid <?= Security::e(Announcement::typeIcon($type)) ?>" aria-hidden="true"></i> <?= Security::e($announcement['title']) ?></strong>
               <small><?= Security::e(safe_truncate($announcement['body'], 120)) ?></small>
-              <small><?= ((int)($announcement['is_pinned'] ?? 0) === 1) ? 'Pinned · ' : '' ?><?= Security::e(Announcement::typeLabel($type)) ?> · <?= Security::e(status_label($priority)) ?> priority</small>
+              <small><?= ((int)($announcement['is_pinned'] ?? 0) === 1) ? 'Pinned Â· ' : '' ?><?= Security::e(Announcement::typeLabel($type)) ?> Â· <?= Security::e(status_label($priority)) ?> priority</small>
             </div>
           </td>
-          <td><?= Security::e(implode(', ', Announcement::roleLabels($announcement['target_roles_json'] ?? null))) ?></td>
+          <td>
+            <div class="sa-audience-chips">
+<?php foreach (Announcement::roleLabels($announcement['target_roles_json'] ?? null) as $label): ?>
+              <span class="sa-audience-chip<?= $label === 'All staff' ? ' is-all' : '' ?>"><?= Security::e($label) ?></span>
+<?php endforeach; ?>
+            </div>
+            <small class="sa-audience-reach">~<?= (int)Announcement::audienceReachCount($announcement['target_roles_json'] ?? null) ?> users</small>
+          </td>
           <td><span class="badge <?= Security::e(status_badge_class($status)) ?>"><?= Security::e(status_label($status)) ?></span></td>
           <td><span class="stacked-cell"><small>Published: <?= Security::e(format_datetime($announcement['published_at'] ?: $announcement['created_at'])) ?></small><small>Expires: <?= Security::e(format_datetime($announcement['expires_at'] ?? null)) ?></small></span></td>
           <td>
@@ -150,7 +157,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </div>
 
   <nav class="pagination" aria-label="Announcements pagination">
-    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($totalAnnouncements)) ?> announcements</p>
+    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($totalAnnouncements)) ?> staff announcements</p>
     <div class="pagination__list">
       <a class="pagination__link <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= Security::e(announcement_page_url(max(1, $page - 1), $filters)) ?>" aria-label="Previous page"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
 <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>

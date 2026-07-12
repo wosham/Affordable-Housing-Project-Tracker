@@ -174,6 +174,16 @@
   gap: .75rem;
   min-height: 104px;
   padding: 1rem;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+a.contractor-project-stat:hover {
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
 }
 
 .contractor-project-stat > span {
@@ -268,6 +278,42 @@
 .contractor-project-list-item > span:last-child small {
   text-align: right;
   white-space: normal;
+}
+
+.contractor-timeline-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  min-width: 0;
+}
+
+.contractor-timeline-item__head .badge {
+  flex: 0 0 auto;
+}
+
+.contractor-project-hero h2,
+.contractor-project-profile h3 {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.contractor-toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 2rem));
+  padding: .85rem 1rem;
+  border-radius: 8px;
+  background: var(--admin-primary);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, .2);
+}
+
+.contractor-toast.is-error {
+  background: #b91c1c;
 }
 
 .contractor-timeline-item {
@@ -637,6 +683,273 @@
 
 .contractor-toast.is-error {
   background: #b91c1c;
+}
+
+.contractor-timeline-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  margin-top: .55rem;
+  align-items: center;
+}
+
+.contractor-timeline-item__meta {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+  font-size: .86rem;
+}
+
+.contractor-timeline-item__muted {
+  color: var(--admin-text-muted);
+  font-size: .82rem;
+  font-weight: 650;
+}
+
+body.contractor-modal-open {
+  overflow: hidden;
+}
+
+.contractor-progress-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, .58);
+  backdrop-filter: blur(2px);
+}
+
+.contractor-progress-overlay[hidden] {
+  display: none !important;
+}
+
+.contractor-progress-modal {
+  width: min(760px, 100%);
+  max-height: min(90vh, 860px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .32);
+}
+
+.contractor-progress-modal__header,
+.contractor-progress-modal__footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .85rem;
+  padding: 1.05rem 1.2rem;
+  background: #fff;
+}
+
+.contractor-progress-modal__header {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.contractor-progress-modal__footer {
+  border-top: 1px solid var(--admin-border);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.contractor-progress-modal__header-copy {
+  min-width: 0;
+}
+
+.contractor-progress-modal__header h2 {
+  margin: .28rem 0 .18rem;
+  font-size: clamp(1.12rem, 1.8vw, 1.35rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.contractor-progress-modal__when {
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: .88rem;
+}
+
+.contractor-progress-modal__close {
+  flex: 0 0 auto;
+}
+
+.contractor-progress-modal__body {
+  overflow: auto;
+  padding: 1rem 1.2rem 1.15rem;
+  display: grid;
+  gap: 1.05rem;
+  min-height: 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 48px);
+}
+
+.contractor-progress-modal__chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+}
+
+.contractor-progress-chip {
+  display: grid;
+  gap: .28rem;
+  min-width: 0;
+  padding: .85rem .9rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .02);
+}
+
+.contractor-progress-chip small,
+.contractor-progress-field .label,
+.contractor-progress-modal__photo-head .label {
+  color: var(--admin-text-muted);
+  font-size: .72rem;
+  font-weight: 850;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.contractor-progress-chip strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: .98rem;
+  line-height: 1.25;
+}
+
+.contractor-progress-chip .badge {
+  text-transform: capitalize;
+}
+
+.contractor-progress-modal__fields {
+  display: grid;
+  gap: .7rem;
+}
+
+.contractor-progress-field {
+  padding: .9rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.contractor-progress-field p {
+  margin: .35rem 0 0;
+  color: var(--admin-text);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: .95rem;
+}
+
+.contractor-progress-modal__photo {
+  display: grid;
+  gap: .55rem;
+}
+
+.contractor-progress-modal__photo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.contractor-progress-modal__photo-head small {
+  color: var(--admin-text-muted);
+  font-size: .8rem;
+}
+
+.contractor-progress-modal__photo-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0b1220;
+  cursor: zoom-in;
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.contractor-progress-modal__photo-btn:hover,
+.contractor-progress-modal__photo-btn:focus-visible {
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .18);
+  outline: none;
+}
+
+.contractor-progress-modal__photo-btn img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  background: radial-gradient(circle at center, #1e293b 0%, #0b1220 70%);
+}
+
+.contractor-progress-overlay--lightbox {
+  background: rgba(2, 6, 23, .86);
+  z-index: 1200;
+}
+
+.contractor-progress-lightbox {
+  position: relative;
+  width: min(980px, 100%);
+  max-height: 92vh;
+  display: grid;
+  gap: .8rem;
+  justify-items: center;
+}
+
+.contractor-progress-lightbox img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #000;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
+}
+
+.contractor-progress-lightbox p {
+  margin: 0;
+  color: #e2e8f0;
+  text-align: center;
+}
+
+.contractor-progress-lightbox__close {
+  position: absolute;
+  top: -.2rem;
+  right: 0;
+  z-index: 2;
+}
+
+.contractor-project-list-item em {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  font-size: clamp(.78rem, 1vw, .9rem);
+}
+
+.contractor-submission-grid a {
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.contractor-submission-grid a:hover,
+.contractor-submission-grid a:focus-visible {
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+  outline: none;
+}
+
+@media (max-width: 720px) {
+  .contractor-progress-modal__chips {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-progress-modal {
+    max-height: 94vh;
+  }
 }
 
 @media (max-width: 1180px) {

@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(['superadmin']);
+Guard::exactRole('superadmin');
 
 $pageTitle = 'Financial Overview';
 $pageDescription = 'Director-level financial summary for contracts, IPCs, payments, retention and liquidated damages.';
@@ -51,7 +51,7 @@ $revisedContractValue = $totalContractValue + $approvedVariationValue;
 $approvedIpcValue = (float)$scalar("SELECT COALESCE(SUM(net_amount), 0) AS total FROM ipcs WHERE status IN ('approved', 'paid')");
 $approvedAwaitingValue = (float)$scalar("SELECT COALESCE(SUM(net_amount), 0) AS total FROM ipcs WHERE status = 'approved'");
 $approvedAwaitingCount = (int)$scalar("SELECT COUNT(*) AS total FROM ipcs WHERE status = 'approved'");
-$paidToDate = (float)$scalar('SELECT COALESCE(SUM(amount), 0) AS total FROM payments');
+$paidToDate = (float)$scalar("SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE status = 'processed'");
 $retentionHeld = (float)$scalar('SELECT COALESCE(SUM(total_held), 0) AS total FROM retention');
 $retentionReleased = (float)$scalar('SELECT COALESCE(SUM(released_amount), 0) AS total FROM retention');
 $retentionRemaining = max(0, $retentionHeld - $retentionReleased);
@@ -65,7 +65,7 @@ $zeroContractProjects = (int)$scalar('SELECT COUNT(*) AS total FROM projects WHE
 $overdueWithBalance = (int)$scalar(
     "SELECT COUNT(*) AS total
      FROM projects p
-     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments GROUP BY project_id) pay ON pay.project_id = p.id
+     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments WHERE status = 'processed' GROUP BY project_id) pay ON pay.project_id = p.id
      WHERE p.est_delivery IS NOT NULL
        AND p.est_delivery < CURDATE()
        AND p.status <> 'completed'
@@ -75,7 +75,7 @@ $retentionDue = (int)$scalar("SELECT COUNT(*) AS total FROM retention WHERE rele
 $paidOverProgress = (int)$scalar(
     "SELECT COUNT(*) AS total
      FROM projects p
-     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments GROUP BY project_id) pay ON pay.project_id = p.id
+     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments WHERE status = 'processed' GROUP BY project_id) pay ON pay.project_id = p.id
      WHERE COALESCE(p.contract_sum, 0) > 0
        AND ((COALESCE(pay.paid, 0) / p.contract_sum) * 100) > (COALESCE(p.pct_complete, 0) + 15)"
 );
@@ -110,7 +110,7 @@ if ($ldTotal > 0) {
     $addSignal($financeSignals, 'monitor', 'fa-gavel', 'Liquidated damages applied', format_money($ldTotal) . ' has been recorded across programme projects.', 'admin/finance/liquidated-damages.php');
 }
 
-$where = [];
+$where = ["pay.status = 'processed'"];
 $bindings = [];
 if ($projectId > 0) {
     $where[] = 'p.id = ?';
@@ -193,7 +193,7 @@ $projectPositions = $rows(
                SUM(CASE WHEN status IN ('submitted','certified','endorsed') THEN net_amount ELSE 0 END) AS pending_ipcs
         FROM ipcs GROUP BY project_id
      ) ipc ON ipc.project_id = p.id
-     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments GROUP BY project_id) pay ON pay.project_id = p.id
+     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments WHERE status = 'processed' GROUP BY project_id) pay ON pay.project_id = p.id
      LEFT JOIN (SELECT project_id, SUM(total_held) AS total_held, SUM(released_amount) AS released_amount FROM retention GROUP BY project_id) ret ON ret.project_id = p.id
      LEFT JOIN (SELECT project_id, SUM(total_ld) AS total_ld FROM liquidated_damages GROUP BY project_id) ld ON ld.project_id = p.id
      ORDER BY (COALESCE(p.contract_sum,0) + COALESCE(var.approved_variations,0) - COALESCE(pay.paid,0)) DESC
@@ -229,14 +229,14 @@ $spendByConstituency = $rows(
     "SELECT c.name, COALESCE(SUM(p.contract_sum), 0) AS contract_sum, COALESCE(SUM(pay.paid), 0) AS paid
      FROM constituencies c
      LEFT JOIN projects p ON p.constituency_id = c.id
-     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments GROUP BY project_id) pay ON pay.project_id = p.id
+     LEFT JOIN (SELECT project_id, SUM(amount) AS paid FROM payments WHERE status = 'processed' GROUP BY project_id) pay ON pay.project_id = p.id
      GROUP BY c.id, c.name
      ORDER BY contract_sum DESC"
 );
 $monthlyPayments = $rows(
     "SELECT DATE_FORMAT(payment_date, '%Y-%m') AS month_label, COALESCE(SUM(amount), 0) AS total
      FROM payments
-     WHERE payment_date >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH)
+     WHERE status = 'processed' AND payment_date >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH)
      GROUP BY DATE_FORMAT(payment_date, '%Y-%m')
      ORDER BY month_label ASC"
 );
@@ -276,7 +276,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
       <span class="sa-panel-label">Financial health</span>
       <strong><?= Security::e(format_percentage($financeHealthScore)) ?></strong>
       <div class="sa-finance-health__bar"><span style="--bar-width: <?= (int)$financeHealthScore ?>%;"></span></div>
-      <small><?= Security::e(format_percentage($budgetUtilisation)) ?> budget utilised · <?= Security::e(format_percentage($unpaidApprovedRatio)) ?> approved value unpaid</small>
+      <small><?= Security::e(format_percentage($budgetUtilisation)) ?> budget utilised Â· <?= Security::e(format_percentage($unpaidApprovedRatio)) ?> approved value unpaid</small>
     </div>
     <div class="sa-finance-hero__actions" aria-label="Financial shortcuts">
       <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/finance/approved-ipcs.php')) ?>"><i class="fa-solid fa-file-circle-check" aria-hidden="true"></i> Approved IPCs</a>
@@ -338,8 +338,13 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
             $balance = max(0, $revised - $paid);
             $paidPct = $revised > 0 ? percentage(($paid / $revised) * 100) : 0;
             $barWidth = percentage(($revised / $maxProjectPosition) * 100);
+            $chartTip = $project['name']
+                . ' | Revised value: ' . format_money($revised)
+                . ' | Paid: ' . format_money($paid)
+                . ' (' . format_percentage($paidPct) . ')'
+                . ' | Balance: ' . format_money($balance);
           ?>
-          <div class="sa-finance-bar-row">
+          <div class="sa-finance-bar-row" data-chart-tip="<?= Security::e($chartTip) ?>" title="<?= Security::e($chartTip) ?>">
             <div class="sa-finance-row-title"><strong><?= Security::e($project['name']) ?></strong><small><?= Security::e(status_label($project['status'])) ?> &middot; <?= Security::e(format_percentage($project['pct_complete'])) ?> complete</small></div>
             <div class="sa-finance-row-meter"><div class="sa-finance-bar-track"><span style="--bar-width: <?= (int)$barWidth ?>%; --bar-paid: <?= (int)$paidPct ?>%;"></span></div><small><b><?= Security::e(format_percentage($paidPct)) ?></b> paid against revised value</small></div>
             <div class="sa-finance-row-money"><strong><?= Security::e(format_money($revised)) ?></strong><small><?= Security::e(format_money($balance)) ?> balance</small></div>
@@ -356,8 +361,13 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <?php if ($ipcPipeline): ?>
       <div class="sa-finance-pipeline">
         <?php foreach ($ipcPipeline as $item): ?>
-          <?php $width = percentage(((float)$item['value'] / $maxPipelineValue) * 100); ?>
-          <div class="sa-finance-pipeline__row">
+          <?php
+            $width = percentage(((float)$item['value'] / $maxPipelineValue) * 100);
+            $pipelineTip = status_label($item['status'])
+                . ' | Value: ' . format_money($item['value'])
+                . ' | IPC count: ' . format_number($item['total']);
+          ?>
+          <div class="sa-finance-pipeline__row" data-chart-tip="<?= Security::e($pipelineTip) ?>" title="<?= Security::e($pipelineTip) ?>">
             <span class="badge <?= Security::e(status_badge_class($item['status'])) ?>"><?= Security::e(status_label($item['status'])) ?></span>
             <div class="sa-finance-pipeline__track"><span style="--bar-width: <?= (int)$width ?>%;"></span></div>
             <strong><?= Security::e(format_money($item['value'])) ?></strong>
@@ -379,8 +389,12 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
         <?php
           $contractWidth = percentage(((float)$row['contract_sum'] / $maxConstituencyValue) * 100);
           $paidWidth = percentage(((float)$row['paid'] / $maxConstituencyValue) * 100);
+          $constituencyTip = $row['name']
+              . ' | Contract allocation: ' . format_money($row['contract_sum'])
+              . ' | Paid: ' . format_money($row['paid'])
+              . ' | Green bar is paid movement, dark bar is contract allocation.';
         ?>
-        <div class="sa-finance-dual-row">
+        <div class="sa-finance-dual-row" data-chart-tip="<?= Security::e($constituencyTip) ?>" title="<?= Security::e($constituencyTip) ?>">
           <strong><?= Security::e($row['name']) ?></strong>
           <div>
             <span class="sa-finance-track sa-finance-track--contract"><i style="--bar-width: <?= (int)$contractWidth ?>%;"></i></span>
@@ -397,8 +411,12 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <?php if ($monthlyPayments): ?>
       <div class="sa-finance-months">
         <?php foreach ($monthlyPayments as $month): ?>
-          <?php $height = max(8, percentage(((float)$month['total'] / $maxMonthly) * 100)); ?>
-          <div class="sa-finance-month">
+          <?php
+            $height = max(8, percentage(((float)$month['total'] / $maxMonthly) * 100));
+            $monthName = date('M Y', strtotime($month['month_label'] . '-01'));
+            $monthTip = $monthName . ' | Processed payments: ' . format_money($month['total']);
+          ?>
+          <div class="sa-finance-month" data-chart-tip="<?= Security::e($monthTip) ?>" title="<?= Security::e($monthTip) ?>">
             <span style="--bar-height: <?= (int)$height ?>%;"></span>
             <strong><?= Security::e(format_money($month['total'])) ?></strong>
             <small><?= Security::e(date('M y', strtotime($month['month_label'] . '-01'))) ?></small>
@@ -504,11 +522,13 @@ function sa_financial_pagination(int $page, int $totalPages, int $total, int $pe
     ob_start();
 ?>
   <nav class="sa-project-pagination pagination" aria-label="Payment pagination">
-    <span>Showing <?= Security::e(format_number($from)) ?>-<?= Security::e(format_number($to)) ?> of <?= Security::e(format_number($total)) ?></span>
-    <div class="pagination__links">
-      <a class="btn btn--sm btn--outline <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= Security::e(sa_financial_page_url(max(1, $page - 1))) ?>">Previous</a>
-      <span class="pagination__current">Page <?= Security::e(format_number($page)) ?> of <?= Security::e(format_number($totalPages)) ?></span>
-      <a class="btn btn--sm btn--outline <?= $page >= $totalPages ? 'is-disabled' : '' ?>" href="<?= Security::e(sa_financial_page_url(min($totalPages, $page + 1))) ?>">Next</a>
+    <p class="pagination__info">Showing <?= Security::e(format_number($from)) ?>-<?= Security::e(format_number($to)) ?> of <?= Security::e(format_number($total)) ?> payments</p>
+    <div class="pagination__list">
+      <a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(sa_financial_page_url(max(1, $page - 1))) ?>" aria-label="Previous page"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
+<?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+      <a class="pagination__link<?= $i === $page ? ' is-active' : '' ?>" href="<?= Security::e(sa_financial_page_url($i)) ?>"><?= Security::e(format_number($i)) ?></a>
+<?php endfor; ?>
+      <a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(sa_financial_page_url(min($totalPages, $page + 1))) ?>" aria-label="Next page"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
     </div>
   </nav>
 <?php

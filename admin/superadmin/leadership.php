@@ -1,13 +1,46 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_leadership';
 
 function sa_leadership_redirect(): void
 {
     Response::redirect(Url::to('admin/superadmin/leadership.php'));
+}
+
+function sa_leadership_page(array $rows, string $param, int $perPage): array
+{
+    $total = count($rows);
+    $totalPages = max(1, (int)ceil($total / max(1, $perPage)));
+    $page = max(1, min($totalPages, (int)($_GET[$param] ?? 1)));
+    $offset = ($page - 1) * $perPage;
+    return [array_slice($rows, $offset, $perPage), $page, $totalPages, $total, $offset];
+}
+
+function sa_leadership_pagination(int $page, int $totalPages, int $total, int $perPage, string $param, string $label): string
+{
+    if ($total <= 0) {
+        return '';
+    }
+    $from = (($page - 1) * $perPage) + 1;
+    $to = min($total, $page * $perPage);
+    $query = $_GET;
+    $prev = $query; $prev[$param] = max(1, $page - 1);
+    $next = $query; $next[$param] = min($totalPages, $page + 1);
+    ob_start();
+    ?>
+  <nav class="sa-project-pagination pagination" aria-label="<?= Security::e($label) ?>">
+    <span>Showing <?= Security::e(format_number($from)) ?>-<?= Security::e(format_number($to)) ?> of <?= Security::e(format_number($total)) ?> (10 per page)</span>
+    <div class="pagination__links">
+      <a class="btn btn--sm btn--outline <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= Security::e(Url::to('admin/superadmin/leadership.php?' . http_build_query($prev))) ?>">Previous</a>
+      <span class="pagination__current">Page <?= Security::e(format_number($page)) ?> of <?= Security::e(format_number($totalPages)) ?></span>
+      <a class="btn btn--sm btn--outline <?= $page >= $totalPages ? 'is-disabled' : '' ?>" href="<?= Security::e(Url::to('admin/superadmin/leadership.php?' . http_build_query($next))) ?>">Next</a>
+    </div>
+  </nav>
+    <?php
+    return (string)ob_get_clean();
 }
 
 function sa_lines(array $row, string $field): string
@@ -130,9 +163,9 @@ $profileFilters = [
 ];
 $profileFilters = array_filter($profileFilters, static fn ($value): bool => $value !== '');
 
-$profiles = LeadershipProfile::ordered($profileFilters);
-$contractors = Contractor::ordered();
-$quotes = LeadershipQuote::ordered();
+$profilesAll = LeadershipProfile::ordered($profileFilters);
+$contractorsAll = Contractor::ordered();
+$quotesAll = LeadershipQuote::ordered();
 $partners = Stakeholder::leadershipPartners();
 $projects = Project::withRelations([], 100);
 $constituencies = Constituency::findAll([], 'name ASC');
@@ -141,6 +174,12 @@ $contractorStats = Contractor::stats();
 $quoteStats = LeadershipQuote::stats();
 $stakeholderStats = Stakeholder::stats();
 $spotlight = LeadershipProfile::featuredSpotlight();
+
+// Tables show 10 rows per page.
+$perPage = 10;
+[$profiles, $profilePage, $profilePages, $profileTotal, $profileOffset] = sa_leadership_page($profilesAll, 'profile_page', $perPage);
+[$contractors, $contractorPage, $contractorPages, $contractorTotal, $contractorOffset] = sa_leadership_page($contractorsAll, 'contractor_page', $perPage);
+[$quotes, $quotePage, $quotePages, $quoteTotal, $quoteOffset] = sa_leadership_page($quotesAll, 'quote_page', $perPage);
 
 $editProfile = null;
 $editContractor = null;
@@ -171,7 +210,7 @@ $componentCss = ['cms-editor', 'media-library', 'leadership-admin'];
 $pageScripts = ['media-picker', 'leadership-admin'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Leadership'],
 ];
 
@@ -181,14 +220,23 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <section class="sa-leadership-hero card">
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-user-tie" aria-hidden="true"></i> Leadership Registry</span>
-    <h2>Programme leadership and delivery partners</h2>
-    <p>Control the command chain, county director spotlight, contractor cards, partner rail and leadership quotes used by the leadership page.</p>
+    <h2>Programme leadership records</h2>
+    <p>This screen controls the people, contractors, quotes and partner records shown on the public Leadership page. Use Page Text / SEO for the public headings, hero wording and section copy.</p>
   </div>
   <div class="sa-action-grid">
     <a class="btn btn--primary" href="#profile-form"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add Profile</a>
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=leadership')) ?>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Page Copy</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=leadership')) ?>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Page Text / SEO</a>
     <a class="btn btn--outline" href="<?= Security::e(Url::to('leadership.php')) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Preview Page</a>
   </div>
+</section>
+
+<section class="card sa-cms-module-callout">
+  <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></div>
+  <div>
+    <h3>How this connects to the public page</h3>
+    <p>Leadership profiles feed the org chart, profile cards and County Director spotlight. Contractor records feed the contractor section. Quotes feed the quote carousel. Page Text / SEO controls only wording, hero text and section titles.</p>
+  </div>
+  <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=leadership')) ?>"><i class="fa-solid fa-file-pen" aria-hidden="true"></i> Edit Page Text / SEO</a>
 </section>
 
 <section class="stat-grid stat-grid--4 sa-leadership-stats" aria-label="Leadership summary">
@@ -203,9 +251,9 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     <div class="card__header">
       <div>
         <h2 class="card__title">Leadership Profiles</h2>
-        <p class="card__subtitle">Manage the command hierarchy, display cards and county director spotlight.</p>
+        <p class="card__subtitle">Appears on the public Leadership page in the org chart, senior official cards and spotlight sections.</p>
       </div>
-      <span class="badge badge--lime"><?= Security::e(format_number(count($profiles))) ?> records</span>
+      <span class="badge badge--lime"><?= Security::e(format_number($profileTotal)) ?> records</span>
     </div>
 
     <form class="filter-bar sa-leadership-filter" method="get" action="<?= Security::e(Url::to('admin/superadmin/leadership.php')) ?>">
@@ -221,7 +269,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <tbody>
 <?php foreach ($profiles as $index => $profile): ?>
           <tr>
-            <td><?= Security::e((string)($index + 1)) ?></td>
+            <td><?= Security::e((string)($profileOffset + $index + 1)) ?></td>
             <td>
               <div class="sa-leader-cell">
                 <span class="sa-leader-avatar"><?= Security::e($profile['initials'] ?: LeadershipProfile::initials((string)$profile['name'])) ?></span>
@@ -250,6 +298,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </tbody>
       </table>
     </div>
+    <?= sa_leadership_pagination($profilePage, $profilePages, $profileTotal, $perPage, 'profile_page', 'Leadership profiles pagination') ?>
   </article>
 
   <aside class="sa-leadership-side">
@@ -324,7 +373,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
 <section class="sa-leadership-split">
   <article class="card sa-leadership-card">
-    <div class="card__header"><div><h2 class="card__title">Contractor Cards</h2><p class="card__subtitle">Companies shown in the builders section.</p></div><span class="badge badge--lime"><?= Security::e(format_number(count($contractors))) ?> records</span></div>
+    <div class="card__header"><div><h2 class="card__title">Contractor Cards</h2><p class="card__subtitle">Appears on the public Leadership page in the Contractors and Site Delivery section.</p></div><span class="badge badge--lime"><?= Security::e(format_number($contractorTotal)) ?> records</span></div>
     <div class="sa-compact-list">
 <?php foreach ($contractors as $contractor): ?>
       <div class="sa-compact-row">
@@ -335,10 +384,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       </div>
 <?php endforeach; ?>
     </div>
+    <?= sa_leadership_pagination($contractorPage, $contractorPages, $contractorTotal, $perPage, 'contractor_page', 'Contractor cards pagination') ?>
   </article>
 
   <article class="card sa-leadership-card" id="contractor-form">
-    <div class="card__header"><div><h2 class="card__title"><?= $editContractor ? 'Edit Contractor' : 'Add Contractor' ?></h2><p class="card__subtitle">Link contractor records to project and constituency delivery data.</p></div></div>
+    <div class="card__header"><div><h2 class="card__title"><?= $editContractor ? 'Edit Contractor' : 'Add Contractor' ?></h2><p class="card__subtitle">Set the company, status, linked project and short public delivery note.</p></div></div>
     <form class="sa-record-form" method="post">
       <?= Csrf::field($csrfForm) ?>
       <input type="hidden" name="action" value="save_contractor">
@@ -361,7 +411,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
 <section class="sa-leadership-split">
   <article class="card sa-leadership-card">
-    <div class="card__header"><div><h2 class="card__title">Leadership Quotes</h2><p class="card__subtitle">Short statements used in the quote carousel.</p></div><span class="badge badge--lime"><?= Security::e(format_number($quoteStats['featured'] ?? 0)) ?> featured</span></div>
+    <div class="card__header"><div><h2 class="card__title">Leadership Quotes</h2><p class="card__subtitle">Appears on the public Leadership page in the quote carousel.</p></div><span class="badge badge--lime"><?= Security::e(format_number($quoteTotal)) ?> quotes</span></div>
     <div class="sa-quote-list">
 <?php foreach ($quotes as $quote): ?>
       <blockquote>
@@ -370,6 +420,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       </blockquote>
 <?php endforeach; ?>
     </div>
+    <?= sa_leadership_pagination($quotePage, $quotePages, $quoteTotal, $perPage, 'quote_page', 'Leadership quotes pagination') ?>
   </article>
 
   <article class="card sa-leadership-card" id="quote-form">

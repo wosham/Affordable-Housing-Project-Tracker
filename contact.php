@@ -12,8 +12,7 @@ function contact_content(array $page, string $key, array $defaults): array
 
 function contact_setting(array $settings, string $key, string $default = ''): string
 {
-    $value = $settings[$key] ?? $default;
-    return trim((string)$value) !== '' ? (string)$value : $default;
+    return trim((string)($settings[$key] ?? ''));
 }
 
 function contact_tel_href(string $phone): string
@@ -24,12 +23,13 @@ function contact_tel_href(string $phone): string
 
 function contact_subject_key(string $name): string
 {
-    $key = strtolower(trim((string)preg_replace('/[^a-z0-9]+/i', '_', $name), '_'));
-    return $key !== '' ? $key : 'general';
+    return ContactDepartment::keyFromName($name);
 }
 
 $settings = CmsSetting::getGroup('contact');
 $hero = contact_content($cmsPage, 'contact_hero', [
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Trans-Nzoia Affordable Housing Programme contact desk',
     'eyebrow' => 'Get in Touch',
     'title' => "We're Here\nto Help.",
     'subtitle' => 'Reach our county housing team for enquiries about the Affordable Housing Programme - applications, site progress, allocation status, or any other question.',
@@ -110,20 +110,20 @@ $postalAddress = contact_setting($settings, 'contact_postal_address', 'P.O. Box 
 $mapsUrl = contact_setting($settings, 'contact_maps_url', 'https://maps.google.com/?q=Kitale+Trans-Nzoia+County');
 
 try {
-    $departments = Database::fetchAll(
-        'SELECT name, COALESCE(subject_key, "") AS subject_key, role, email, phone, COALESCE(icon, "fa-building") AS icon, COALESCE(accent, "a") AS accent
-         FROM contact_departments
-         WHERE is_visible = 1
-         ORDER BY sort_order ASC, name ASC'
-    );
-} catch (Throwable) {
-    $departments = [
-        ['name' => 'Field Operations', 'subject_key' => 'field_operations', 'role' => 'Construction progress, site visits, contractor oversight', 'email' => 'fieldops@transnzoia.go.ke', 'phone' => '+254 53 000 0001', 'icon' => 'fa-hard-hat', 'accent' => 'a'],
-        ['name' => 'Legal & Allocation', 'subject_key' => 'legal_allocation', 'role' => 'Applications, balloting, title deeds, legal enquiries', 'email' => 'legal@transnzoia.go.ke', 'phone' => '+254 53 000 0002', 'icon' => 'fa-scale-balanced', 'accent' => 'b'],
-        ['name' => 'Finance & Levy', 'subject_key' => 'finance_levy', 'role' => 'Housing Levy, mortgage, refunds, payment queries', 'email' => 'finance@transnzoia.go.ke', 'phone' => '+254 53 000 0003', 'icon' => 'fa-coins', 'accent' => 'c'],
-        ['name' => 'Communications', 'subject_key' => 'communications', 'role' => 'Media, press, events, public announcements', 'email' => 'comms@transnzoia.go.ke', 'phone' => '+254 53 000 0004', 'icon' => 'fa-bullhorn', 'accent' => 'd'],
-    ];
+    $departments = ContactDepartment::visible();
+} catch (Throwable $e) {
+    Logger::error('Contact departments could not be loaded', ['error' => $e->getMessage()]);
+    $departments = [];
 }
+$mapEmbedUrl = trim(CmsLoader::text($office, 'map_embed_url', ''));
+$heroImage = CmsLoader::text($hero, 'background_image', trim((string)($cmsPage['hero_image'] ?? '')) ?: 'uploads/heroes/hero-main.jpg');
+$heroAlt = CmsLoader::text($hero, 'background_alt', 'Trans-Nzoia Affordable Housing Programme contact desk');
+$officeHoursPayload = [
+    'weekdayStart' => '08:00',
+    'weekdayEnd' => '17:00',
+    'saturdayStart' => '09:00',
+    'saturdayEnd' => '13:00',
+];
 
 $pageTitle = $cmsPage['seo_title'] ?? 'Contact Us | Trans-Nzoia AHP Tracker';
 $pageDescription = $cmsPage['seo_description'] ?? 'Contact the Trans-Nzoia Affordable Housing Programme team - phone, email, office location and online enquiry form.';
@@ -131,7 +131,7 @@ $pageKeywords = $cmsPage['seo_keywords'] ?? 'Trans-Nzoia affordable housing cont
 $pageAuthor = 'Trans-Nzoia County Government - Department of Land, Housing & Physical Planning';
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = $cmsPage['canonical_url'] ?? 'https://housing.transnzoia.go.ke/contact.php';
+$canonicalUrl = trim((string)($cmsPage['canonical_url'] ?? '')) ?: Url::canonical('contact.php');
 $pageStyles = ['assets/css/global.css', 'assets/css/pages/contact.css'];
 $pageScripts = ['assets/js/global.js', 'assets/js/pages/contact.js'];
 $headMeta = [
@@ -141,7 +141,7 @@ $headMeta = [
     '<meta property="og:description" content="' . Security::e($pageDescription) . '">',
     '<meta property="og:type" content="website">',
     '<meta property="og:url" content="' . Security::e($canonicalUrl) . '">',
-    '<meta property="og:image" content="' . Security::e($cmsPage['hero_image'] ?? 'uploads/heroes/hero-main.jpg') . '">',
+    '<meta property="og:image" content="' . Security::e(Url::asset($heroImage)) . '">',
     '<meta property="og:locale" content="en_KE">',
     '<meta property="og:site_name" content="Trans-Nzoia AHP Tracker">',
     '<meta name="twitter:card" content="summary_large_image">',
@@ -155,15 +155,11 @@ include __DIR__ . '/app/partials/head.php';
 
     <section class="ct-hero" aria-label="Contact overview">
       <div class="ct-hero-bg" aria-hidden="true">
+        <img <?= public_image_attrs($heroImage, $heroAlt, ['loading' => 'eager', 'fetchpriority' => 'high', 'class' => 'ct-hero-image', 'onerror' => "this.style.display='none'"]) ?>>
         <div class="ct-hero-overlay"></div>
         <div class="ct-hero-dots"></div>
       </div>
       <div class="container">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <a href="index.php" class="breadcrumb-link">Home</a>
-          <span class="breadcrumb-sep" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
-          <span class="breadcrumb-current" aria-current="page">Contact Us</span>
-        </nav>
         <div class="ct-hero-body">
           <div class="ct-hero-eyebrow"><i class="fa-solid fa-headset" aria-hidden="true"></i> <?= Security::e(CmsLoader::text($hero, 'eyebrow', 'Get in Touch')) ?></div>
           <h1 class="ct-hero-title"><?= nl2br(Security::e(CmsLoader::text($hero, 'title', "We're Here\nto Help."))) ?></h1>
@@ -215,11 +211,11 @@ include __DIR__ . '/app/partials/head.php';
               <h2 class="ct-form-title"><?= Security::e(CmsLoader::text($formCopy, 'title', 'Send Us a Message')) ?></h2>
               <p class="ct-form-sub"><?= Security::e(CmsLoader::text($formCopy, 'subtitle', 'Fill in the form below and a member of our team will get back to you within one business day.')) ?></p>
             </div>
-            <form class="ct-form" id="contactForm" novalidate aria-label="Contact form" enctype="multipart/form-data" data-contact-endpoint="<?= Security::e(Url::to('api/public/contact-submit.php')) ?>">
+            <form class="ct-form" id="contactForm" novalidate aria-label="Contact form" enctype="multipart/form-data" data-contact-endpoint="<?= Security::e(Url::to('api/public/contact-submit.php')) ?>" data-office-hours="<?= Security::e(json_encode($officeHoursPayload, JSON_UNESCAPED_SLASHES)) ?>">
               <input type="text" name="_gotcha" class="ct-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
               <div class="ct-form-row ct-form-row--2col">
                 <div class="ct-field-group"><label class="ct-label" for="ctName">Full Name <span class="ct-required" aria-hidden="true">*</span></label><div class="ct-input-wrap"><i class="fa-solid fa-user ct-input-icon" aria-hidden="true"></i><input type="text" id="ctName" name="name" class="ct-input" placeholder="<?= Security::e(CmsLoader::text($formCopy, 'name_placeholder', 'e.g. John Wafula')) ?>" autocomplete="name" required aria-required="true"></div><span class="ct-error" id="ctNameErr" role="alert" aria-live="polite"></span></div>
-                <div class="ct-field-group"><label class="ct-label" for="ctPhone">Phone Number</label><div class="ct-input-wrap"><i class="fa-solid fa-phone ct-input-icon" aria-hidden="true"></i><input type="tel" id="ctPhone" name="phone" class="ct-input" placeholder="<?= Security::e(CmsLoader::text($formCopy, 'phone_placeholder', '07XX XXX XXX')) ?>" autocomplete="tel"></div></div>
+                <div class="ct-field-group"><label class="ct-label" for="ctPhone">Phone Number</label><div class="ct-input-wrap"><i class="fa-solid fa-phone ct-input-icon" aria-hidden="true"></i><input type="tel" id="ctPhone" name="phone" class="ct-input" placeholder="<?= Security::e(CmsLoader::text($formCopy, 'phone_placeholder', '07XX XXX XXX')) ?>" autocomplete="tel"></div><span class="ct-error" id="ctPhoneErr" role="alert" aria-live="polite"></span></div>
               </div>
               <div class="ct-field-group"><label class="ct-label" for="ctEmail">Email Address <span class="ct-required" aria-hidden="true">*</span></label><div class="ct-input-wrap"><i class="fa-solid fa-envelope ct-input-icon" aria-hidden="true"></i><input type="email" id="ctEmail" name="email" class="ct-input" placeholder="<?= Security::e(CmsLoader::text($formCopy, 'email_placeholder', 'you@example.com')) ?>" autocomplete="email" required aria-required="true"></div><span class="ct-error" id="ctEmailErr" role="alert" aria-live="polite"></span></div>
               <div class="ct-field-group">
@@ -250,7 +246,7 @@ include __DIR__ . '/app/partials/head.php';
                 <div class="ct-hours-row" role="row"><span role="cell"><?= Security::e(CmsLoader::text($office, 'holiday_label', 'Sunday & Public Holidays')) ?></span><span role="cell"><?= Security::e(CmsLoader::text($office, 'holiday_hours', 'Closed')) ?></span><span role="cell" class="ct-hours-status ct-hours-closed">Closed</span></div>
               </div>
             </div>
-            <div class="ct-map-wrap"><div class="ct-map-placeholder" aria-label="Office location map"><iframe src="<?= Security::e(CmsLoader::text($office, 'map_embed_url', '')) ?>" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Trans-Nzoia AHP Field Office location on Google Maps" aria-label="Google Maps showing Kitale, Trans-Nzoia County"></iframe></div><a href="<?= Security::e($mapsUrl) ?>" target="_blank" rel="noopener noreferrer" class="ct-map-link"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> <?= Security::e(CmsLoader::text($office, 'map_link_label', 'Open in Google Maps')) ?></a></div>
+            <div class="ct-map-wrap"><div class="ct-map-placeholder" aria-label="Office location map"><?php if ($mapEmbedUrl !== ''): ?><iframe src="<?= Security::e($mapEmbedUrl) ?>" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Trans-Nzoia AHP Field Office location on Google Maps" aria-label="Google Maps showing Kitale, Trans-Nzoia County"></iframe><?php else: ?><div class="ct-map-empty"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><strong>Office map unavailable</strong><span>Use the address or phone details above to reach the field office.</span></div><?php endif; ?></div><a href="<?= Security::e($mapsUrl) ?>" target="_blank" rel="noopener noreferrer" class="ct-map-link"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> <?= Security::e(CmsLoader::text($office, 'map_link_label', 'Open in Google Maps')) ?></a></div>
             <div class="ct-ahb-card"><div class="ct-ahb-icon"><i class="fa-solid fa-phone-volume" aria-hidden="true"></i></div><div><p class="ct-ahb-title"><?= Security::e(CmsLoader::text($office, 'helpline_title', 'National AHB Helpline')) ?></p><a href="<?= Security::e(contact_tel_href(CmsLoader::text($office, 'helpline_number', '0800 723 133'))) ?>" class="ct-ahb-number"><?= Security::e(CmsLoader::text($office, 'helpline_number', '0800 723 133')) ?></a><p class="ct-ahb-note"><?= Security::e(CmsLoader::text($office, 'helpline_note', 'Toll-free - Mon-Fri 8am-6pm')) ?></p></div></div>
           </div>
         </div>
@@ -265,7 +261,7 @@ include __DIR__ . '/app/partials/head.php';
           <?php $accent = preg_match('/^[a-d]$/', (string)$department['accent']) ? (string)$department['accent'] : 'a'; ?>
           <div class="ct-dept-card"><div class="ct-dept-avatar ct-dept-avatar--<?= Security::e($accent) ?>" aria-hidden="true"><i class="fa-solid <?= Security::e($department['icon'] ?: 'fa-building') ?>"></i></div><div class="ct-dept-body"><h3 class="ct-dept-name"><?= Security::e($department['name']) ?></h3><p class="ct-dept-role"><?= Security::e($department['role']) ?></p><div class="ct-dept-contacts"><a href="mailto:<?= Security::e($department['email']) ?>" class="ct-dept-contact"><i class="fa-solid fa-envelope" aria-hidden="true"></i> <?= Security::e($department['email']) ?></a><a href="<?= Security::e(contact_tel_href((string)$department['phone'])) ?>" class="ct-dept-contact"><i class="fa-solid fa-phone" aria-hidden="true"></i> <?= Security::e($department['phone']) ?></a></div></div></div>
           <?php endforeach; ?>
-          <?php if (!$departments): ?><p class="ct-section-sub"><?= Security::e(CmsLoader::text($departmentsCopy, 'empty_text', 'Department contacts will appear after they are added to the contact directory.')) ?></p><?php endif; ?>
+          <?php if (!$departments): ?><div class="ct-empty-card"><i class="fa-solid fa-building-circle-exclamation" aria-hidden="true"></i><strong>No department contacts listed</strong><span><?= Security::e(CmsLoader::text($departmentsCopy, 'empty_text', 'Department contacts will appear after they are added to the contact directory.')) ?></span></div><?php endif; ?>
         </div>
       </div>
     </section>

@@ -61,8 +61,10 @@
   font-weight: 800;
 }
 
-.assignment-actions {
+.assignment-actions,
+.manager-table-actions {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: .35rem;
 }

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TRANS-NZOIA AHP TRACKER â€” Homepage JavaScript
  * Phase 2 Rebuild: Modern Project Tracker UI
  */
@@ -20,6 +20,16 @@
       if (progress < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;',
+    }[char]));
   }
 
   /* ========================================================
@@ -156,167 +166,38 @@
       if (selected) { selected.classList.remove('is-selected'); selected = null; }
     }
 
-    const CONSTITUENCY_DATA = {
-      saboti: {
-        projects: [
-          {
-            name: 'Maili Tatu Affordable Housing Estate',
-            ward: 'Matisi Ward',
-            units: 1040,
-            pct: 60,
-            status: 'active',
-            contractor: 'Jabavu Developers Ltd',
-            funding: 'National AHP Fund',
-            leadAgency: 'State Dept. of Housing',
-            siteEngineer: 'Eng. S. K. Kariuki',
-            startDate: 'Mar 2024',
-            estDelivery: 'Q4 2026',
-            milestone: 'Roofing works â€” Q3 2026',
-          },
-          {
-            name: 'Kitale Town Infill Units',
-            ward: 'Kitale Central',
-            units: 80,
-            pct: 55,
-            status: 'active',
-            contractor: 'BuildRight Construction Co.',
-            funding: 'County Development Fund',
-            leadAgency: 'Trans-Nzoia County Housing Dept.',
-            siteEngineer: 'Eng. P. Wafula',
-            startDate: 'Jun 2024',
-            estDelivery: 'Q1 2027',
-            milestone: 'Internal finishing',
-          },
-        ],
-      },
-      cherangany: {
-        projects: [
-          {
-            name: 'Matunda AHP Estate',
-            ward: 'Matunda / Sinyerere',
-            units: 200,
-            pct: 35,
-            status: 'active',
-            contractor: 'Afri-Build Kenya Ltd',
-            funding: 'National AHP Fund',
-            leadAgency: 'State Dept. of Housing',
-            siteEngineer: 'Eng. J. M. Otieno',
-            startDate: 'Jul 2024',
-            estDelivery: 'Q2 2027',
-            milestone: 'Ground-floor columns cast',
-          },
-        ],
-      },
-      endebess: {
-        projects: [
-          {
-            name: 'Suam Border Post Estate',
-            ward: 'Endebess Ward',
-            units: 150,
-            pct: 12,
-            status: 'active',
-            contractor: 'Frontier Housing Ltd',
-            funding: 'National AHP Fund + NEMA',
-            leadAgency: 'State Dept. of Housing',
-            siteEngineer: 'Eng. A. Chesire',
-            startDate: 'Jan 2025',
-            estDelivery: 'Q3 2027',
-            milestone: 'Site mobilisation in progress',
-          },
-          {
-            name: 'Endebess Township Units',
-            ward: 'Endebess Ward',
-            units: 60,
-            pct: 8,
-            status: 'active',
-            contractor: 'Trans-Nzoia Housing Corp.',
-            funding: 'County Capital Budget',
-            leadAgency: 'Trans-Nzoia County Housing Dept.',
-            siteEngineer: 'Eng. B. K. Rotich',
-            startDate: 'Mar 2025',
-            estDelivery: 'Q4 2027',
-            milestone: 'Foundation works',
-          },
-        ],
-      },
-      kiminini: {
-        projects: [
-          {
-            name: 'Kiminini AHP Phase 1',
-            ward: 'Kiminini Ward',
-            units: 80,
-            pct: 5,
-            status: 'planning',
-            contractor: 'TBD â€” Tender in Preparation',
-            funding: 'National AHP Fund',
-            leadAgency: 'State Dept. of Housing',
-            siteEngineer: 'TBD',
-            startDate: 'TBD â€” Q3 2026 target',
-            estDelivery: 'Q2 2028',
-            milestone: 'Environmental Assessment underway',
-          },
-          {
-            name: 'Waitaluk Estate',
-            ward: 'Waitaluk Ward',
-            units: 40,
-            pct: 5,
-            status: 'planning',
-            contractor: 'TBD',
-            funding: 'County Development Fund',
-            leadAgency: 'Trans-Nzoia County Housing Dept.',
-            siteEngineer: 'TBD',
-            startDate: 'TBD',
-            estDelivery: 'TBD',
-            milestone: 'Land acquisition in progress',
-          },
-        ],
-      },
-      kwanza: {
-        projects: [
-          {
-            name: 'Kwanza Township Housing',
-            ward: 'Kwanza Ward',
-            units: 80,
-            pct: 8,
-            status: 'planning',
-            contractor: 'TBD â€” Procurement stage',
-            funding: 'National AHP Fund',
-            leadAgency: 'State Dept. of Housing',
-            siteEngineer: 'TBD',
-            startDate: 'TBD â€” Q4 2026 target',
-            estDelivery: 'Q1 2028',
-            milestone: 'Design review in progress',
-          },
-        ],
-      },
-    };
+    const CONSTITUENCY_DATA = window.TNAH?.data?.model
+      ? window.TNAH.data.model('map_projects', {})
+      : {};
 
     function buildProjectCard(p) {
-      const isActive = p.status === 'active';
+      const isActive = p.status === 'active' || p.status === 'completed';
+      const statusLabel = p.statusLabel || (isActive ? 'Active' : 'Planning');
+      const pct = Math.max(0, Math.min(100, Number(p.pct || 0)));
       const badgeStyle = isActive
         ? 'background:rgba(34,197,94,0.12);color:#15803d;border:1px solid rgba(34,197,94,0.25)'
         : 'background:rgba(245,158,11,0.12);color:#b45309;border:1px solid rgba(245,158,11,0.25)';
       return `
         <div class="mpd-project-card">
           <div class="mpd-pc-header">
-            <span class="mpd-pc-name">${p.name}</span>
-            <span class="mpd-pc-badge" style="${badgeStyle}">${isActive ? 'Active' : 'Planning'}</span>
+            <span class="mpd-pc-name">${escapeHtml(p.name || 'Project')}</span>
+            <span class="mpd-pc-badge" style="${badgeStyle}">${escapeHtml(statusLabel)}</span>
           </div>
           <div class="mpd-pc-rows">
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-location-dot"></i> Ward</span><span class="mpd-pc-val">${p.ward}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-building"></i> Units</span><span class="mpd-pc-val">${p.units.toLocaleString()}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-hammer"></i> Contractor</span><span class="mpd-pc-val">${p.contractor}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-coins"></i> Funding</span><span class="mpd-pc-val">${p.funding}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-building-columns"></i> Lead Agency</span><span class="mpd-pc-val">${p.leadAgency}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-regular fa-calendar"></i> Start Date</span><span class="mpd-pc-val">${p.startDate}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-flag-checkered"></i> Est. Delivery</span><span class="mpd-pc-val">${p.estDelivery}</span></div>
-            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-person-digging"></i> Site Engineer</span><span class="mpd-pc-val">${p.siteEngineer}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-location-dot"></i> Ward</span><span class="mpd-pc-val">${escapeHtml(p.ward || 'TBD')}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-building"></i> ${escapeHtml(p.outputLabel || 'Units')}</span><span class="mpd-pc-val">${Number(p.units || 0).toLocaleString()}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-hammer"></i> Contractor</span><span class="mpd-pc-val">${escapeHtml(p.contractor || 'TBD')}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-coins"></i> Funding</span><span class="mpd-pc-val">${escapeHtml(p.funding || 'TBD')}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-building-columns"></i> Lead Agency</span><span class="mpd-pc-val">${escapeHtml(p.leadAgency || 'TBD')}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-regular fa-calendar"></i> Start Date</span><span class="mpd-pc-val">${escapeHtml(p.startDate || 'TBD')}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-flag-checkered"></i> Est. Delivery</span><span class="mpd-pc-val">${escapeHtml(p.estDelivery || 'TBD')}</span></div>
+            <div class="mpd-pc-row"><span class="mpd-pc-lbl"><i class="fa-solid fa-person-digging"></i> Site Engineer</span><span class="mpd-pc-val">${escapeHtml(p.siteEngineer || 'TBD')}</span></div>
           </div>
           <div class="mpd-pc-progress-wrap">
-            <div class="mpd-progress-meta"><span>Completion</span><span>${p.pct}%</span></div>
-            <div class="mpd-progress-bar"><div class="mpd-progress-fill mpd-progress-fill-anim" style="width:0%" data-target="${p.pct}"></div></div>
+            <div class="mpd-progress-meta"><span>Completion</span><span>${pct}%</span></div>
+            <div class="mpd-progress-bar"><div class="mpd-progress-fill mpd-progress-fill-anim" style="width:0%" data-target="${pct}"></div></div>
           </div>
-          <p class="mpd-pc-milestone"><i class="fa-solid fa-circle-dot" style="color:var(--lime-muted)"></i> ${p.milestone}</p>
+          <p class="mpd-pc-milestone"><i class="fa-solid fa-circle-dot" style="color:var(--lime-muted)"></i> ${escapeHtml(p.milestone || 'Project update pending')}</p>
         </div>`;
     }
 
@@ -325,16 +206,37 @@
       const name = g.getAttribute('data-name') || '';
       const link = g.getAttribute('data-link') || 'constituencies.php';
       const data = CONSTITUENCY_DATA[id];
-      const projects = data ? data.projects : [];
+      const projects = Array.isArray(data) ? data : (data && Array.isArray(data.projects) ? data.projects : []);
+
+      if (!projects.length) {
+        panelDetail.innerHTML = `
+        <div class=\"mpd-header\">
+          <button class=\"mpd-back\" id=\"mpd-back-btn\" aria-label=\"Back to constituency overview\">
+            <i class=\"fa-solid fa-arrow-left\" aria-hidden=\"true\"></i>
+          </button>
+          <span class=\"mpd-name\">${escapeHtml(name)}</span>
+          <span class=\"mpd-proj-count\">0 projects</span>
+        </div>
+        <div class=\"mpd-project-card\">
+          <div class=\"mpd-pc-header\"><span class=\"mpd-pc-name\">No active tracked projects yet</span></div>
+          <p class=\"mpd-pc-milestone\"><i class=\"fa-solid fa-circle-info\" style=\"color:var(--lime-muted)\"></i> This constituency is included in county coverage and will show project data once a site is published.</p>
+        </div>
+        <div class=\"mpd-cta\"><a href=\"${escapeHtml(link)}\" class=\"btn btn-primary\"><i class=\"fa-solid fa-eye\" aria-hidden=\"true\"></i> View ${escapeHtml(name)}</a></div>`;
+        panelDefault.style.display = 'none';
+        panelDetail.classList.add('is-visible');
+        const emptyBackBtn = document.getElementById('mpd-back-btn');
+        if (emptyBackBtn) { emptyBackBtn.addEventListener('click', showDefault); emptyBackBtn.focus(); }
+        return;
+      }
 
       /* Build tab strip (only when multiple projects) */
       const tabStrip = projects.length > 1
-        ? `<div class="mpd-tabs" role="tablist" aria-label="${name} projects">
+        ? `<div class="mpd-tabs" role="tablist" aria-label="${escapeHtml(name)} projects">
             ${projects.map((p, i) => `
               <button class="mpd-tab-btn${i === 0 ? ' is-active' : ''}"
                 role="tab" aria-selected="${i === 0}" aria-controls="mpd-tab-panel-${i}"
                 data-tab="${i}">
-                ${p.name.split(' ').slice(0, 3).join(' ')}&hellip;
+                ${escapeHtml(String(p.name || 'Project').split(' ').slice(0, 3).join(' '))}&hellip;
               </button>`).join('')}
            </div>`
         : '';
@@ -350,14 +252,14 @@
           <button class="mpd-back" id="mpd-back-btn" aria-label="Back to constituency overview">
             <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
           </button>
-          <span class="mpd-name">${name}</span>
+          <span class="mpd-name">${escapeHtml(name)}</span>
           <span class="mpd-proj-count">${projects.length} project${projects.length !== 1 ? 's' : ''}</span>
         </div>
         ${tabStrip}
         <div class="mpd-tab-panels">${tabPanels}</div>
         <div class="mpd-cta">
-          <a href="${link}" class="btn btn-primary">
-            <i class="fa-solid fa-eye" aria-hidden="true"></i> All ${name} Projects
+          <a href="${escapeHtml(link)}" class="btn btn-primary">
+            <i class="fa-solid fa-eye" aria-hidden="true"></i> All ${escapeHtml(name)} Projects
           </a>
         </div>`;
 

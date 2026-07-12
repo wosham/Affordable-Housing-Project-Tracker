@@ -1,5 +1,5 @@
-/* =========================================================
-   TRANS-NZOIA AHP TRACKER — FAQ Page CSS
+﻿/* =========================================================
+   TRANS-NZOIA AHP TRACKER â€” FAQ Page CSS
    ========================================================= */
 
 /* ---------------------------------------------------------
@@ -46,7 +46,7 @@
 .breadcrumb-current { color: rgba(255,255,255,0.88); font-weight: 600; }
 
 /* ---------------------------------------------------------
-   S1 — HERO
+   S1 â€” HERO
    --------------------------------------------------------- */
 .fq-hero {
   position: relative;
@@ -61,6 +61,17 @@
   inset: 0;
   background: var(--primary-700, #163300);
   z-index: 0;
+  overflow: hidden;
+}
+.fq-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .44;
+  filter: saturate(.95) contrast(1.05);
+  transform: scale(1.01);
 }
 .fq-hero-overlay {
   position: absolute;
@@ -219,7 +230,7 @@
 }
 
 /* ---------------------------------------------------------
-   S2 — POPULAR PILLS
+   S2 â€” POPULAR PILLS
    --------------------------------------------------------- */
 .fq-popular {
   padding: var(--space-8, 2rem) 0;
@@ -242,6 +253,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+.fq-muted {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  color: var(--neutral-500, #5a7a48);
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 .fq-pill {
   display: inline-flex;
@@ -271,7 +290,7 @@
 }
 
 /* ---------------------------------------------------------
-   S3 — FAQ MAIN (TABS + GROUPS + ACCORDION)
+   S3 â€” FAQ MAIN (TABS + GROUPS + ACCORDION)
    --------------------------------------------------------- */
 .fq-main {
   padding: var(--space-12, 3rem) 0 var(--space-16, 4rem);
@@ -339,6 +358,39 @@
   font-size: inherit;
   font-family: inherit;
   padding: 0;
+}
+
+.fq-empty-state {
+  border: 1px dashed var(--neutral-200, #ddeece);
+  border-radius: 18px;
+  background: var(--neutral-50, #f6faf0);
+  color: var(--neutral-600, #3d5c2a);
+  padding: 3rem 1.5rem;
+  text-align: center;
+  margin-bottom: var(--space-10, 2.5rem);
+}
+.fq-empty-state i {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-50, #edfbd6);
+  color: var(--primary-600, #1e4d00);
+  border: 1px solid var(--primary-100, #c5f09a);
+  margin-bottom: 1rem;
+}
+.fq-empty-state h2 {
+  font-family: var(--font-display, 'Syne', sans-serif);
+  color: var(--neutral-950, #050a02);
+  font-size: 1.2rem;
+  margin-bottom: 0.35rem;
+}
+.fq-empty-state p {
+  margin: 0 auto;
+  max-width: 560px;
+  line-height: 1.65;
 }
 
 /* FAQ Group */
@@ -554,7 +606,7 @@
 }
 
 /* ---------------------------------------------------------
-   S4 — STILL HAVE QUESTIONS CTA
+   S4 â€” STILL HAVE QUESTIONS CTA
    --------------------------------------------------------- */
 .fq-cta {
   padding: var(--space-16, 4rem) 0;
@@ -739,3 +791,4 @@
   .fq-cat-tab { font-size: 0.75rem; padding: 0.4rem 0.75rem; }
   .fq-cat-tab i { display: none; }
 }
+

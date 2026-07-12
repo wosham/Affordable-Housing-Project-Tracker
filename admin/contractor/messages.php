@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('contractor'));
+Guard::exactRole('contractor');
 
 $pageTitle = 'Messages';
 $pageDescription = 'Site delivery conversations and direct messages.';

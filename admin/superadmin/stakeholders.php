@@ -1,13 +1,47 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_stakeholders';
 
 function sa_stakeholders_redirect(string $fragment = ''): void
 {
     Response::redirect(Url::to('admin/superadmin/stakeholders.php' . $fragment));
+}
+
+function sa_stakeholders_page(array $rows, string $param, int $perPage = 10): array
+{
+    $total = count($rows);
+    $totalPages = max(1, (int)ceil($total / max(1, $perPage)));
+    $page = max(1, min($totalPages, (int)($_GET[$param] ?? 1)));
+    $offset = ($page - 1) * $perPage;
+    return [array_slice($rows, $offset, $perPage), $page, $totalPages, $total, $offset];
+}
+
+function sa_stakeholders_pagination(int $page, int $totalPages, int $total, int $perPage, string $param, string $fragment, string $label): string
+{
+    if ($total <= 0) {
+        return '';
+    }
+    $from = (($page - 1) * $perPage) + 1;
+    $to = min($total, $page * $perPage);
+    $query = $_GET;
+    $prev = $query; $prev[$param] = max(1, $page - 1);
+    $next = $query; $next[$param] = min($totalPages, $page + 1);
+    $base = 'admin/superadmin/stakeholders.php';
+    ob_start();
+    ?>
+  <nav class="sa-project-pagination pagination" aria-label="<?= Security::e($label) ?>">
+    <span>Showing <?= Security::e(format_number($from)) ?>-<?= Security::e(format_number($to)) ?> of <?= Security::e(format_number($total)) ?> (10 per page)</span>
+    <div class="pagination__links">
+      <a class="btn btn--sm btn--outline <?= $page <= 1 ? 'is-disabled' : '' ?>" href="<?= Security::e(Url::to($base . '?' . http_build_query($prev) . $fragment)) ?>">Previous</a>
+      <span class="pagination__current">Page <?= Security::e(format_number($page)) ?> of <?= Security::e(format_number($totalPages)) ?></span>
+      <a class="btn btn--sm btn--outline <?= $page >= $totalPages ? 'is-disabled' : '' ?>" href="<?= Security::e(Url::to($base . '?' . http_build_query($next) . $fragment)) ?>">Next</a>
+    </div>
+  </nav>
+    <?php
+    return (string)ob_get_clean();
 }
 
 function sa_stakeholder_selected(mixed $left, mixed $right): string
@@ -142,27 +176,6 @@ if (Security::isPost()) {
             sa_stakeholders_redirect('#voices');
         }
 
-        if ($action === 'save_path') {
-            $id = Security::cleanInt($_POST['path_id'] ?? 0) ?: null;
-            if (trim((string)($_POST['title'] ?? '')) === '') {
-                throw new RuntimeException('Engagement path title is required.');
-            }
-            $savedId = StakeholderEngagementPath::savePath($_POST, $id);
-            Logger::log($id ? 'update' : 'create', 'stakeholder_engagement_paths', $savedId);
-            Session::flash('status', 'Engagement path saved.');
-            sa_stakeholders_redirect('#engagement');
-        }
-
-        if ($action === 'delete_path') {
-            $id = Security::cleanInt($_POST['path_id'] ?? 0);
-            if ($id <= 0 || !StakeholderEngagementPath::find($id)) {
-                throw new RuntimeException('Engagement path could not be found.');
-            }
-            StakeholderEngagementPath::delete($id);
-            Logger::log('delete', 'stakeholder_engagement_paths', $id);
-            Session::flash('status', 'Engagement path removed.');
-            sa_stakeholders_redirect('#engagement');
-        }
     } catch (Throwable $e) {
         Session::flash('error', $e->getMessage());
         sa_stakeholders_redirect();
@@ -171,45 +184,46 @@ if (Security::isPost()) {
     sa_stakeholders_redirect();
 }
 
-$groups = StakeholderGroup::ordered();
-$stakeholders = Stakeholder::ordered();
-$milestones = StakeholderMilestone::ordered();
-$voices = StakeholderTestimonial::ordered();
-$paths = StakeholderEngagementPath::ordered();
+$groupsAll = StakeholderGroup::ordered();
+$stakeholdersAll = Stakeholder::ordered();
+$milestonesAll = StakeholderMilestone::ordered();
+$voicesAll = StakeholderTestimonial::ordered();
 
 $groupStats = StakeholderGroup::stats();
 $stakeholderStats = Stakeholder::stats();
 $milestoneStats = StakeholderMilestone::stats();
 $voiceStats = StakeholderTestimonial::stats();
-$pathStats = StakeholderEngagementPath::stats();
+
+$perPage = 10;
+[$groups, $groupPage, $groupPages, $groupTotal, $groupOffset] = sa_stakeholders_page($groupsAll, 'group_page', $perPage);
+[$stakeholders, $orgPage, $orgPages, $orgTotal, $orgOffset] = sa_stakeholders_page($stakeholdersAll, 'org_page', $perPage);
+[$milestones, $msPage, $msPages, $msTotal, $msOffset] = sa_stakeholders_page($milestonesAll, 'ms_page', $perPage);
+[$voices, $voicePage, $voicePages, $voiceTotal, $voiceOffset] = sa_stakeholders_page($voicesAll, 'voice_page', $perPage);
 
 $editGroup = isset($_GET['edit_group']) ? StakeholderGroup::findDetailed(Security::cleanInt($_GET['edit_group'])) : null;
 $editStakeholder = isset($_GET['edit_stakeholder']) ? Stakeholder::findDetailed(Security::cleanInt($_GET['edit_stakeholder'])) : null;
 $editMilestone = isset($_GET['edit_milestone']) ? StakeholderMilestone::findDetailed(Security::cleanInt($_GET['edit_milestone'])) : null;
 $editVoice = isset($_GET['edit_voice']) ? StakeholderTestimonial::findDetailed(Security::cleanInt($_GET['edit_voice'])) : null;
-$editPath = isset($_GET['edit_path']) ? StakeholderEngagementPath::findDetailed(Security::cleanInt($_GET['edit_path'])) : null;
 
-$blankGroup = ['id' => 0, 'name' => '', 'slug' => '', 'icon' => 'fa-landmark', 'count_label' => '', 'summary' => '', 'description' => '', 'tags_json' => '[]', 'cta_label' => 'See entities', 'cta_url' => '#', 'legal_basis' => '', 'responsibilities_json' => '[]', 'reporting_lines' => '', 'sort_order' => count($groups) + 1, 'status' => 'published'];
-$blankStakeholder = ['id' => 0, 'group_id' => '', 'organisation' => '', 'slug' => '', 'role' => '', 'category' => 'partner', 'partner_type' => '', 'agreement_type' => '', 'icon' => 'fa-handshake', 'description' => '', 'mandate' => '', 'logo_path' => '', 'website' => '', 'sort_order' => count($stakeholders) + 1, 'status' => 'published', 'featured_on_leadership' => 0, 'is_formal_partner' => 1, 'featured_on_stakeholders' => 1];
-$blankMilestone = ['id' => 0, 'group_id' => '', 'milestone_date' => '', 'date_label' => '', 'title' => '', 'summary' => '', 'icon' => 'fa-flag', 'badge_label' => '', 'sort_order' => count($milestones) + 1, 'status' => 'published'];
-$blankVoice = ['id' => 0, 'group_id' => '', 'name' => '', 'role' => '', 'initials' => '', 'photo_path' => '', 'rating' => 5, 'quote' => '', 'tags_json' => '[]', 'sort_order' => count($voices) + 1, 'status' => 'published'];
-$blankPath = ['id' => 0, 'slug' => '', 'title' => '', 'icon' => 'fa-house-user', 'description' => '', 'steps_json' => '[]', 'button_label' => '', 'button_url' => '', 'tone' => 'standard', 'sort_order' => count($paths) + 1, 'status' => 'published'];
+$blankGroup = ['id' => 0, 'name' => '', 'slug' => '', 'icon' => 'fa-landmark', 'count_label' => '', 'summary' => '', 'description' => '', 'tags_json' => '[]', 'cta_label' => 'See entities', 'cta_url' => '#', 'legal_basis' => '', 'responsibilities_json' => '[]', 'reporting_lines' => '', 'sort_order' => count($groupsAll) + 1, 'status' => 'published'];
+$blankStakeholder = ['id' => 0, 'group_id' => '', 'organisation' => '', 'slug' => '', 'role' => '', 'category' => 'partner', 'partner_type' => '', 'agreement_type' => '', 'icon' => 'fa-handshake', 'description' => '', 'mandate' => '', 'logo_path' => '', 'website' => '', 'sort_order' => count($stakeholdersAll) + 1, 'status' => 'published', 'featured_on_leadership' => 0, 'is_formal_partner' => 1, 'featured_on_stakeholders' => 1];
+$blankMilestone = ['id' => 0, 'group_id' => '', 'milestone_date' => '', 'date_label' => '', 'title' => '', 'summary' => '', 'icon' => 'fa-flag', 'badge_label' => '', 'sort_order' => count($milestonesAll) + 1, 'status' => 'published'];
+$blankVoice = ['id' => 0, 'group_id' => '', 'name' => '', 'role' => '', 'initials' => '', 'photo_path' => '', 'rating' => 5, 'quote' => '', 'tags_json' => '[]', 'sort_order' => count($voicesAll) + 1, 'status' => 'published'];
 
 $groupForm = array_merge($blankGroup, $editGroup ?: []);
 $stakeholderForm = array_merge($blankStakeholder, $editStakeholder ?: []);
 $milestoneForm = array_merge($blankMilestone, $editMilestone ?: []);
 $voiceForm = array_merge($blankVoice, $editVoice ?: []);
-$pathForm = array_merge($blankPath, $editPath ?: []);
 
 $pageTitle = 'Stakeholders';
-$pageDescription = 'Manage programme ecosystem groups, partner organisations, mandates, milestones, voices and engagement paths.';
+$pageDescription = 'Manage programme ecosystem groups, partner organisations, mandates, milestones and community voices.';
 $adminRole = 'superadmin';
 $contentClass = 'sa-stakeholders-admin-page';
 $componentCss = ['cms-editor', 'media-library', 'stakeholders-admin'];
 $pageScripts = ['media-picker', 'stakeholders-admin'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Stakeholders'],
 ];
 
@@ -220,20 +234,29 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-network-wired" aria-hidden="true"></i> Stakeholder Ecosystem</span>
     <h2>Programme partners, mandates and community channels</h2>
-    <p>Control the ecosystem map, formal institutions, accountability pillars, engagement milestones, community voices and participation pathways used by the stakeholders page.</p>
+    <p>Control the ecosystem map, formal institutions, accountability pillars, engagement milestones and community voices used by the public stakeholders page. Use Page Text / SEO for hero wording and section headings.</p>
   </div>
   <div class="sa-action-grid">
     <a class="btn btn--primary" href="#organisation-form"><i class="fa-solid fa-building-circle-arrow-right" aria-hidden="true"></i> Add Organisation</a>
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=stakeholders')) ?>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Page Copy</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=stakeholders')) ?>"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Page Text / SEO</a>
     <a class="btn btn--outline" href="<?= Security::e(Url::to('stakeholders.php')) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Preview Page</a>
   </div>
+</section>
+
+<section class="card sa-cms-module-callout">
+  <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></div>
+  <div>
+    <h3>How this connects to the public page</h3>
+    <p>Groups feed the Programme Web and mandate accordion. Organisations feed ecosystem details and formal partners. Milestones feed the timeline. Community voices feed the public testimony cards. Page Text / SEO controls only wording, images and section titles.</p>
+  </div>
+  <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/cms-page-editor.php?slug=stakeholders')) ?>"><i class="fa-solid fa-file-pen" aria-hidden="true"></i> Edit Page Text / SEO</a>
 </section>
 
 <section class="stat-grid stat-grid--4 sa-stakeholders-stats" aria-label="Stakeholder summary">
   <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--success"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($groupStats['published'] ?? 0)) ?></strong><span class="stat-widget__label">Groups</span><small class="stat-widget__trend">Ecosystem pillars</small></span></article>
   <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--info"><i class="fa-solid fa-handshake" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($stakeholderStats['published'] ?? 0)) ?></strong><span class="stat-widget__label">Organisations</span><small class="stat-widget__trend"><?= Security::e(format_number($stakeholderStats['formal_partners'] ?? 0)) ?> formal partners</small></span></article>
   <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--warning"><i class="fa-solid fa-timeline" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($milestoneStats['published'] ?? 0)) ?></strong><span class="stat-widget__label">Milestones</span><small class="stat-widget__trend">Engagement journey</small></span></article>
-  <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--primary"><i class="fa-solid fa-comments" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($voiceStats['published'] ?? 0)) ?></strong><span class="stat-widget__label">Community Voices</span><small class="stat-widget__trend"><?= Security::e(format_number($pathStats['published'] ?? 0)) ?> engagement paths</small></span></article>
+  <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--primary"><i class="fa-solid fa-comments" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(format_number($voiceStats['published'] ?? 0)) ?></strong><span class="stat-widget__label">Community Voices</span><small class="stat-widget__trend">Published public voices</small></span></article>
 </section>
 
 <nav class="card sa-stakeholders-tabs" aria-label="Stakeholders workspace">
@@ -241,19 +264,18 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <a href="#organisations"><i class="fa-solid fa-building" aria-hidden="true"></i> Organisations</a>
   <a href="#milestones"><i class="fa-solid fa-timeline" aria-hidden="true"></i> Milestones</a>
   <a href="#voices"><i class="fa-solid fa-quote-left" aria-hidden="true"></i> Voices</a>
-  <a href="#engagement"><i class="fa-solid fa-route" aria-hidden="true"></i> Engagement</a>
 </nav>
 
 <section class="sa-stakeholders-layout" id="groups">
   <article class="card sa-stakeholders-card">
-    <div class="card__header"><div><h2 class="card__title">Ecosystem Groups</h2><p class="card__subtitle">These six pillars drive the map, mandate accordion and group cards.</p></div><span class="badge badge--lime"><?= Security::e(format_number(count($groups))) ?> groups</span></div>
+    <div class="card__header"><div><h2 class="card__title">Ecosystem Groups</h2><p class="card__subtitle">These six pillars drive the map, mandate accordion and group cards.</p></div><span class="badge badge--lime"><?= Security::e(format_number($groupTotal)) ?> groups</span></div>
     <div class="table-wrap">
       <table class="table sa-stakeholder-table" data-stakeholder-table>
         <thead><tr><th>#</th><th>Group</th><th>Signal</th><th>Records</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
 <?php foreach ($groups as $index => $group): ?>
           <tr>
-            <td><?= Security::e((string)($index + 1)) ?></td>
+            <td><?= Security::e((string)($groupOffset + $index + 1)) ?></td>
             <td><div class="sa-stakeholder-cell"><span class="sa-stakeholder-icon"><i class="fa-solid <?= Security::e($group['icon'] ?: 'fa-layer-group') ?>" aria-hidden="true"></i></span><span><strong><?= Security::e($group['name']) ?></strong><small><?= Security::e($group['summary']) ?></small></span></div></td>
             <td><strong><?= Security::e($group['count_label'] ?: 'Not set') ?></strong><small><?= Security::e($group['cta_label'] ?: 'No CTA') ?></small></td>
             <td><span class="sa-chip-row"><em><?= Security::e(format_number($group['stakeholder_count'] ?? 0)) ?> orgs</em><em><?= Security::e(format_number($group['milestone_count'] ?? 0)) ?> milestones</em></span></td>
@@ -264,6 +286,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </tbody>
       </table>
     </div>
+    <?= sa_stakeholders_pagination($groupPage, $groupPages, $groupTotal, $perPage, 'group_page', '#groups', 'Stakeholder groups pagination') ?>
   </article>
 
   <aside class="card sa-stakeholders-form-card" id="group-form">
@@ -295,14 +318,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="card sa-stakeholders-card" id="organisations">
-  <div class="card__header"><div><h2 class="card__title">Organisations & Partners</h2><p class="card__subtitle">Formal partners, contractors, regulators, county offices and community institutions.</p></div><span class="badge badge--lime"><?= Security::e(format_number(count($stakeholders))) ?> records</span></div>
+  <div class="card__header"><div><h2 class="card__title">Organisations & Partners</h2><p class="card__subtitle">Formal partners, contractors, regulators, county offices and community institutions.</p></div><span class="badge badge--lime"><?= Security::e(format_number($orgTotal)) ?> records</span></div>
   <div class="table-wrap">
     <table class="table sa-stakeholder-table" data-stakeholder-table>
       <thead><tr><th>#</th><th>Organisation</th><th>Group</th><th>Role</th><th>Flags</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
 <?php foreach ($stakeholders as $index => $stakeholder): ?>
         <tr>
-          <td><?= Security::e((string)($index + 1)) ?></td>
+          <td><?= Security::e((string)($orgOffset + $index + 1)) ?></td>
           <td><div class="sa-stakeholder-cell"><span class="sa-stakeholder-icon"><i class="fa-solid <?= Security::e($stakeholder['icon'] ?: $stakeholder['group_icon'] ?: 'fa-handshake') ?>" aria-hidden="true"></i></span><span><strong><?= Security::e($stakeholder['organisation']) ?></strong><small><?= Security::e($stakeholder['website'] ?: $stakeholder['slug']) ?></small></span></div></td>
           <td><?= Security::e($stakeholder['group_name'] ?: 'Unassigned') ?></td>
           <td><strong><?= Security::e($stakeholder['role'] ?: 'Role not set') ?></strong><small><?= Security::e($stakeholder['partner_type'] ?: $stakeholder['category']) ?></small></td>
@@ -319,6 +342,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       </tbody>
     </table>
   </div>
+  <?= sa_stakeholders_pagination($orgPage, $orgPages, $orgTotal, $perPage, 'org_page', '#organisations', 'Organisations pagination') ?>
 </section>
 
 <section class="card sa-stakeholders-form-card" id="organisation-form">
@@ -331,7 +355,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     <div class="form-grid form-grid--3">
       <label class="form-field"><span>Organisation</span><input class="form-input" name="organisation" required value="<?= Security::e($stakeholderForm['organisation']) ?>"></label>
       <label class="form-field"><span>Slug</span><input class="form-input" name="slug" data-slug-source="organisation" value="<?= Security::e($stakeholderForm['slug']) ?>"></label>
-      <label class="form-field"><span>Group</span><select class="form-select" name="group_id"><option value="">Choose group</option><?php foreach ($groups as $group): ?><option value="<?= (int)$group['id'] ?>" <?= sa_stakeholder_selected($stakeholderForm['group_id'], $group['id']) ?>><?= Security::e($group['name']) ?></option><?php endforeach; ?></select></label>
+      <label class="form-field"><span>Group</span><select class="form-select" name="group_id"><option value="">Choose group</option><?php foreach ($groupsAll as $group): ?><option value="<?= (int)$group['id'] ?>" <?= sa_stakeholder_selected($stakeholderForm['group_id'], $group['id']) ?>><?= Security::e($group['name']) ?></option><?php endforeach; ?></select></label>
       <label class="form-field"><span>Role</span><input class="form-input" name="role" value="<?= Security::e($stakeholderForm['role']) ?>"></label>
       <label class="form-field"><span>Category</span><input class="form-input" name="category" value="<?= Security::e($stakeholderForm['category']) ?>"></label>
       <label class="form-field"><span>Partner type</span><input class="form-input" name="partner_type" value="<?= Security::e($stakeholderForm['partner_type']) ?>"></label>
@@ -355,12 +379,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
 <section class="sa-stakeholders-split">
   <article class="card sa-stakeholders-card" id="milestones">
-    <div class="card__header"><div><h2 class="card__title">Engagement Milestones</h2><p class="card__subtitle">Timeline events from presidential directive to active construction.</p></div><span class="badge badge--lime"><?= Security::e(format_number(count($milestones))) ?> events</span></div>
+    <div class="card__header"><div><h2 class="card__title">Engagement Milestones</h2><p class="card__subtitle">Timeline events from presidential directive to active construction.</p></div><span class="badge badge--lime"><?= Security::e(format_number($msTotal)) ?> events</span></div>
     <div class="sa-compact-list" data-stakeholder-table>
 <?php foreach ($milestones as $index => $milestone): ?>
-      <div class="sa-compact-row" data-table-row><span class="sa-row-number"><?= Security::e((string)($index + 1)) ?></span><span class="sa-stakeholder-icon"><i class="fa-solid <?= Security::e($milestone['icon'] ?: $milestone['group_icon'] ?: 'fa-flag') ?>" aria-hidden="true"></i></span><span><strong><?= Security::e($milestone['title']) ?></strong><small><?= Security::e(($milestone['date_label'] ?: (!empty($milestone['milestone_date']) ? format_date($milestone['milestone_date']) : 'Date pending')) . ' - ' . ($milestone['group_name'] ?: 'No group')) ?></small></span><a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php?edit_milestone=' . (int)$milestone['id'] . '#milestone-form')) ?>"><i class="fa-solid fa-pen" aria-hidden="true"></i></a><form method="post" data-confirm="Remove this milestone?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="delete_milestone"><input type="hidden" name="milestone_id" value="<?= (int)$milestone['id'] ?>"><button class="btn btn--icon btn--danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></div>
+      <div class="sa-compact-row" data-table-row><span class="sa-row-number"><?= Security::e((string)($msOffset + $index + 1)) ?></span><span class="sa-stakeholder-icon"><i class="fa-solid <?= Security::e($milestone['icon'] ?: $milestone['group_icon'] ?: 'fa-flag') ?>" aria-hidden="true"></i></span><span><strong><?= Security::e($milestone['title']) ?></strong><small><?= Security::e(($milestone['date_label'] ?: (!empty($milestone['milestone_date']) ? format_date($milestone['milestone_date']) : 'Date pending')) . ' - ' . ($milestone['group_name'] ?: 'No group')) ?></small></span><a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php?edit_milestone=' . (int)$milestone['id'] . '#milestone-form')) ?>"><i class="fa-solid fa-pen" aria-hidden="true"></i></a><form method="post" data-confirm="Remove this milestone?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="delete_milestone"><input type="hidden" name="milestone_id" value="<?= (int)$milestone['id'] ?>"><button class="btn btn--icon btn--danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></div>
 <?php endforeach; ?>
     </div>
+    <?= sa_stakeholders_pagination($msPage, $msPages, $msTotal, $perPage, 'ms_page', '#milestones', 'Milestones pagination') ?>
   </article>
   <article class="card sa-stakeholders-form-card" id="milestone-form">
     <h3><?= $editMilestone ? 'Edit Milestone' : 'Add Milestone' ?></h3>
@@ -368,7 +393,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="save_milestone"><input type="hidden" name="milestone_id" value="<?= (int)$milestoneForm['id'] ?>">
       <div class="form-grid form-grid--2">
         <label class="form-field form-field--full"><span>Title</span><input class="form-input" name="title" required value="<?= Security::e($milestoneForm['title']) ?>"></label>
-        <label class="form-field"><span>Group</span><select class="form-select" name="group_id"><option value="">No group</option><?php foreach ($groups as $group): ?><option value="<?= (int)$group['id'] ?>" <?= sa_stakeholder_selected($milestoneForm['group_id'], $group['id']) ?>><?= Security::e($group['name']) ?></option><?php endforeach; ?></select></label>
+        <label class="form-field"><span>Group</span><select class="form-select" name="group_id"><option value="">No group</option><?php foreach ($groupsAll as $group): ?><option value="<?= (int)$group['id'] ?>" <?= sa_stakeholder_selected($milestoneForm['group_id'], $group['id']) ?>><?= Security::e($group['name']) ?></option><?php endforeach; ?></select></label>
         <label class="form-field"><span>Date</span><input class="form-input" type="date" name="milestone_date" value="<?= Security::e($milestoneForm['milestone_date']) ?>"></label>
         <label class="form-field"><span>Date label</span><input class="form-input" name="date_label" value="<?= Security::e($milestoneForm['date_label']) ?>"></label>
         <label class="form-field"><span>Icon</span><input class="form-input" name="icon" value="<?= Security::e($milestoneForm['icon']) ?>"></label>
@@ -384,12 +409,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
 <section class="sa-stakeholders-split">
   <article class="card sa-stakeholders-card" id="voices">
-    <div class="card__header"><div><h2 class="card__title">Community Voices</h2><p class="card__subtitle">Beneficiary, ward representative and community advocate quotes.</p></div><span class="badge badge--lime"><?= Security::e(format_number(count($voices))) ?> voices</span></div>
+    <div class="card__header"><div><h2 class="card__title">Community Voices</h2><p class="card__subtitle">Beneficiary, ward representative and community advocate quotes.</p></div><span class="badge badge--lime"><?= Security::e(format_number($voiceTotal)) ?> voices</span></div>
     <div class="sa-quote-list" data-stakeholder-table>
 <?php foreach ($voices as $index => $voice): ?>
-      <blockquote data-table-row><header><span class="sa-row-number"><?= Security::e((string)($index + 1)) ?></span><strong><?= Security::e($voice['name']) ?></strong><small><?= Security::e($voice['role']) ?></small></header><p><?= Security::e($voice['quote']) ?></p><footer><span><?= Security::e(str_repeat('*', (int)$voice['rating'])) ?> · <?= Security::e($voice['group_name'] ?: 'Community') ?></span><span class="table-actions"><a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php?edit_voice=' . (int)$voice['id'] . '#voice-form')) ?>"><i class="fa-solid fa-pen" aria-hidden="true"></i></a><form method="post" data-confirm="Remove this community voice?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="delete_testimonial"><input type="hidden" name="testimonial_id" value="<?= (int)$voice['id'] ?>"><button class="btn btn--icon btn--danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></span></footer></blockquote>
+      <blockquote data-table-row><header><span class="sa-row-number"><?= Security::e((string)($voiceOffset + $index + 1)) ?></span><strong><?= Security::e($voice['name']) ?></strong><small><?= Security::e($voice['role']) ?></small></header><p><?= Security::e($voice['quote']) ?></p><footer><span><?= Security::e(str_repeat('*', (int)$voice['rating'])) ?> - <?= Security::e($voice['group_name'] ?: 'Community') ?></span><span class="table-actions"><a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php?edit_voice=' . (int)$voice['id'] . '#voice-form')) ?>"><i class="fa-solid fa-pen" aria-hidden="true"></i></a><form method="post" data-confirm="Remove this community voice?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="delete_testimonial"><input type="hidden" name="testimonial_id" value="<?= (int)$voice['id'] ?>"><button class="btn btn--icon btn--danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></span></footer></blockquote>
 <?php endforeach; ?>
     </div>
+    <?= sa_stakeholders_pagination($voicePage, $voicePages, $voiceTotal, $perPage, 'voice_page', '#voices', 'Community voices pagination') ?>
   </article>
   <article class="card sa-stakeholders-form-card" id="voice-form">
     <h3><?= $editVoice ? 'Edit Community Voice' : 'Add Community Voice' ?></h3>
@@ -399,7 +425,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <label class="form-field"><span>Name</span><input class="form-input" name="name" required value="<?= Security::e($voiceForm['name']) ?>"></label>
         <label class="form-field"><span>Initials</span><input class="form-input" name="initials" value="<?= Security::e($voiceForm['initials']) ?>"></label>
         <label class="form-field form-field--full"><span>Role</span><input class="form-input" name="role" value="<?= Security::e($voiceForm['role']) ?>"></label>
-        <label class="form-field"><span>Group</span><select class="form-select" name="group_id"><option value="">Community</option><?php foreach ($groups as $group): ?><option value="<?= (int)$group['id'] ?>" <?= sa_stakeholder_selected($voiceForm['group_id'], $group['id']) ?>><?= Security::e($group['name']) ?></option><?php endforeach; ?></select></label>
+        <label class="form-field"><span>Group</span><select class="form-select" name="group_id"><option value="">Community</option><?php foreach ($groupsAll as $group): ?><option value="<?= (int)$group['id'] ?>" <?= sa_stakeholder_selected($voiceForm['group_id'], $group['id']) ?>><?= Security::e($group['name']) ?></option><?php endforeach; ?></select></label>
         <label class="form-field"><span>Rating</span><input class="form-input" type="number" min="1" max="5" name="rating" value="<?= Security::e((string)$voiceForm['rating']) ?>"></label>
         <div class="form-field form-field--full"><span>Photo</span><?php sa_stakeholder_asset_control('photo_path', (string)$voiceForm['photo_path'], 'profiles', 'Optional profile image for future public profile surfaces.'); ?></div>
         <label class="form-field form-field--full"><span>Quote</span><textarea class="form-textarea" name="quote" required><?= Security::e($voiceForm['quote']) ?></textarea></label>
@@ -408,36 +434,6 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <label class="form-field"><span>Status</span><select class="form-select" name="status"><option value="published" <?= sa_stakeholder_selected($voiceForm['status'], 'published') ?>>Published</option><option value="draft" <?= sa_stakeholder_selected($voiceForm['status'], 'draft') ?>>Draft</option></select></label>
       </div>
       <div class="form-actions"><button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Voice</button></div>
-    </form>
-  </article>
-</section>
-
-<section class="sa-stakeholders-split">
-  <article class="card sa-stakeholders-card" id="engagement">
-    <div class="card__header"><div><h2 class="card__title">Engagement Paths</h2><p class="card__subtitle">How residents, partners and community leaders can participate or report issues.</p></div><span class="badge badge--lime"><?= Security::e(format_number(count($paths))) ?> paths</span></div>
-    <div class="sa-compact-list" data-stakeholder-table>
-<?php foreach ($paths as $index => $path): ?>
-      <div class="sa-compact-row" data-table-row><span class="sa-row-number"><?= Security::e((string)($index + 1)) ?></span><span class="sa-stakeholder-icon"><i class="fa-solid <?= Security::e($path['icon'] ?: 'fa-route') ?>" aria-hidden="true"></i></span><span><strong><?= Security::e($path['title']) ?></strong><small><?= Security::e($path['button_label'] ?: 'No button') ?></small></span><a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php?edit_path=' . (int)$path['id'] . '#path-form')) ?>"><i class="fa-solid fa-pen" aria-hidden="true"></i></a><form method="post" data-confirm="Remove this engagement path?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="delete_path"><input type="hidden" name="path_id" value="<?= (int)$path['id'] ?>"><button class="btn btn--icon btn--danger" type="submit"><i class="fa-solid fa-trash" aria-hidden="true"></i></button></form></div>
-<?php endforeach; ?>
-    </div>
-  </article>
-  <article class="card sa-stakeholders-form-card" id="path-form">
-    <h3><?= $editPath ? 'Edit Engagement Path' : 'Add Engagement Path' ?></h3>
-    <form class="sa-record-form" method="post">
-      <?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="save_path"><input type="hidden" name="path_id" value="<?= (int)$pathForm['id'] ?>">
-      <div class="form-grid form-grid--2">
-        <label class="form-field"><span>Title</span><input class="form-input" name="title" required value="<?= Security::e($pathForm['title']) ?>"></label>
-        <label class="form-field"><span>Slug</span><input class="form-input" name="slug" data-slug-source="title" value="<?= Security::e($pathForm['slug']) ?>"></label>
-        <label class="form-field"><span>Icon</span><input class="form-input" name="icon" value="<?= Security::e($pathForm['icon']) ?>"></label>
-        <label class="form-field"><span>Tone</span><select class="form-select" name="tone"><option value="standard" <?= sa_stakeholder_selected($pathForm['tone'], 'standard') ?>>Standard</option><option value="highlight" <?= sa_stakeholder_selected($pathForm['tone'], 'highlight') ?>>Highlight</option></select></label>
-        <label class="form-field form-field--full"><span>Description</span><textarea class="form-textarea" name="description"><?= Security::e($pathForm['description']) ?></textarea></label>
-        <label class="form-field form-field--full"><span>Steps, one per line</span><textarea class="form-textarea" name="steps"><?= Security::e(sa_stakeholder_lines($pathForm, 'steps', [StakeholderEngagementPath::class, 'steps'])) ?></textarea></label>
-        <label class="form-field"><span>Button label</span><input class="form-input" name="button_label" value="<?= Security::e($pathForm['button_label']) ?>"></label>
-        <label class="form-field"><span>Button URL</span><input class="form-input" name="button_url" value="<?= Security::e($pathForm['button_url']) ?>"></label>
-        <label class="form-field"><span>Sort</span><input class="form-input" type="number" min="0" name="sort_order" value="<?= Security::e((string)$pathForm['sort_order']) ?>"></label>
-        <label class="form-field"><span>Status</span><select class="form-select" name="status"><option value="published" <?= sa_stakeholder_selected($pathForm['status'], 'published') ?>>Published</option><option value="draft" <?= sa_stakeholder_selected($pathForm['status'], 'draft') ?>>Draft</option></select></label>
-      </div>
-      <div class="form-actions"><button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save Path</button></div>
     </form>
   </article>
 </section>

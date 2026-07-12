@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -15,7 +15,7 @@ $filters = array_filter([
     'date_to' => Security::cleanString((string)($_GET['date_to'] ?? '')),
 ], static fn ($value): bool => $value !== '' && $value !== 0 && $value !== null);
 
-$perPage = 15;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $total = ManagerMilestone::count($userId, $role, $filters);
 $totalPages = max(1, (int)ceil($total / $perPage));
@@ -48,7 +48,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Delivery targets</span>
     <h2>Milestones</h2>
-    <p>Track delivery targets, upcoming deadlines and completed site milestones.</p>
+    <p>Track delivery targets, upcoming deadlines and completed milestones on your assigned projects only.</p>
   </div>
   <div class="manager-milestone-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Projects</a>
@@ -114,7 +114,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
               <td><div class="manager-milestone-progress"><span style="width: <?= (int)$milestone['progress'] ?>%"></span></div><small><?= (int)$milestone['progress'] ?>% complete</small></td>
               <td><strong><?= Security::e($milestone['updated_by_name'] ?: 'System') ?></strong><small><?= Security::e($milestone['updated_label'] ?: '-') ?></small></td>
               <td>
-                <div class="manager-milestone-actions">
+                <div class="manager-table-actions manager-milestone-actions">
                   <button class="btn btn--icon btn--outline" type="button" data-milestone-edit
                     data-id="<?= (int)$milestone['id'] ?>"
                     data-project-id="<?= (int)$milestone['project_id'] ?>"
@@ -139,12 +139,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </table>
       </div>
 
-<?php if ($totalPages > 1): ?>
       <nav class="pagination" aria-label="Milestone pagination">
-        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> milestones</p>
-        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_milestone_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_milestone_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> milestones (10 per page)</p>
+        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_milestone_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_milestone_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
       </nav>
-<?php endif; ?>
     </section>
 
     <section class="card manager-milestone-followup">

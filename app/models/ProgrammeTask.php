@@ -64,6 +64,37 @@ class ProgrammeTask extends Model
         ) ?: [];
     }
 
+    public static function publicSummaryForProject(int $projectId): array
+    {
+        $summary = self::summary(['project_id' => $projectId]);
+        $current = Database::fetch(
+            "SELECT task_name, status, pct_complete, planned_end
+             FROM programme_tasks
+             WHERE project_id = ?
+               AND status NOT IN ('complete', 'cancelled')
+             ORDER BY critical_path DESC, planned_end IS NULL ASC, planned_end ASC, sort_order ASC, id ASC
+             LIMIT 1",
+            [$projectId]
+        ) ?: [];
+
+        return [
+            'total_tasks' => (int)($summary['total_tasks'] ?? 0),
+            'not_started' => (int)($summary['not_started'] ?? 0),
+            'in_progress' => (int)($summary['in_progress'] ?? 0),
+            'complete' => (int)($summary['complete'] ?? 0),
+            'needs_attention' => (int)($summary['delayed_tasks'] ?? 0),
+            'average_progress' => (int)round((float)($summary['avg_progress'] ?? 0)),
+            'timeline_start' => (string)($summary['timeline_start'] ?? ''),
+            'timeline_end' => (string)($summary['timeline_end'] ?? ''),
+            'current_task' => [
+                'name' => (string)($current['task_name'] ?? ''),
+                'status' => (string)($current['status'] ?? ''),
+                'pct_complete' => percentage($current['pct_complete'] ?? 0),
+                'planned_end' => (string)($current['planned_end'] ?? ''),
+            ],
+        ];
+    }
+
     public static function projectOptions(): array
     {
         return Database::fetchAll(

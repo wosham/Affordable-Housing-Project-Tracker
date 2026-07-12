@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -60,7 +60,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Claims and cost</span>
     <h2>BOQ Review</h2>
-    <p>Review quantities, certified work, payment exposure and item-level delivery risks.</p>
+    <p>Review quantities, certified work, payment exposure and item-level risks on your assigned projects only.</p>
   </div>
   <div class="manager-boq-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Projects</a>
@@ -87,14 +87,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="stat-grid stat-grid--4 manager-boq-stats" aria-label="BOQ summary">
-  <?php manager_boq_stat('fa-list-check', $summary['total_items'], 'BOQ Items', 'Assigned portfolio'); ?>
+  <?php manager_boq_stat('fa-list-check', $summary['total_items'], 'BOQ Items', 'Assigned portfolio', manager_boq_page_url(array_diff_key($filters, ['review_status' => true, 'risk' => true, 'page' => true]), 1)); ?>
   <?php manager_boq_stat('fa-file-contract', format_money($summary['contract_value']), 'Contract Value', 'Measured work'); ?>
   <?php manager_boq_stat('fa-circle-check', format_money($summary['certified_value']), 'Certified Value', (int)$summary['certified_percent'] . '% certified'); ?>
   <?php manager_boq_stat('fa-money-check-dollar', format_money($summary['paid_value']), 'Paid Value', (int)$summary['paid_percent'] . '% paid'); ?>
   <?php manager_boq_stat('fa-scale-balanced', format_money($summary['remaining_value']), 'Remaining Value', 'Not yet certified'); ?>
-  <?php manager_boq_stat('fa-triangle-exclamation', $summary['over_certified'], 'Over-Certified', 'Needs confirmation'); ?>
-  <?php manager_boq_stat('fa-circle-exclamation', $summary['overpaid'], 'Paid Above Certified', 'Payment exposure'); ?>
-  <?php manager_boq_stat('fa-clipboard-question', $summary['needs_review'], 'Needs Review', 'Pending action'); ?>
+  <?php manager_boq_stat('fa-triangle-exclamation', $summary['over_certified'], 'Over-Certified', 'Needs confirmation', manager_boq_page_url(array_merge($filters, ['risk' => 'over-certified', 'page' => 1]), 1)); ?>
+  <?php manager_boq_stat('fa-circle-exclamation', $summary['overpaid'], 'Paid Above Certified', 'Payment exposure', manager_boq_page_url(array_merge($filters, ['risk' => 'overpaid', 'page' => 1]), 1)); ?>
+  <?php manager_boq_stat('fa-clipboard-question', $summary['needs_review'], 'Needs Review', 'Pending action', manager_boq_page_url(array_merge($filters, ['review_status' => 'pending', 'page' => 1]), 1)); ?>
 </section>
 
 <section class="manager-boq-layout">
@@ -138,7 +138,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
                 <?php if (($item['computed_risks'] ?? []) !== []): ?><small class="manager-boq-signal"><?= Security::e($item['risk_label']) ?></small><?php endif; ?>
               </td>
               <td>
-                <button class="btn btn--icon btn--primary" type="button" data-boq-review data-id="<?= (int)$item['id'] ?>" title="Review BOQ item" aria-label="Review BOQ item"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
+                <div class="manager-table-actions">
+                  <button class="btn btn--icon btn--primary" type="button" data-boq-review data-id="<?= (int)$item['id'] ?>" title="Review BOQ item" aria-label="Review BOQ item"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
+                  <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/manager/ipc-queue.php?project_id=' . (int)$item['project_id'])) ?>" title="IPC queue" aria-label="IPC queue"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></a>
+                </div>
               </td>
             </tr>
 <?php endforeach; endif; ?>
@@ -146,12 +149,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </table>
       </div>
 
-<?php if ($totalPages > 1): ?>
       <nav class="pagination" aria-label="BOQ pagination">
-        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> BOQ items</p>
-        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_boq_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_boq_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> BOQ items (<?= (int)$perPage ?> per page)</p>
+        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_boq_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_boq_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
       </nav>
-<?php endif; ?>
     </section>
 
     <section class="card manager-boq-followup">
@@ -220,13 +221,15 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function manager_boq_stat(string $icon, mixed $value, string $label, string $trend): void
+function manager_boq_stat(string $icon, mixed $value, string $label, string $trend, ?string $href = null): void
 {
+    $tag = $href ? 'a' : 'article';
+    $attr = $href ? ' href="' . Security::e($href) . '"' : '';
 ?>
-  <article class="stat-widget">
+  <<?= $tag ?> class="stat-widget<?= $href ? ' stat-widget--link' : '' ?>"<?= $attr ?>>
     <span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span>
     <span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(is_numeric($value) ? format_number((float)$value) : (string)$value) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span>
-  </article>
+  </<?= $tag ?>>
 <?php
 }
 

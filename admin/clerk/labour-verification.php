@@ -1,5 +1,5 @@
 <?php
-// Clerk of Works — Labour Verification (verify contractor workforce numbers)
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
-// TODO: Phase 5 — Independently record and compare workforce numbers to contractor's
+Guard::exactRole('clerk');
+$recordType = 'labour';
+include __DIR__ . '/../../app/partials/admin/clerk-daily-record-page.php';

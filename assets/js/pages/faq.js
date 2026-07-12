@@ -129,10 +129,20 @@
       return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function highlightText(text, query) {
-      if (!query) return text;
+      const safeText = escapeHtml(text);
+      if (!query) return safeText;
       const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-      return text.replace(regex, '<mark>$1</mark>');
+      return safeText.replace(regex, '<mark>$1</mark>');
     }
 
     function doSearch(query) {
@@ -145,7 +155,7 @@
           item.classList.remove('is-hidden');
           const span = item.querySelector('.fq-q-text');
           const trigger = item.querySelector('.fq-trigger');
-          if (span && trigger) span.innerHTML = trigger._originalText || span.textContent;
+          if (span && trigger) span.textContent = trigger._originalText || span.textContent;
         });
         allGroups.forEach((g) => g.classList.remove('is-hidden'));
         if (noResults) noResults.hidden = true;
@@ -172,7 +182,7 @@
           item.classList.add('is-hidden');
           /* Remove highlight */
           const span = trigger ? trigger.querySelector('.fq-q-text') : null;
-          if (span) span.innerHTML = qText;
+          if (span) span.textContent = qText;
         }
       });
 

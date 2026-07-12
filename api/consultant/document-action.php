@@ -40,12 +40,5 @@ try {
 
 function consultant_documents_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach (['consultant_documents', 'consultant_reports', 'default'] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
-    }
-
-    return false;
+    return ApiCsrf::checkAny(['consultant_documents', 'consultant_reports', 'default']);
 }

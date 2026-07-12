@@ -10,7 +10,7 @@ class Migration_012_Projects
             ward_id          INT UNSIGNED NULL,
             name             VARCHAR(200) NOT NULL,
             slug             VARCHAR(200) NOT NULL UNIQUE,
-            status           ENUM('planning','active','stalled','completed') DEFAULT 'planning',
+            status           ENUM('planning','active','on_hold','stalled','completed','cancelled') DEFAULT 'planning',
             pct_complete     TINYINT UNSIGNED DEFAULT 0,
             contract_sum     DECIMAL(15,2) NULL,
             start_date       DATE NULL,

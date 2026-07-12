@@ -4,10 +4,17 @@ class ProjectAssignment extends Model
 {
     protected static string $table = 'project_assignments';
 
-    public const ASSIGNABLE_ROLES = ['consultant', 'contractor', 'clerk', 'intern'];
+    public const ASSIGNABLE_ROLES = ['manager', 'consultant', 'contractor', 'clerk', 'intern'];
+    /** Clerks and interns may hold only one active project/site assignment at a time. */
+    public const SINGLE_SITE_ROLES = ['clerk', 'intern'];
     public const STATUSES = ['active', 'inactive', 'revoked'];
     public const TYPES = ['site', 'project-oversight', 'attendance-supervision', 'ipc-verification', 'reporting'];
-    public const SCOPES = ['general', 'attendance', 'boq', 'programme', 'quality', 'safety', 'finance-visibility'];
+    public const SCOPES = ['general', 'attendance', 'boq', 'programme', 'quality', 'safety', 'reporting', 'finance-visibility'];
+
+    public static function isSingleSiteRole(string $role): bool
+    {
+        return in_array(strtolower(trim($role)), self::SINGLE_SITE_ROLES, true);
+    }
 
     public static function usersForProject(int $projectId): array
     {
@@ -91,12 +98,7 @@ class ProjectAssignment extends Model
             return Database::fetch('SELECT id FROM projects WHERE id = ? LIMIT 1', [$projectId]) !== null;
         }
 
-        return Database::fetch(
-            "SELECT id FROM project_assignments
-             WHERE user_id = ? AND project_id = ? AND status = 'active'
-             LIMIT 1",
-            [$managerId, $projectId]
-        ) !== null;
+        return ProjectAccess::canManageProject($managerId, $role, $projectId);
     }
 
     public static function findDetailed(int $id): ?array
@@ -190,7 +192,7 @@ class ProjectAssignment extends Model
 
     public static function availableUsers(string $roleSlug = '', int $projectId = 0, string $q = '', int $limit = 80): array
     {
-        $where = ["u.status = 'active'", "r.slug IN ('consultant','contractor','clerk','intern')"];
+        $where = ["u.status = 'active'", "r.slug IN ('manager','consultant','contractor','clerk','intern')"];
         $bindings = [];
 
         if ($roleSlug !== '' && in_array($roleSlug, self::ASSIGNABLE_ROLES, true)) {
@@ -236,8 +238,35 @@ class ProjectAssignment extends Model
             throw new InvalidArgumentException('This user role cannot be assigned from the manager centre.');
         }
 
-        if (Database::fetch('SELECT id FROM project_assignments WHERE project_id = ? AND user_id = ? LIMIT 1', [$projectId, $userId])) {
+        $actorId = (int)($payload['assigned_by'] ?? 0);
+        $status = self::cleanOption((string)($payload['status'] ?? 'active'), self::STATUSES, 'active');
+
+        // Clerks/interns: only one active project site. Transfer by revoking other active sites first.
+        if ($status === 'active' && self::isSingleSiteRole($role)) {
+            self::revokeOtherActiveSites($userId, $projectId, $actorId);
+        }
+
+        $existing = Database::fetch('SELECT id, status FROM project_assignments WHERE project_id = ? AND user_id = ? LIMIT 1', [$projectId, $userId]);
+        if ($existing && (string)($existing['status'] ?? '') === 'active') {
             throw new InvalidArgumentException('This user is already assigned to the selected project.');
+        }
+        if ($existing) {
+            self::update((int)$existing['id'], [
+                'role' => $role,
+                'assignment_type' => self::cleanOption((string)($payload['assignment_type'] ?? 'site'), self::TYPES, 'site'),
+                'scope' => self::cleanOption((string)($payload['scope'] ?? 'general'), self::SCOPES, 'general'),
+                'status' => $status,
+                'start_date' => self::dateOrNull($payload['start_date'] ?? null),
+                'end_date' => self::dateOrNull($payload['end_date'] ?? null),
+                'is_primary' => !empty($payload['is_primary']) ? 1 : 0,
+                'notes' => trim((string)($payload['notes'] ?? '')) ?: null,
+                'assigned_by' => $actorId,
+                'assigned_at' => date('Y-m-d H:i:s'),
+                'revoked_by' => null,
+                'revoked_at' => null,
+                'updated_by' => $actorId ?: null,
+            ]);
+            return (int)$existing['id'];
         }
 
         $isPrimary = !empty($payload['is_primary']) ? 1 : 0;
@@ -251,14 +280,14 @@ class ProjectAssignment extends Model
             'role' => $role,
             'assignment_type' => self::cleanOption((string)($payload['assignment_type'] ?? 'site'), self::TYPES, 'site'),
             'scope' => self::cleanOption((string)($payload['scope'] ?? 'general'), self::SCOPES, 'general'),
-            'status' => self::cleanOption((string)($payload['status'] ?? 'active'), self::STATUSES, 'active'),
+            'status' => $status,
             'start_date' => self::dateOrNull($payload['start_date'] ?? null),
             'end_date' => self::dateOrNull($payload['end_date'] ?? null),
             'is_primary' => $isPrimary,
             'notes' => trim((string)($payload['notes'] ?? '')) ?: null,
-            'assigned_by' => (int)($payload['assigned_by'] ?? 0),
+            'assigned_by' => $actorId,
             'assigned_at' => date('Y-m-d H:i:s'),
-            'updated_by' => (int)($payload['assigned_by'] ?? 0) ?: null,
+            'updated_by' => $actorId ?: null,
         ]);
     }
 
@@ -270,11 +299,18 @@ class ProjectAssignment extends Model
         }
 
         $isPrimary = !empty($payload['is_primary']) ? 1 : 0;
+        $roleSlug = (string)($assignment['role_slug'] ?? $assignment['role'] ?? '');
         if ($isPrimary === 1) {
-            self::clearPrimary((int)$assignment['project_id'], (string)$assignment['role_slug'], $id);
+            self::clearPrimary((int)$assignment['project_id'], $roleSlug, $id);
         }
 
         $status = self::cleanOption((string)($payload['status'] ?? $assignment['assignment_status']), self::STATUSES, 'active');
+        $actorId = (int)($payload['updated_by'] ?? 0);
+
+        if ($status === 'active' && self::isSingleSiteRole($roleSlug)) {
+            self::revokeOtherActiveSites((int)$assignment['user_id'], (int)$assignment['project_id'], $actorId);
+        }
+
         $data = [
             'assignment_type' => self::cleanOption((string)($payload['assignment_type'] ?? $assignment['assignment_type']), self::TYPES, 'site'),
             'scope' => self::cleanOption((string)($payload['scope'] ?? $assignment['scope']), self::SCOPES, 'general'),
@@ -283,11 +319,11 @@ class ProjectAssignment extends Model
             'end_date' => self::dateOrNull($payload['end_date'] ?? null),
             'is_primary' => $isPrimary,
             'notes' => trim((string)($payload['notes'] ?? '')) ?: null,
-            'updated_by' => (int)($payload['updated_by'] ?? 0) ?: null,
+            'updated_by' => $actorId ?: null,
         ];
 
         if ($status === 'revoked') {
-            $data['revoked_by'] = (int)($payload['updated_by'] ?? 0) ?: null;
+            $data['revoked_by'] = $actorId ?: null;
             $data['revoked_at'] = $assignment['revoked_at'] ?: date('Y-m-d H:i:s');
             $data['is_primary'] = 0;
         } elseif ($status === 'active') {
@@ -311,6 +347,16 @@ class ProjectAssignment extends Model
 
     public static function reactivate(int $id, int $userId): bool
     {
+        $assignment = self::findDetailed($id);
+        if (!$assignment) {
+            throw new InvalidArgumentException('Assignment could not be found.');
+        }
+
+        $role = (string)($assignment['role_slug'] ?? $assignment['role'] ?? '');
+        if (self::isSingleSiteRole($role)) {
+            self::revokeOtherActiveSites((int)$assignment['user_id'], (int)$assignment['project_id'], $userId);
+        }
+
         return self::update($id, [
             'status' => 'active',
             'revoked_by' => null,
@@ -346,6 +392,159 @@ class ProjectAssignment extends Model
             'assigned_at' => (string)($row['assigned_at'] ?? ''),
             'revoked_at' => (string)($row['revoked_at'] ?? ''),
         ];
+    }
+
+    public static function syncUserAssignments(int $userId, array $projectIds, int $actorId): void
+    {
+        $user = User::findDetailed($userId);
+        if (!$user) {
+            throw new InvalidArgumentException('User account could not be found.');
+        }
+
+        $role = (string)($user['role_slug'] ?? '');
+        if (!in_array($role, self::ASSIGNABLE_ROLES, true)) {
+            $existing = Database::fetchAll('SELECT id FROM project_assignments WHERE user_id = ? AND status = "active"', [$userId]);
+            foreach ($existing as $row) {
+                self::revoke((int)$row['id'], $actorId);
+            }
+            return;
+        }
+
+        $projectIds = array_values(array_unique(array_filter(array_map('intval', $projectIds), fn ($id) => $id > 0)));
+
+        // Clerks and interns: at most one active project site.
+        if (self::isSingleSiteRole($role) && count($projectIds) > 1) {
+            $projectIds = [ (int)$projectIds[0] ];
+        }
+
+        $existing = Database::fetchAll('SELECT id, project_id, status FROM project_assignments WHERE user_id = ?', [$userId]);
+        $existingByProject = [];
+        foreach ($existing as $row) {
+            $existingByProject[(int)$row['project_id']] = $row;
+        }
+
+        foreach ($projectIds as $projectId) {
+            if (!Database::fetch('SELECT id FROM projects WHERE id = ? LIMIT 1', [$projectId])) {
+                continue;
+            }
+
+            if (isset($existingByProject[$projectId])) {
+                $row = $existingByProject[$projectId];
+                if ((string)($row['status'] ?? '') !== 'active') {
+                    self::update((int)$row['id'], [
+                        'role' => $role,
+                        'status' => 'active',
+                        'revoked_by' => null,
+                        'revoked_at' => null,
+                        'updated_by' => $actorId,
+                    ]);
+                } else {
+                    self::update((int)$row['id'], ['role' => $role, 'updated_by' => $actorId]);
+                }
+                continue;
+            }
+
+            self::assign([
+                'project_id' => $projectId,
+                'user_id' => $userId,
+                'assignment_type' => self::defaultTypeForRole($role),
+                'scope' => self::defaultScopeForRole($role),
+                'status' => 'active',
+                'assigned_by' => $actorId,
+                'notes' => 'Assigned by system administrator.',
+            ]);
+        }
+
+        foreach ($existingByProject as $projectId => $row) {
+            if (!in_array($projectId, $projectIds, true) && (string)($row['status'] ?? '') === 'active') {
+                self::revoke((int)$row['id'], $actorId);
+            }
+        }
+    }
+
+    public static function defaultTypeForRole(string $role): string
+    {
+        return match ($role) {
+            'manager' => 'project-oversight',
+            'clerk' => 'attendance-supervision',
+            'intern' => 'reporting',
+            'consultant' => 'ipc-verification',
+            default => 'site',
+        };
+    }
+
+    public static function defaultScopeForRole(string $role): string
+    {
+        return match ($role) {
+            'manager' => 'general',
+            'consultant' => 'quality',
+            'contractor' => 'programme',
+            'clerk' => 'attendance',
+            'intern' => 'reporting',
+            default => 'general',
+        };
+    }
+
+    /**
+     * Revoke every other active project assignment for a clerk/intern (one-site policy).
+     */
+    public static function revokeOtherActiveSites(int $userId, int $keepProjectId, int $actorId = 0): int
+    {
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        $rows = Database::fetchAll(
+            'SELECT id FROM project_assignments
+             WHERE user_id = ? AND status = "active" AND project_id <> ?
+             ORDER BY assigned_at DESC, id DESC',
+            [$userId, $keepProjectId]
+        );
+
+        $count = 0;
+        foreach ($rows as $row) {
+            if (self::revoke((int)$row['id'], $actorId)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Repair multi-site clerk/intern rows: keep the newest active assignment, revoke the rest.
+     *
+     * @return array{users:int,revoked:int}
+     */
+    public static function repairSingleSiteAssignments(int $actorId = 0): array
+    {
+        $users = Database::fetchAll(
+            "SELECT u.id AS user_id, r.slug AS role_slug
+             FROM users u
+             INNER JOIN roles r ON r.id = u.role_id
+             WHERE r.slug IN ('clerk', 'intern')
+               AND (
+                 SELECT COUNT(*) FROM project_assignments pa
+                 WHERE pa.user_id = u.id AND pa.status = 'active'
+               ) > 1"
+        );
+
+        $revoked = 0;
+        foreach ($users as $user) {
+            $keep = Database::fetch(
+                'SELECT project_id FROM project_assignments
+                 WHERE user_id = ? AND status = "active"
+                 ORDER BY assigned_at DESC, id DESC
+                 LIMIT 1',
+                [(int)$user['user_id']]
+            );
+            if (!$keep) {
+                continue;
+            }
+            $revoked += self::revokeOtherActiveSites((int)$user['user_id'], (int)$keep['project_id'], $actorId);
+        }
+
+        return ['users' => count($users), 'revoked' => $revoked];
     }
 
     private static function selectSql(): string

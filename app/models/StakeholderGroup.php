@@ -21,9 +21,9 @@ class StakeholderGroup extends Model
         }
 
         $sql = "SELECT g.*,
-                    COUNT(DISTINCT s.id) AS stakeholder_count,
-                    COUNT(DISTINCT m.id) AS milestone_count,
-                    COUNT(DISTINCT t.id) AS testimonial_count
+                    COUNT(DISTINCT CASE WHEN s.status = 'published' THEN s.id END) AS stakeholder_count,
+                    COUNT(DISTINCT CASE WHEN m.status = 'published' THEN m.id END) AS milestone_count,
+                    COUNT(DISTINCT CASE WHEN t.status = 'published' THEN t.id END) AS testimonial_count
                 FROM stakeholder_groups g
                 LEFT JOIN stakeholders s ON s.group_id = g.id
                 LEFT JOIN stakeholder_milestones m ON m.group_id = g.id
@@ -52,6 +52,7 @@ class StakeholderGroup extends Model
     {
         $name = Security::cleanString((string)($input['name'] ?? ''));
         $slug = self::slug((string)($input['slug'] ?? $name));
+        self::ensureUniqueSlug($slug, $id);
         $data = [
             'slug' => $slug,
             'name' => $name,
@@ -61,7 +62,7 @@ class StakeholderGroup extends Model
             'description' => trim((string)($input['description'] ?? '')),
             'tags_json' => self::jsonLines((string)($input['tags'] ?? '')),
             'cta_label' => Security::cleanString((string)($input['cta_label'] ?? '')),
-            'cta_url' => Security::cleanString((string)($input['cta_url'] ?? '')),
+            'cta_url' => self::nullableUrl($input['cta_url'] ?? null),
             'legal_basis' => trim((string)($input['legal_basis'] ?? '')),
             'responsibilities_json' => self::jsonLines((string)($input['responsibilities'] ?? '')),
             'reporting_lines' => trim((string)($input['reporting_lines'] ?? '')),
@@ -118,5 +119,31 @@ class StakeholderGroup extends Model
     {
         $decoded = json_decode((string)$value, true);
         return is_array($decoded) ? array_values(array_filter($decoded, static fn ($item): bool => trim((string)$item) !== '')) : [];
+    }
+
+    private static function nullableUrl(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+        if ($value === '' || $value === '#') {
+            return $value === '#' ? '#' : null;
+        }
+
+        if (preg_match('#^(?:https?://|mailto:|tel:|/)#i', $value) === 1) {
+            return $value;
+        }
+
+        throw new RuntimeException('Stakeholder group CTA URL must be http, https, mailto, tel or an internal path.');
+    }
+
+    private static function ensureUniqueSlug(string $slug, ?int $id = null): void
+    {
+        $existing = Database::fetch(
+            'SELECT id FROM stakeholder_groups WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1',
+            [$slug, $id, $id]
+        );
+
+        if ($existing) {
+            throw new RuntimeException('This stakeholder group slug is already in use.');
+        }
     }
 }

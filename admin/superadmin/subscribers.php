@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $filters = [
     'q' => Security::cleanString((string)($_GET['q'] ?? '')),
@@ -12,7 +12,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== null);
 
-$perPage = 20;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalSubscribers = Subscriber::countItems($filters);
 $totalPages = max(1, (int)ceil($totalSubscribers / $perPage));

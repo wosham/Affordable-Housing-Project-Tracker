@@ -1,5 +1,5 @@
 <?php
-// Clerk of Works — Inspection & Test Plans
-require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
-// TODO: Phase 5 — Record ITP hold points, inspection results per activity
+require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
+Guard::exactRole('clerk');
+$qualityType = 'itp';
+include dirname(__DIR__, 2) . '/app/partials/admin/clerk-quality-evidence-page.php';

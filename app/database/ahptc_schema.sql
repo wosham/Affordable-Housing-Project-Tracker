@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `first_name`             VARCHAR(80)  NOT NULL,
     `last_name`              VARCHAR(80)  NOT NULL,
     `email`                  VARCHAR(160) NOT NULL UNIQUE,
-    `phone`                  VARCHAR(30)  NULL,
+    `phone`                  VARCHAR(30)  NULL UNIQUE,
     `password_hash`          VARCHAR(255) NOT NULL,
     `avatar`                 VARCHAR(255) NULL,
     `job_title`              VARCHAR(100) NULL,
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
     `id`                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `user_id`            INT UNSIGNED NOT NULL,
     `email`              VARCHAR(190) NULL,
-    `token`              VARCHAR(255) NOT NULL UNIQUE,
+    `token`              CHAR(64) NOT NULL UNIQUE,
     `token_hash`         CHAR(64) NULL,
     `expires_at`         DATETIME     NOT NULL,
     `used`               TINYINT(1)   DEFAULT 0,
@@ -288,8 +288,11 @@ CREATE TABLE IF NOT EXISTS `project_assignments` (
     UNIQUE KEY `uq_project_user` (`project_id`, `user_id`),
     INDEX `idx_project_assignments_user_project` (`user_id`, `project_id`),
     INDEX `idx_project_assignments_user_project_status` (`user_id`, `project_id`, `status`),
+    INDEX `idx_project_assignments_user_role_status` (`user_id`, `role`, `status`),
     INDEX `idx_project_assignments_project_role_status` (`project_id`, `role`, `status`),
+    INDEX `idx_project_assignments_project_status` (`project_id`, `status`),
     INDEX `idx_project_assignments_user_status` (`user_id`, `status`),
+    INDEX `idx_assignments_user_status_project` (`user_id`, `status`, `project_id`),
     INDEX `idx_assignments_project_user_status` (`project_id`, `user_id`, `status`),
     INDEX `idx_project_assignments_status_dates` (`status`, `start_date`, `end_date`),
     INDEX `idx_project_assignments_primary` (`project_id`, `role`, `is_primary`)
@@ -415,8 +418,7 @@ CREATE TABLE IF NOT EXISTS `subcontractors` (
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_subcontractors_project_status` (`project_id`, `status`),
     INDEX `idx_subcontractors_compliance` (`compliance_status`, `risk_status`),
-    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    INDEX `idx_equipment_project_dates` (`project_id`, `date_on_site`, `date_off_site`)
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -427,12 +429,17 @@ CREATE TABLE IF NOT EXISTS `documents` (
     `project_id`      INT UNSIGNED NOT NULL,
     `uploaded_by`     INT UNSIGNED NOT NULL,
     `category`        ENUM('contract','drawing','spec','report','correspondence','shop-drawing','quality-test','other') DEFAULT 'other',
+    `clerk_document_type` VARCHAR(60) NULL,
     `filename`        VARCHAR(255) NOT NULL,
     `original_name`   VARCHAR(255) NOT NULL,
     `size`            INT UNSIGNED NOT NULL,
     `version`         VARCHAR(20)  DEFAULT '1.0',
+    `site_record_date` DATE NULL,
+    `linked_record_type` VARCHAR(60) NULL,
+    `linked_record_id` INT UNSIGNED NULL,
     `description`     TEXT NULL,
     `is_confidential` TINYINT(1)   DEFAULT 0,
+    `review_required` TINYINT(1) NOT NULL DEFAULT 0,
     `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
     `consultant_review_note` TEXT NULL,
     `consultant_reviewed_by` INT UNSIGNED NULL,
@@ -443,7 +450,8 @@ CREATE TABLE IF NOT EXISTS `documents` (
     FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`),
     INDEX `idx_documents_project_created` (`project_id`, `created_at`),
     INDEX `idx_documents_consultant_review` (`project_id`, `consultant_review_status`, `created_at`),
-    INDEX `idx_documents_category_review` (`category`, `consultant_review_status`)
+    INDEX `idx_documents_category_review` (`category`, `consultant_review_status`),
+    INDEX `idx_documents_clerk_type` (`project_id`, `clerk_document_type`, `site_record_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -560,8 +568,17 @@ CREATE TABLE IF NOT EXISTS `equipment_register` (
     `date_on_site`   DATE NULL,
     `date_off_site`  DATE NULL,
     `condition`      VARCHAR(60)  DEFAULT 'good',
+    `status`         ENUM('on-site','off-site','maintenance') NOT NULL DEFAULT 'on-site',
+    `check_status`   ENUM('pending','present','missing','off-site','maintenance','queried') NOT NULL DEFAULT 'pending',
+    `checked_by`     INT UNSIGNED NULL,
+    `checked_at`     DATETIME NULL,
+    `check_notes`    TEXT NULL,
+    `updated_by`     INT UNSIGNED NULL,
+    `updated_at`     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `created_at`     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    INDEX `idx_equipment_project_status` (`project_id`, `status`),
+    INDEX `idx_equipment_check` (`project_id`, `check_status`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -574,15 +591,25 @@ CREATE TABLE IF NOT EXISTS `material_deliveries` (
     `supplier`         VARCHAR(150) NULL,
     `delivery_date`    DATE         NOT NULL,
     `quantity`         DECIMAL(12,3) NOT NULL,
+    `verified_quantity` DECIMAL(12,3) NULL,
     `unit`             VARCHAR(30)  NOT NULL,
     `delivery_note_no` VARCHAR(60)  NULL,
     `received_by`      INT UNSIGNED NOT NULL,
     `condition`        VARCHAR(60)  DEFAULT 'good',
     `approved`         TINYINT(1)   DEFAULT 0,
+    `status`           ENUM('submitted','accepted','queried') NOT NULL DEFAULT 'submitted',
+    `verification_status` ENUM('pending','accepted','queried','rejected') NOT NULL DEFAULT 'pending',
+    `verified_by`      INT UNSIGNED NULL,
+    `verified_at`      DATETIME NULL,
+    `verification_notes` TEXT NULL,
+    `updated_by`       INT UNSIGNED NULL,
+    `updated_at`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`received_by`) REFERENCES `users`(`id`),
-    INDEX `idx_material_deliveries_project_date` (`project_id`, `delivery_date`)
+    INDEX `idx_material_deliveries_project_date` (`project_id`, `delivery_date`),
+    INDEX `idx_material_deliveries_project_status_date` (`project_id`, `status`, `delivery_date`),
+    INDEX `idx_material_verification` (`project_id`, `verification_status`, `delivery_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -599,6 +626,7 @@ CREATE TABLE IF NOT EXISTS `material_approvals` (
     `approved_date`  DATE         NULL,
     `status`         ENUM('pending','approved','rejected') DEFAULT 'pending',
     `notes`          TEXT NULL,
+    `updated_at`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`submitted_by`) REFERENCES `users`(`id`),
     FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`),
@@ -618,11 +646,25 @@ CREATE TABLE IF NOT EXISTS `labour_register` (
     `unskilled_count`  SMALLINT UNSIGNED DEFAULT 0,
     `supervisor_count` SMALLINT UNSIGNED DEFAULT 0,
     `total`            SMALLINT UNSIGNED DEFAULT 0,
+    `clerk_skilled_count` SMALLINT UNSIGNED NULL,
+    `clerk_unskilled_count` SMALLINT UNSIGNED NULL,
+    `clerk_supervisor_count` SMALLINT UNSIGNED NULL,
+    `clerk_total`      SMALLINT UNSIGNED NULL,
+    `variance_total`   SMALLINT NULL,
     `recorded_by`      INT UNSIGNED NOT NULL,
+    `status`           ENUM('submitted','reviewed') NOT NULL DEFAULT 'submitted',
+    `verification_status` ENUM('pending','verified','queried') NOT NULL DEFAULT 'pending',
+    `verified_by`      INT UNSIGNED NULL,
+    `verified_at`      DATETIME NULL,
+    `verification_notes` TEXT NULL,
+    `updated_by`       INT UNSIGNED NULL,
+    `updated_at`       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`),
     UNIQUE KEY `uq_project_date` (`project_id`, `diary_date`),
-    INDEX `idx_labour_project_date` (`project_id`, `diary_date`)
+    INDEX `idx_labour_project_date` (`project_id`, `diary_date`),
+    INDEX `idx_labour_project_status_date` (`project_id`, `status`, `diary_date`),
+    INDEX `idx_labour_verification` (`project_id`, `verification_status`, `diary_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -636,6 +678,8 @@ CREATE TABLE IF NOT EXISTS `site_diaries` (
     `weather_summary` VARCHAR(180) NULL,
     `work_done`     TEXT NULL,
     `issues_raised` TEXT NULL,
+    `safety_observations` TEXT NULL,
+    `visitors_instructions` TEXT NULL,
     `next_day_plan` TEXT NULL,
     `recorded_by`   INT UNSIGNED NOT NULL,
     `approved_by`   INT UNSIGNED NULL,
@@ -644,12 +688,15 @@ CREATE TABLE IF NOT EXISTS `site_diaries` (
     `consultant_review_note` TEXT NULL,
     `consultant_reviewed_by` INT UNSIGNED NULL,
     `consultant_reviewed_at` DATETIME NULL,
+    `status`        ENUM('draft','submitted','reviewed') NOT NULL DEFAULT 'submitted',
+    `updated_by`    INT UNSIGNED NULL,
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`),
     UNIQUE KEY `uq_project_date` (`project_id`, `diary_date`),
-    INDEX `idx_site_diaries_consultant_review` (`project_id`, `consultant_review_status`, `diary_date`)
+    INDEX `idx_site_diaries_consultant_review` (`project_id`, `consultant_review_status`, `diary_date`),
+    INDEX `idx_site_diaries_project_status_date` (`project_id`, `status`, `diary_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -662,11 +709,19 @@ CREATE TABLE IF NOT EXISTS `weather_logs` (
     `morning_condition`   VARCHAR(60)  NULL,
     `afternoon_condition` VARCHAR(60)  NULL,
     `rainfall_mm`         DECIMAL(5,1) DEFAULT 0,
+    `temperature_min`     DECIMAL(4,1) NULL,
+    `temperature_max`     DECIMAL(4,1) NULL,
     `working_hours`       DECIMAL(4,1) DEFAULT 8,
+    `working_hours_lost`  DECIMAL(4,1) NOT NULL DEFAULT 0,
+    `impact_level`        ENUM('none','minor','moderate','severe') NOT NULL DEFAULT 'none',
     `remarks`             TEXT NULL,
     `recorded_by`         INT UNSIGNED NOT NULL,
+    `updated_by`          INT UNSIGNED NULL,
+    `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`recorded_by`) REFERENCES `users`(`id`),
+    INDEX `idx_weather_project_date` (`project_id`, `log_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -675,8 +730,10 @@ CREATE TABLE IF NOT EXISTS `weather_logs` (
 CREATE TABLE IF NOT EXISTS `site_meeting_minutes` (
     `id`               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `project_id`       INT UNSIGNED NOT NULL,
+    `meeting_type`     VARCHAR(60) NOT NULL DEFAULT 'site',
     `meeting_date`     DATE         NOT NULL,
     `venue`            VARCHAR(200) NULL,
+    `chairperson`      VARCHAR(150) NULL,
     `attendees_json`   TEXT NULL,
     `agenda`           TEXT NULL,
     `minutes_text`     LONGTEXT NULL,
@@ -685,6 +742,7 @@ CREATE TABLE IF NOT EXISTS `site_meeting_minutes` (
     `recorded_by`      INT UNSIGNED NOT NULL,
     `status`           ENUM('draft','recorded','reviewed','closed') DEFAULT 'recorded',
     `action_status`    ENUM('none','open','in-progress','completed','overdue') DEFAULT 'none',
+    `next_meeting_date` DATE NULL,
     `updated_by`       INT UNSIGNED NULL,
     `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `reviewed_at`      DATETIME NULL,
@@ -732,6 +790,8 @@ CREATE TABLE IF NOT EXISTS `hs_incidents` (
     `persons_involved` TEXT NULL,
     `cause`            TEXT NULL,
     `corrective_action` TEXT NULL,
+    `immediate_action` TEXT NULL,
+    `lost_time_hours`  DECIMAL(6,2) NOT NULL DEFAULT 0,
     `reported_by`      INT UNSIGNED NOT NULL,
     `severity`         ENUM('low','medium','high','critical') DEFAULT 'medium',
     `status`           ENUM('open','investigating','action-pending','resolved','closed') DEFAULT 'open',
@@ -740,6 +800,7 @@ CREATE TABLE IF NOT EXISTS `hs_incidents` (
     `updated_by`       INT UNSIGNED NULL,
     `updated_at`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `attachment_path`  VARCHAR(255) NULL,
+    `evidence_media_id` INT UNSIGNED NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_hs_project_date` (`project_id`, `incident_date`),
     INDEX `idx_hs_status_severity` (`status`, `severity`),
@@ -774,10 +835,17 @@ CREATE TABLE IF NOT EXISTS `quality_tests` (
     `test_date`        DATE         NOT NULL,
     `location_on_site` VARCHAR(200) NULL,
     `result`           VARCHAR(150) NULL,
+    `required_result`  VARCHAR(180) NULL,
+    `actual_result`    VARCHAR(180) NULL,
+    `clerk_observation` TEXT NULL,
     `pass_fail`        ENUM('pass','fail','pending') DEFAULT 'pending',
     `lab_ref`          VARCHAR(80)  NULL,
     `tested_by`        INT UNSIGNED NOT NULL,
     `document_path`    VARCHAR(255) NULL,
+    `evidence_media_id` INT UNSIGNED NULL,
+    `verification_status` ENUM('pending','passed','failed','queried') NOT NULL DEFAULT 'pending',
+    `verified_by`      INT UNSIGNED NULL,
+    `verified_at`      DATETIME NULL,
     `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
     `consultant_review_note` TEXT NULL,
     `consultant_reviewed_by` INT UNSIGNED NULL,
@@ -789,7 +857,8 @@ CREATE TABLE IF NOT EXISTS `quality_tests` (
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`tested_by`)  REFERENCES `users`(`id`),
     INDEX `idx_quality_tests_project_result_date` (`project_id`, `pass_fail`, `test_date`),
-    INDEX `idx_quality_consultant_review` (`project_id`, `consultant_review_status`, `test_date`)
+    INDEX `idx_quality_consultant_review` (`project_id`, `consultant_review_status`, `test_date`),
+    INDEX `idx_quality_tests_clerk_verification` (`project_id`, `verification_status`, `test_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -799,12 +868,18 @@ CREATE TABLE IF NOT EXISTS `inspection_test_plans` (
     `id`               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `project_id`       INT UNSIGNED NOT NULL,
     `activity`         VARCHAR(200) NOT NULL,
+    `inspection_area`  VARCHAR(180) NULL,
     `hold_point`       VARCHAR(100) NULL,
     `inspection_date`  DATE NULL,
     `inspected_by`     INT UNSIGNED NULL,
     `outcome`          VARCHAR(100) NULL,
+    `clerk_notes`      TEXT NULL,
     `witness_required` TINYINT(1)   DEFAULT 0,
     `document_path`    VARCHAR(255) NULL,
+    `evidence_media_id` INT UNSIGNED NULL,
+    `inspection_status` ENUM('pending','passed','failed','rework-required') NOT NULL DEFAULT 'pending',
+    `verified_by`      INT UNSIGNED NULL,
+    `verified_at`      DATETIME NULL,
     `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
     `consultant_review_note` TEXT NULL,
     `consultant_reviewed_by` INT UNSIGNED NULL,
@@ -816,7 +891,8 @@ CREATE TABLE IF NOT EXISTS `inspection_test_plans` (
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`inspected_by`) REFERENCES `users`(`id`),
     INDEX `idx_itp_project_date` (`project_id`, `inspection_date`),
-    INDEX `idx_itp_consultant_review` (`project_id`, `consultant_review_status`, `inspection_date`)
+    INDEX `idx_itp_consultant_review` (`project_id`, `consultant_review_status`, `inspection_date`),
+    INDEX `idx_itp_clerk_status` (`project_id`, `inspection_status`, `inspection_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -824,13 +900,17 @@ CREATE TABLE IF NOT EXISTS `inspection_test_plans` (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `non_conformance_reports` (
     `id`                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `ncr_reference`     VARCHAR(80) NULL,
     `project_id`        INT UNSIGNED NOT NULL,
     `raised_by`         INT UNSIGNED NOT NULL,
     `raised_date`       DATE         NOT NULL,
+    `location_on_site`  VARCHAR(180) NULL,
     `description`       TEXT         NOT NULL,
     `severity`          ENUM('minor','major','critical') DEFAULT 'minor',
     `root_cause`        TEXT NULL,
     `corrective_action` TEXT NULL,
+    `target_close_date` DATE NULL,
+    `evidence_media_id` INT UNSIGNED NULL,
     `closed_by`         INT UNSIGNED NULL,
     `closed_date`       DATE NULL,
     `status`            ENUM('open','in-progress','closed') DEFAULT 'open',
@@ -840,6 +920,7 @@ CREATE TABLE IF NOT EXISTS `non_conformance_reports` (
     `consultant_reviewed_at` DATETIME NULL,
     `consultant_severity` VARCHAR(30) NOT NULL DEFAULT 'minor',
     `consultant_documents_checked` TINYINT(1) NOT NULL DEFAULT 0,
+    `updated_by`        INT UNSIGNED NULL,
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at`        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
@@ -880,6 +961,7 @@ CREATE TABLE IF NOT EXISTS `shop_drawings` (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `defects` (
     `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `defect_reference` VARCHAR(80) NULL,
     `project_id`  INT UNSIGNED NOT NULL,
     `raised_by`   INT UNSIGNED NOT NULL,
     `raised_date` DATE         NOT NULL,
@@ -887,10 +969,14 @@ CREATE TABLE IF NOT EXISTS `defects` (
     `description` TEXT         NOT NULL,
     `severity`    ENUM('minor','major','critical') DEFAULT 'minor',
     `photo_path`  VARCHAR(255) NULL,
+    `evidence_media_id` INT UNSIGNED NULL,
     `assigned_to` INT UNSIGNED NULL,
     `due_date`    DATE NULL,
     `closed_date` DATE NULL,
     `status`      ENUM('open','in-progress','resolved','closed') DEFAULT 'open',
+    `rectification_notes` TEXT NULL,
+    `verified_fixed_by` INT UNSIGNED NULL,
+    `verified_fixed_at` DATETIME NULL,
     `consultant_review_status` VARCHAR(30) NOT NULL DEFAULT 'pending',
     `consultant_review_note` TEXT NULL,
     `consultant_reviewed_by` INT UNSIGNED NULL,
@@ -927,12 +1013,20 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     `certified_at`     DATETIME NULL,
     `certified_by`      INT UNSIGNED NULL,
     `certification_comment` TEXT NULL,
+    `clerk_verification_comment` TEXT NULL,
+    `clerk_checklist_json` TEXT NULL,
+    `clerk_verified_by` INT UNSIGNED NULL,
+    `clerk_verified_at` DATETIME NULL,
     `approved_at`      DATETIME NULL,
     `approved_by`      INT UNSIGNED NULL,
     `rejected_by`      INT UNSIGNED NULL,
     `rejected_at`      DATETIME NULL,
     `rejection_reason` TEXT NULL,
     `paid_at`          DATETIME NULL,
+    `paid_by`          INT UNSIGNED NULL,
+    `payment_status`   VARCHAR(30) NOT NULL DEFAULT 'unpaid',
+    `payment_reference` VARCHAR(100) NULL,
+    `payment_comment`  TEXT NULL,
     `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     `updated_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)    REFERENCES `projects`(`id`) ON DELETE CASCADE,
@@ -944,10 +1038,13 @@ CREATE TABLE IF NOT EXISTS `ipcs` (
     INDEX `idx_ipcs_project_status` (`project_id`, `status`),
     INDEX `idx_ipcs_project_status_submitted` (`project_id`, `status`, `submitted_at`),
     INDEX `idx_ipcs_project_status_certified` (`project_id`, `status`, `certified_at`),
+    INDEX `idx_ipcs_clerk_verified` (`project_id`, `status`, `clerk_verified_at`),
     INDEX `idx_ipcs_contractor_status` (`contractor_id`, `status`),
     INDEX `idx_ipcs_contractor_stage` (`contractor_id`, `current_stage`),
     INDEX `idx_ipcs_submitted_at` (`submitted_at`),
     INDEX `idx_ipcs_approved_at` (`approved_at`),
+    INDEX `idx_ipcs_payment_status` (`payment_status`, `paid_at`),
+    INDEX `idx_ipcs_status_payment_approved` (`status`, `payment_status`, `approved_at`),
     INDEX `idx_ipcs_paid_at` (`paid_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -964,6 +1061,25 @@ CREATE TABLE IF NOT EXISTS `ipc_attachments` (
     INDEX `idx_ipc_attachments_user` (`uploaded_by`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `contractor_submission_attachments` (
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `submission_type` ENUM('eot','variation','rfi','shop_drawing','material') NOT NULL,
+    `submission_id`   INT UNSIGNED NOT NULL,
+    `project_id`      INT UNSIGNED NOT NULL,
+    `media_id`        INT UNSIGNED NULL,
+    `path`            VARCHAR(255) NULL,
+    `title`           VARCHAR(180) NULL,
+    `uploaded_by`     INT UNSIGNED NOT NULL,
+    `created_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`)  REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`media_id`)    REFERENCES `media_library`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_csa_submission` (`submission_type`, `submission_id`),
+    INDEX `idx_csa_project` (`project_id`, `submission_type`, `created_at`),
+    INDEX `idx_csa_media` (`media_id`),
+    INDEX `idx_csa_user` (`uploaded_by`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- 35. IPC LINES
 -- ============================================================
@@ -974,8 +1090,13 @@ CREATE TABLE IF NOT EXISTS `ipc_lines` (
     `description`     TEXT         NOT NULL,
     `qty_this_period` DECIMAL(12,3) DEFAULT 0,
     `cumulative_qty`  DECIMAL(12,3) DEFAULT 0,
+    `clerk_verified_qty` DECIMAL(12,3) NULL,
+    `clerk_variance_qty` DECIMAL(12,3) NULL,
     `rate`            DECIMAL(12,2) DEFAULT 0,
     `amount`          DECIMAL(15,2) DEFAULT 0,
+    `clerk_note`      TEXT NULL,
+    `clerk_verified_by` INT UNSIGNED NULL,
+    `clerk_verified_at` DATETIME NULL,
     FOREIGN KEY (`ipc_id`)      REFERENCES `ipcs`(`id`)      ON DELETE CASCADE,
     FOREIGN KEY (`boq_item_id`) REFERENCES `boq_items`(`id`) ON DELETE SET NULL,
     INDEX `idx_ipc_lines_ipc` (`ipc_id`),
@@ -1094,6 +1215,7 @@ CREATE TABLE IF NOT EXISTS `liquidated_damages` (
     `applied_at`        DATETIME NULL,
     `created_at`        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX `idx_ld_project_status` (`project_id`, `status`),
+    INDEX `idx_ld_status_updated` (`status`, `updated_at`),
     INDEX `idx_ld_ipc` (`applied_to_ipc_id`),
     FOREIGN KEY (`project_id`)        REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`applied_to_ipc_id`) REFERENCES `ipcs`(`id`) ON DELETE SET NULL
@@ -1109,14 +1231,26 @@ CREATE TABLE IF NOT EXISTS `payments` (
     `amount`       DECIMAL(15,2) NOT NULL,
     `payment_date` DATE         NOT NULL,
     `reference_no` VARCHAR(100) NULL,
+    `voucher_no`   VARCHAR(100) NULL,
     `bank`         VARCHAR(150) NULL,
+    `payment_method` VARCHAR(60) NOT NULL DEFAULT 'bank_transfer',
     `processed_by` INT UNSIGNED NOT NULL,
+    `processed_at` DATETIME NULL,
     `receipt_path` VARCHAR(255) NULL,
+    `status`       ENUM('processed','void','reversed') NOT NULL DEFAULT 'processed',
+    `notes`        TEXT NULL,
+    `voided_by`    INT UNSIGNED NULL,
+    `voided_at`    DATETIME NULL,
+    `void_reason`  TEXT NULL,
     `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`ipc_id`)       REFERENCES `ipcs`(`id`)     ON DELETE CASCADE,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`),
-    INDEX `idx_payments_project_date` (`project_id`, `payment_date`)
+    INDEX `idx_payments_project_date` (`project_id`, `payment_date`),
+    INDEX `idx_payments_ipc_status` (`ipc_id`, `status`),
+    INDEX `idx_payments_reference` (`reference_no`),
+    INDEX `idx_payments_status_date` (`status`, `payment_date`),
+    INDEX `idx_payments_project_status_date` (`project_id`, `status`, `payment_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1125,14 +1259,39 @@ CREATE TABLE IF NOT EXISTS `payments` (
 CREATE TABLE IF NOT EXISTS `retention` (
     `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `project_id`      INT UNSIGNED NOT NULL,
+    `ipc_id`          INT UNSIGNED NULL,
     `total_held`      DECIMAL(15,2) DEFAULT 0,
     `released_amount` DECIMAL(15,2) DEFAULT 0,
     `release_date`    DATE NULL,
     `release_reason`  TEXT NULL,
+    `status`          VARCHAR(30) NOT NULL DEFAULT 'held',
     `processed_by`    INT UNSIGNED NULL,
     `created_at`      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`)
+    FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`),
+    INDEX `idx_retention_ipc` (`ipc_id`),
+    INDEX `idx_retention_status_release` (`status`, `release_date`),
+    INDEX `idx_retention_project_status_release` (`project_id`, `status`, `release_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `retention_release_history` (
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `retention_id`    INT UNSIGNED NOT NULL,
+    `project_id`      INT UNSIGNED NOT NULL,
+    `ipc_id`          INT UNSIGNED NULL,
+    `released_amount` DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `balance_after`   DECIMAL(15,2) NOT NULL DEFAULT 0,
+    `release_date`    DATE NOT NULL,
+    `reason`          TEXT NULL,
+    `processed_by`    INT UNSIGNED NULL,
+    `created_at`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`retention_id`) REFERENCES `retention`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`ipc_id`)       REFERENCES `ipcs`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`processed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_rrh_retention_created` (`retention_id`, `created_at`),
+    INDEX `idx_rrh_project_date` (`project_id`, `release_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1152,6 +1311,7 @@ CREATE TABLE IF NOT EXISTS `rfis` (
     `response_date` DATE NULL,
     `status`        ENUM('open','answered','closed') DEFAULT 'open',
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`project_id`)   REFERENCES `projects`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`raised_by`)    REFERENCES `users`(`id`),
     FOREIGN KEY (`responded_by`) REFERENCES `users`(`id`),
@@ -1183,20 +1343,84 @@ CREATE TABLE IF NOT EXISTS `attendance_records` (
     `id`                   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `user_id`              INT UNSIGNED NOT NULL,
     `project_id`           INT UNSIGNED NOT NULL,
+    `role_at_signin`       VARCHAR(50) NULL,
     `gateway_id`           INT UNSIGNED NOT NULL,
     `date`                 DATE         NOT NULL,
     `signin_time`          TIME NULL,
     `latitude`             DECIMAL(10,8) NULL,
     `longitude`            DECIMAL(11,8) NULL,
     `distance_from_site_m` DECIMAL(8,1) NULL,
+    `accuracy_meters`      DECIMAL(8,1) NULL,
     `status`               ENUM('present','absent','geo-fail','outside-window','late') DEFAULT 'absent',
+    `review_status`        ENUM('pending','accepted','rejected') NOT NULL DEFAULT 'pending',
     `created_at`           TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`user_id`)    REFERENCES `users`(`id`)               ON DELETE CASCADE,
     FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`)            ON DELETE CASCADE,
     FOREIGN KEY (`gateway_id`) REFERENCES `attendance_gateways`(`id`) ON DELETE CASCADE,
     UNIQUE KEY `uq_user_date` (`user_id`, `date`),
     INDEX `idx_attendance_project_date_status` (`project_id`, `date`, `status`),
-    INDEX `idx_attendance_date_user` (`date`, `user_id`)
+    INDEX `idx_attendance_date_user` (`date`, `user_id`),
+    INDEX `idx_attendance_user_project_date` (`user_id`, `project_id`, `date`),
+    INDEX `idx_attendance_user_status_date` (`user_id`, `status`, `date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 44B. INTERN PROJECT WORK
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `intern_site_entries` (
+    `id`                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `project_id`          INT UNSIGNED NOT NULL,
+    `user_id`             INT UNSIGNED NOT NULL,
+    `entry_date`          DATE NOT NULL,
+    `entry_title`         VARCHAR(180) NULL,
+    `work_observed`       TEXT NULL,
+    `labour_observed`     TEXT NULL,
+    `materials_observed`  TEXT NULL,
+    `equipment_observed`  TEXT NULL,
+    `weather_condition`   VARCHAR(180) NULL,
+    `issues`              TEXT NULL,
+    `safety_observations` TEXT NULL,
+    `progress_note`       TEXT NULL,
+    `milestone_id`        INT UNSIGNED NULL,
+    `media_id`            INT UNSIGNED NULL,
+    `status`              ENUM('draft','submitted','reviewed','needs-correction') NOT NULL DEFAULT 'submitted',
+    `reviewed_by`         INT UNSIGNED NULL,
+    `reviewed_at`         DATETIME NULL,
+    `review_note`         TEXT NULL,
+    `created_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`milestone_id`) REFERENCES `milestones`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`media_id`) REFERENCES `media_library`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_intern_entries_user_project_date` (`user_id`, `project_id`, `entry_date`),
+    INDEX `idx_intern_entries_project_status` (`project_id`, `status`, `entry_date`),
+    INDEX `idx_intern_entries_review` (`status`, `reviewed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `intern_site_photos` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `project_id`  INT UNSIGNED NOT NULL,
+    `user_id`     INT UNSIGNED NOT NULL,
+    `media_id`    INT UNSIGNED NOT NULL,
+    `caption`     VARCHAR(500) NULL,
+    `category`    ENUM('progress','material','equipment','safety','issue','general') NOT NULL DEFAULT 'general',
+    `latitude`    DECIMAL(10,8) NULL,
+    `longitude`   DECIMAL(11,8) NULL,
+    `status`      ENUM('submitted','reviewed','deleted') NOT NULL DEFAULT 'submitted',
+    `reviewed_by` INT UNSIGNED NULL,
+    `reviewed_at` DATETIME NULL,
+    `review_note` TEXT NULL,
+    `deleted_at`  DATETIME NULL,
+    `created_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`media_id`) REFERENCES `media_library`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`reviewed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_intern_photos_user_project` (`user_id`, `project_id`, `created_at`),
+    INDEX `idx_intern_photos_project_category` (`project_id`, `category`, `status`),
+    INDEX `idx_intern_photos_media` (`media_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1332,7 +1556,14 @@ CREATE TABLE IF NOT EXISTS `media_library` (
     `uploaded_by`   INT UNSIGNED NOT NULL,
     `folder`        VARCHAR(100) DEFAULT 'general',
     `source`        VARCHAR(60)  DEFAULT 'upload',
+    `is_protected`  TINYINT(1)   NOT NULL DEFAULT 0,
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    TIMESTAMP    NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at`    DATETIME     NULL,
+    INDEX `idx_media_folder` (`folder`),
+    INDEX `idx_media_type` (`type`),
+    INDEX `idx_media_path` (`path`),
+    INDEX `idx_media_deleted_at` (`deleted_at`),
     FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1370,6 +1601,7 @@ CREATE TABLE IF NOT EXISTS `cms_sections` (
     `is_locked`    TINYINT(1)   DEFAULT 0,
     `content_json` LONGTEXT NULL,
     `updated_by`   INT UNSIGNED NULL,
+    `updated_at`   TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`page_id`) REFERENCES `cms_pages`(`id`) ON DELETE CASCADE,
     UNIQUE KEY `uq_page_section` (`page_id`, `section_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1386,6 +1618,24 @@ CREATE TABLE IF NOT EXISTS `cms_settings` (
     `group`      VARCHAR(80)  NOT NULL DEFAULT 'global',
     `updated_by` INT UNSIGNED NULL,
     `updated_at` TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 54A. PUBLIC FRONTEND CONTENT SNAPSHOTS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `public_frontend_content_snapshots` (
+    `id`             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `page_slug`      VARCHAR(120) NOT NULL UNIQUE,
+    `page_label`     VARCHAR(180) NOT NULL,
+    `file_path`      VARCHAR(255) NOT NULL,
+    `source_hash`    CHAR(64) NOT NULL,
+    `raw_source`     LONGTEXT NOT NULL,
+    `extracted_text` LONGTEXT NULL,
+    `extracted_json` LONGTEXT NULL,
+    `seeded_at`      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_public_frontend_content_file` (`file_path`),
+    KEY `idx_public_frontend_content_hash` (`source_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1566,28 +1816,188 @@ CREATE TABLE IF NOT EXISTS `faq_items` (
 -- 62. LEADERSHIP PROFILES
 -- ============================================================
 CREATE TABLE IF NOT EXISTS `leadership_profiles` (
-    `id`               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `name`             VARCHAR(150) NOT NULL,
-    `title`            VARCHAR(150) NOT NULL,
-    `organisation`     VARCHAR(200) NULL,
-    `photo_id`         INT UNSIGNED NULL,
-    `bio`              TEXT NULL,
-    `sort_order`       SMALLINT UNSIGNED DEFAULT 0,
-    `is_visible`       TINYINT(1)   DEFAULT 1,
-    `social_links_json` TEXT NULL
+    `id`                    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `slug`                  VARCHAR(180) NULL UNIQUE,
+    `profile_type`          VARCHAR(60) NOT NULL DEFAULT 'national',
+    `parent_id`             INT UNSIGNED NULL,
+    `tier`                  TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `icon`                  VARCHAR(80) NULL,
+    `initials`              VARCHAR(12) NULL,
+    `name`                  VARCHAR(150) NOT NULL,
+    `title`                 VARCHAR(150) NOT NULL,
+    `organisation`          VARCHAR(200) NULL,
+    `appointment_label`     VARCHAR(120) NULL,
+    `appointment_source`    VARCHAR(255) NULL,
+    `photo_id`              INT UNSIGNED NULL,
+    `photo_path`            VARCHAR(500) NULL,
+    `bio`                   TEXT NULL,
+    `quote`                 TEXT NULL,
+    `responsibilities_json` LONGTEXT NULL,
+    `email`                 VARCHAR(160) NULL,
+    `phone`                 VARCHAR(50) NULL,
+    `office_location`       VARCHAR(255) NULL,
+    `sort_order`            SMALLINT UNSIGNED DEFAULT 0,
+    `show_in_org_chart`     TINYINT(1) DEFAULT 1,
+    `show_in_cards`         TINYINT(1) DEFAULT 1,
+    `show_in_spotlight`     TINYINT(1) DEFAULT 0,
+    `status`                ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `is_visible`            TINYINT(1) DEFAULT 1,
+    `social_links_json`     TEXT NULL,
+    `created_at`            TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`            TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_leadership_status_sort` (`status`, `sort_order`),
+    INDEX `idx_leadership_public_flags` (`show_in_org_chart`, `show_in_cards`, `show_in_spotlight`),
+    INDEX `idx_leadership_tier` (`tier`, `sort_order`),
+    FOREIGN KEY (`parent_id`) REFERENCES `leadership_profiles`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `leadership_quotes` (
+    `id`             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `quote_text`     TEXT NOT NULL,
+    `author_name`    VARCHAR(150) NOT NULL,
+    `author_title`   VARCHAR(180) NULL,
+    `source_type`    VARCHAR(50) NULL,
+    `source_id`      INT UNSIGNED NULL,
+    `avatar_label`   VARCHAR(12) NULL,
+    `theme`          VARCHAR(30) DEFAULT 'green',
+    `status`         ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `is_featured`    TINYINT(1) DEFAULT 1,
+    `sort_order`     SMALLINT UNSIGNED DEFAULT 0,
+    `created_at`     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_leadership_quotes_status` (`status`, `is_featured`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `contractors` (
+    `id`              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `company_name`    VARCHAR(200) NOT NULL,
+    `slug`            VARCHAR(180) NULL UNIQUE,
+    `initials`        VARCHAR(12) NULL,
+    `nca_grade`       VARCHAR(60) NULL,
+    `contact_person`  VARCHAR(150) NULL,
+    `email`           VARCHAR(160) NULL,
+    `phone`           VARCHAR(50) NULL,
+    `website`         VARCHAR(255) NULL,
+    `project_id`      INT UNSIGNED NULL,
+    `constituency_id` INT UNSIGNED NULL,
+    `status`          ENUM('active','tendering','inactive','completed') NOT NULL DEFAULT 'active',
+    `progress_pct`    TINYINT UNSIGNED DEFAULT 0,
+    `quote`           TEXT NULL,
+    `logo_path`       VARCHAR(500) NULL,
+    `sort_order`      SMALLINT UNSIGNED DEFAULT 0,
+    `created_at`      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_contractors_status_sort` (`status`, `sort_order`),
+    INDEX `idx_contractors_project` (`project_id`),
+    INDEX `idx_contractors_constituency` (`constituency_id`),
+    FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`constituency_id`) REFERENCES `constituencies`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 -- 63. STAKEHOLDERS
 -- ============================================================
+CREATE TABLE IF NOT EXISTS `stakeholder_groups` (
+    `id`                    INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `slug`                  VARCHAR(80) NOT NULL UNIQUE,
+    `name`                  VARCHAR(160) NOT NULL,
+    `icon`                  VARCHAR(80) NULL,
+    `count_label`           VARCHAR(80) NULL,
+    `summary`               VARCHAR(255) NULL,
+    `description`           TEXT NULL,
+    `tags_json`             LONGTEXT NULL,
+    `cta_label`             VARCHAR(120) NULL,
+    `cta_url`               VARCHAR(255) NULL,
+    `legal_basis`           TEXT NULL,
+    `responsibilities_json` LONGTEXT NULL,
+    `reporting_lines`       TEXT NULL,
+    `sort_order`            SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `status`                ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `created_at`            TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`            TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_stakeholder_groups_status` (`status`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `stakeholders` (
-    `id`           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `organisation` VARCHAR(200) NOT NULL,
-    `role`         VARCHAR(150) NULL,
-    `logo_id`      INT UNSIGNED NULL,
-    `website`      VARCHAR(255) NULL,
-    `sort_order`   SMALLINT UNSIGNED DEFAULT 0,
-    `is_visible`   TINYINT(1)   DEFAULT 1
+    `id`                      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `group_id`                INT UNSIGNED NULL,
+    `slug`                    VARCHAR(180) NULL UNIQUE,
+    `organisation`            VARCHAR(200) NOT NULL,
+    `role`                    VARCHAR(150) NULL,
+    `category`                VARCHAR(80) DEFAULT 'partner',
+    `partner_type`            VARCHAR(80) NULL,
+    `agreement_type`          VARCHAR(120) NULL,
+    `icon`                    VARCHAR(80) NULL,
+    `description`             TEXT NULL,
+    `mandate`                 TEXT NULL,
+    `logo_id`                 INT UNSIGNED NULL,
+    `logo_path`               VARCHAR(500) NULL,
+    `website`                 VARCHAR(255) NULL,
+    `sort_order`              SMALLINT UNSIGNED DEFAULT 0,
+    `is_visible`              TINYINT(1) DEFAULT 1,
+    `status`                  ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `featured_on_leadership`  TINYINT(1) DEFAULT 0,
+    `is_formal_partner`       TINYINT(1) DEFAULT 0,
+    `featured_on_stakeholders` TINYINT(1) DEFAULT 0,
+    `created_at`              TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`              TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_stakeholders_status_sort` (`status`, `sort_order`),
+    INDEX `idx_stakeholders_leadership` (`featured_on_leadership`, `status`),
+    INDEX `idx_stakeholders_group_status` (`group_id`, `status`, `sort_order`),
+    INDEX `idx_stakeholders_formal` (`is_formal_partner`, `status`, `sort_order`),
+    INDEX `idx_stakeholders_public_page` (`featured_on_stakeholders`, `status`, `sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `stakeholder_milestones` (
+    `id`             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `group_id`       INT UNSIGNED NULL,
+    `milestone_date` DATE NULL,
+    `date_label`     VARCHAR(80) NULL,
+    `title`          VARCHAR(180) NOT NULL,
+    `summary`        TEXT NULL,
+    `icon`           VARCHAR(80) NULL,
+    `badge_label`    VARCHAR(80) NULL,
+    `status`         ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `sort_order`     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `created_at`     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_stakeholder_milestones_status` (`status`, `sort_order`),
+    KEY `idx_stakeholder_milestones_group` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `stakeholder_testimonials` (
+    `id`          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `group_id`    INT UNSIGNED NULL,
+    `name`        VARCHAR(160) NOT NULL,
+    `role`        VARCHAR(220) NULL,
+    `initials`    VARCHAR(12) NULL,
+    `photo_path`  VARCHAR(255) NULL,
+    `rating`      TINYINT UNSIGNED NOT NULL DEFAULT 5,
+    `quote`       TEXT NOT NULL,
+    `tags_json`   LONGTEXT NULL,
+    `status`      ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `sort_order`  SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `created_at`  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_stakeholder_testimonials_status` (`status`, `sort_order`),
+    KEY `idx_stakeholder_testimonials_group` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `stakeholder_engagement_paths` (
+    `id`            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `slug`          VARCHAR(100) NOT NULL UNIQUE,
+    `title`         VARCHAR(180) NOT NULL,
+    `icon`          VARCHAR(80) NULL,
+    `description`   TEXT NULL,
+    `steps_json`    LONGTEXT NULL,
+    `button_label`  VARCHAR(120) NULL,
+    `button_url`    VARCHAR(255) NULL,
+    `tone`          VARCHAR(40) NOT NULL DEFAULT 'standard',
+    `status`        ENUM('published','draft') NOT NULL DEFAULT 'published',
+    `sort_order`    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    `created_at`    TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`    TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY `idx_stakeholder_engagement_status` (`status`, `sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -1604,6 +2014,7 @@ CREATE TABLE IF NOT EXISTS `contact_submissions` (
     `is_read`     TINYINT(1)   DEFAULT 0,
     `status`      ENUM('new','read','replied','archived') NOT NULL DEFAULT 'new',
     `assigned_to` INT UNSIGNED NULL,
+    `internal_thread_id` INT UNSIGNED NULL,
     `replied_at`  DATETIME NULL,
     `response_note` TEXT NULL,
     `read_at`     DATETIME NULL,
@@ -1617,9 +2028,29 @@ CREATE TABLE IF NOT EXISTS `contact_submissions` (
     KEY `idx_contact_submissions_status` (`status`, `created_at`),
     KEY `idx_contact_read_status` (`is_read`, `status`),
     KEY `idx_contact_assigned_status` (`assigned_to`, `status`),
+    KEY `idx_contact_internal_thread` (`internal_thread_id`),
     KEY `idx_contact_created` (`created_at`),
     KEY `idx_contact_email` (`email`),
+    KEY `idx_contact_ip_created` (`ip_address`, `created_at`),
     FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `contact_replies` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `contact_submission_id` INT UNSIGNED NOT NULL,
+    `sender_user_id` INT UNSIGNED NULL,
+    `recipient_email` VARCHAR(160) NOT NULL,
+    `subject` VARCHAR(220) NOT NULL,
+    `body` TEXT NOT NULL,
+    `delivery_status` ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending',
+    `provider_message_id` VARCHAR(120) NULL,
+    `error_message` VARCHAR(500) NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_contact_replies_submission` (`contact_submission_id`, `created_at`),
+    KEY `idx_contact_replies_sender` (`sender_user_id`, `created_at`),
+    KEY `idx_contact_replies_delivery` (`delivery_status`, `created_at`),
+    CONSTRAINT `fk_contact_replies_submission` FOREIGN KEY (`contact_submission_id`) REFERENCES `contact_submissions`(`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_contact_replies_sender` FOREIGN KEY (`sender_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `contact_departments` (
@@ -1634,7 +2065,8 @@ CREATE TABLE IF NOT EXISTS `contact_departments` (
     `sort_order`  SMALLINT UNSIGNED DEFAULT 0,
     `is_visible`  TINYINT(1) DEFAULT 1,
     UNIQUE KEY `uq_contact_department_name` (`name`),
-    KEY `idx_contact_departments_visible` (`is_visible`, `sort_order`)
+    KEY `idx_contact_departments_visible` (`is_visible`, `sort_order`),
+    KEY `idx_contact_departments_subject` (`subject_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

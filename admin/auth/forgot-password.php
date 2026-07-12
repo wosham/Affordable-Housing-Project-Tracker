@@ -125,6 +125,6 @@ $csrfToken = Csrf::token('forgot_password');
   </main>
 
   <script src="../../assets/js/global.js"></script>
-  <script src="../assets/js/forgot-password.js"></script>
+  <script src="../assets/js/forgot-password.js?v=20260614-reset-url"></script>
 </body>
 </html>

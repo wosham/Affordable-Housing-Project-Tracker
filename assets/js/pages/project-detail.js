@@ -42,6 +42,7 @@
     if (!images.length) return;
 
     let current = 0;
+    let activeTrigger = null;
     const lightbox = document.createElement('div');
     lightbox.className = 'pd-lightbox';
     lightbox.setAttribute('role', 'dialog');
@@ -59,8 +60,16 @@
     const img = lightbox.querySelector('.pd-lb-img');
     const caption = lightbox.querySelector('.pd-lb-caption');
     const closeBtn = lightbox.querySelector('.pd-lb-close');
+    const prevBtn = lightbox.querySelector('.pd-lb-prev');
+    const nextBtn = lightbox.querySelector('.pd-lb-next');
 
-    function show(index) {
+    if (images.length <= 1) {
+      prevBtn.hidden = true;
+      nextBtn.hidden = true;
+    }
+
+    function show(index, trigger) {
+      if (trigger) activeTrigger = trigger;
       current = (index + images.length) % images.length;
       img.src = images[current].src;
       img.alt = images[current].alt;
@@ -73,15 +82,18 @@
     function close() {
       lightbox.classList.remove('is-open');
       document.body.style.overflow = '';
+      if (activeTrigger && typeof activeTrigger.focus === 'function') {
+        activeTrigger.focus();
+      }
     }
 
     items.forEach((item, index) => {
-      item.addEventListener('click', () => show(index));
+      item.addEventListener('click', () => show(index, item));
     });
 
     closeBtn.addEventListener('click', close);
-    lightbox.querySelector('.pd-lb-prev').addEventListener('click', () => show(current - 1));
-    lightbox.querySelector('.pd-lb-next').addEventListener('click', () => show(current + 1));
+    prevBtn.addEventListener('click', () => show(current - 1));
+    nextBtn.addEventListener('click', () => show(current + 1));
     lightbox.addEventListener('click', (event) => {
       if (event.target === lightbox) close();
     });
@@ -89,8 +101,21 @@
     document.addEventListener('keydown', (event) => {
       if (!lightbox.classList.contains('is-open')) return;
       if (event.key === 'Escape') close();
-      if (event.key === 'ArrowLeft') show(current - 1);
-      if (event.key === 'ArrowRight') show(current + 1);
+      if (event.key === 'ArrowLeft' && images.length > 1) show(current - 1);
+      if (event.key === 'ArrowRight' && images.length > 1) show(current + 1);
+      if (event.key === 'Tab') {
+        const focusable = Array.from(lightbox.querySelectorAll('button:not([hidden])'));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     });
   }
 

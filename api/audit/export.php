@@ -2,7 +2,11 @@
 
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
-Guard::role('superadmin');
+ApiMiddleware::handle([
+    'methods' => ['GET'],
+    'roles' => ['superadmin'],
+    'csrf' => false,
+]);
 
 $filters = [
     'q' => Security::cleanString((string)($_GET['q'] ?? '')),

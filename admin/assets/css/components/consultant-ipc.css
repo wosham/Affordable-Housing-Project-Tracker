@@ -41,6 +41,25 @@
   align-items: center;
   gap: .7rem;
   min-height: 104px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+a.consultant-ipc-stat:hover {
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+}
+
+.consultant-ipc-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  white-space: nowrap;
+}
+
+.consultant-ipc-modal[hidden] {
+  display: none !important;
 }
 
 .consultant-ipc-stat__icon {

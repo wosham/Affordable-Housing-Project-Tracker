@@ -6,7 +6,7 @@ class NewsArticle extends Model
 
     public const FORMATS = [
         'article' => ['label' => 'News Article', 'icon' => 'fa-newspaper', 'hint' => 'Standard story with images and full body copy.'],
-        'announcement' => ['label' => 'Official Announcement', 'icon' => 'fa-bullhorn', 'hint' => 'Formal county or programme notice.'],
+        'announcement' => ['label' => 'Official Public Announcement', 'icon' => 'fa-bullhorn', 'hint' => 'Public-facing county or programme notice used by the website news page and ticker.'],
         'progress_report' => ['label' => 'Progress Report', 'icon' => 'fa-chart-line', 'hint' => 'Construction or programme progress update.'],
         'field_report' => ['label' => 'Field Report', 'icon' => 'fa-map-location-dot', 'hint' => 'Site visit report, inspection note or field observation.'],
         'policy' => ['label' => 'Policy / Allocation Update', 'icon' => 'fa-file-contract', 'hint' => 'Policy, allocation, levy or eligibility update.'],
@@ -160,7 +160,8 @@ class NewsArticle extends Model
                 SUM(status = 'draft') AS drafts,
                 SUM(status = 'scheduled') AS scheduled,
                 SUM(status = 'archived') AS archived,
-                SUM(COALESCE(is_featured, 0) = 1) AS featured
+                SUM(COALESCE(is_featured, 0) = 1) AS featured,
+                SUM(COALESCE(show_in_ticker, 0) = 1) AS ticker
             FROM news_articles
             WHERE deleted_at IS NULL
         ") ?: [];
@@ -226,6 +227,10 @@ class NewsArticle extends Model
         if ($externalUrl !== '' && !filter_var($externalUrl, FILTER_VALIDATE_URL)) {
             throw new RuntimeException('External URL must be a valid URL.');
         }
+        $tickerUrl = trim((string)($input['ticker_url'] ?? ''));
+        if ($tickerUrl !== '' && !filter_var($tickerUrl, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException('Ticker supporting URL must be a valid URL.');
+        }
 
         if ($status === 'published' && $publishedAt === null) {
             $publishedAt = date('Y-m-d H:i:s');
@@ -250,8 +255,13 @@ class NewsArticle extends Model
             'attachment_id' => self::nullableInt($input['attachment_id'] ?? null),
             'external_url' => $externalUrl,
             'status' => $status,
-            'is_featured' => !empty($input['is_featured']) ? 1 : 0,
-            'is_visible' => !empty($input['is_visible']) ? 1 : 0,
+            'is_featured' => ($format !== 'announcement' && !empty($input['is_featured'])) ? 1 : 0,
+            'is_visible' => ($format === 'announcement') ? 0 : (!empty($input['is_visible']) ? 1 : 0),
+            'show_in_ticker' => !empty($input['show_in_ticker']) || $format === 'announcement' ? 1 : 0,
+            'ticker_text' => self::nullableText($input['ticker_text'] ?? null),
+            'ticker_url' => self::nullableText($tickerUrl),
+            'ticker_expires_at' => self::dateOrNull((string)($input['ticker_expires_at'] ?? '')),
+            'ticker_priority' => self::normaliseTickerPriority($input['ticker_priority'] ?? 0),
             'published_at' => $publishedAt,
             'scheduled_for' => $scheduledFor,
             'seo_title' => trim((string)($input['seo_title'] ?? '')),
@@ -277,6 +287,10 @@ class NewsArticle extends Model
             $data['read_time'] = max(1, (int)ceil($wordCount / 220)) . ' min read';
         }
 
+        if ((int)$data['show_in_ticker'] === 1 && (string)$data['ticker_text'] === '') {
+            $data['ticker_text'] = $title;
+        }
+
         if (in_array($status, ['published', 'scheduled'], true) && $data['category_id'] === null) {
             throw new RuntimeException('Published and scheduled posts need a category.');
         }
@@ -299,10 +313,21 @@ class NewsArticle extends Model
     public static function quickStatus(int $id, string $status): void
     {
         $status = self::normaliseStatus($status);
+        $article = self::findAdmin($id);
+        if (!$article) {
+            throw new RuntimeException('News post could not be found.');
+        }
+
+        $isAnnouncement = (string)($article['post_format'] ?? '') === 'announcement';
         $data = ['status' => $status];
         if ($status === 'published') {
             $data['published_at'] = date('Y-m-d H:i:s');
-            $data['is_visible'] = 1;
+            $data['is_visible'] = $isAnnouncement ? 0 : 1;
+            if ($isAnnouncement) {
+                $data['is_featured'] = 0;
+                $data['show_in_ticker'] = 1;
+                $data['ticker_text'] = $article['ticker_text'] ?: $article['title'];
+            }
         }
         if ($status === 'archived') {
             $data['is_visible'] = 0;
@@ -312,6 +337,11 @@ class NewsArticle extends Model
 
     public static function toggleFeatured(int $id): void
     {
+        $article = self::findAdmin($id);
+        if (!$article || (string)($article['post_format'] ?? '') === 'announcement') {
+            throw new RuntimeException('Official public announcements cannot be featured stories.');
+        }
+
         Database::query('UPDATE news_articles SET is_featured = 1 - COALESCE(is_featured, 0) WHERE id = ?', [$id]);
     }
 
@@ -396,6 +426,17 @@ class NewsArticle extends Model
     {
         $int = (int)$value;
         return $int > 0 ? $int : null;
+    }
+
+    private static function nullableText(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+        return $value === '' ? null : $value;
+    }
+
+    private static function normaliseTickerPriority(mixed $value): int
+    {
+        return max(0, min(100, (int)$value));
     }
 
     private static function syncTags(int $articleId, string $tags): void

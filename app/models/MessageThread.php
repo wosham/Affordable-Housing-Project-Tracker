@@ -60,27 +60,18 @@ class MessageThread extends Model
         Database::query('UPDATE message_threads SET last_message_id = ?, last_message_at = NOW() WHERE id = ?', [$messageId, $threadId]);
     }
 
-    public static function recipientOptions(int $viewerId, string $viewerRole): array
+    /**
+     * Roles this viewer may contact (before project-graph filtering).
+     *
+     * @return list<string>
+     */
+    public static function allowedRoleSlugs(string $viewerRole): array
     {
-        $rows = Database::fetchAll("
-            SELECT
-                u.id,
-                CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) AS name,
-                u.email,
-                r.slug AS role_slug,
-                r.name AS role_name
-            FROM users u
-            LEFT JOIN roles r ON r.id = u.role_id
-            WHERE u.status = 'active' AND u.id <> ?
-            ORDER BY r.id ASC, u.first_name ASC, u.last_name ASC
-        ", [$viewerId]);
+        $viewerRole = strtolower(trim($viewerRole));
 
-        if ($viewerRole === 'superadmin') {
-            return $rows;
-        }
-
-        $allowed = match ($viewerRole) {
-            'manager' => ['superadmin', 'consultant', 'contractor', 'clerk', 'finance', 'intern'],
+        return match ($viewerRole) {
+            'superadmin' => ['superadmin', 'manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern'],
+            'manager' => ['superadmin', 'manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern'],
             'consultant' => ['superadmin', 'manager', 'contractor', 'clerk'],
             'contractor' => ['superadmin', 'manager', 'consultant', 'clerk', 'finance'],
             'clerk' => ['superadmin', 'manager', 'consultant', 'contractor', 'intern'],
@@ -88,13 +79,69 @@ class MessageThread extends Model
             'intern' => ['superadmin', 'manager', 'clerk'],
             default => ['superadmin'],
         };
+    }
 
-        return array_values(array_filter($rows, static fn (array $row): bool => in_array((string)($row['role_slug'] ?? ''), $allowed, true)));
+    /**
+     * Whether viewer may message a specific user (optionally in project context).
+     */
+    public static function canMessageUser(int $viewerId, string $viewerRole, int $targetUserId, ?int $projectId = null): bool
+    {
+        if ($viewerId <= 0 || $targetUserId <= 0 || $viewerId === $targetUserId) {
+            return false;
+        }
+
+        $allowed = self::recipientOptions($viewerId, $viewerRole, $projectId);
+        $ids = array_map('intval', array_column($allowed, 'id'));
+
+        return in_array($targetUserId, $ids, true);
+    }
+
+    /**
+     * Directory of people this viewer may message.
+     * Superadmin: all active staff.
+     * Others: allowed roles ∩ (shared project graph ∪ always-reachable superadmins).
+     * Optional $projectId narrows to that project team.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function recipientOptions(int $viewerId, string $viewerRole, ?int $projectId = null): array
+    {
+        $viewerRole = strtolower(trim($viewerRole));
+        $projectId = $projectId && $projectId > 0 ? (int)$projectId : null;
+
+        if ($viewerRole === 'superadmin') {
+            if ($projectId !== null && !self::canUseProjectAudience($viewerId, $viewerRole, $projectId)) {
+                return [];
+            }
+            if ($projectId !== null) {
+                return self::usersByIds(self::projectTeamUserIds($projectId, $viewerId));
+            }
+
+            return self::usersByIds(self::activeUserIds($viewerId));
+        }
+
+        $allowedRoles = self::allowedRoleSlugs($viewerRole);
+        $candidateIds = self::reachableUserIds($viewerId, $viewerRole, $projectId);
+        if ($candidateIds === []) {
+            // Always allow contacting county leadership (superadmin).
+            $candidateIds = self::activeUserIdsByRole('superadmin', $viewerId);
+        }
+
+        $users = self::usersByIds($candidateIds);
+        $users = array_values(array_filter(
+            $users,
+            static fn (array $row): bool => in_array((string)($row['role_slug'] ?? ''), $allowedRoles, true)
+                || (string)($row['role_slug'] ?? '') === 'superadmin'
+        ));
+
+        return $users;
     }
 
     public static function expandAudienceTargets(int $viewerId, string $viewerRole, array $recipientIds = [], array $targets = [], ?int $projectId = null): array
     {
-        $allowedOptions = self::recipientOptions($viewerId, $viewerRole);
+        $viewerRole = strtolower(trim($viewerRole));
+        $projectId = $projectId && $projectId > 0 ? (int)$projectId : null;
+        $allowedOptions = self::recipientOptions($viewerId, $viewerRole, $projectId);
         $allowedIds = array_map('intval', array_column($allowedOptions, 'id'));
         $expanded = array_map('intval', $recipientIds);
 
@@ -105,19 +152,36 @@ class MessageThread extends Model
             }
 
             if ($target === 'all:staff') {
-                $expanded = array_merge($expanded, self::activeUserIds($viewerId));
+                $expanded = array_merge($expanded, $allowedIds);
                 continue;
             }
 
             if (str_starts_with($target, 'role:')) {
                 $role = substr($target, 5);
                 if (preg_match('/^[a-z0-9_-]+$/', $role)) {
-                    $expanded = array_merge($expanded, self::activeUserIdsByRole($role, $viewerId));
+                    if ($viewerRole === 'superadmin') {
+                        if ($projectId !== null) {
+                            $team = self::projectTeamUserIds($projectId, $viewerId);
+                            $byRole = self::activeUserIdsByRole($role, $viewerId);
+                            $expanded = array_merge($expanded, array_values(array_intersect($team, $byRole)));
+                        } else {
+                            $expanded = array_merge($expanded, self::activeUserIdsByRole($role, $viewerId));
+                        }
+                    } else {
+                        // Non-director: only that role among people already reachable (project graph).
+                        $byRole = [];
+                        foreach ($allowedOptions as $row) {
+                            if ((string)($row['role_slug'] ?? '') === $role) {
+                                $byRole[] = (int)$row['id'];
+                            }
+                        }
+                        $expanded = array_merge($expanded, $byRole);
+                    }
                 }
                 continue;
             }
 
-            if ($target === 'project:selected' && $projectId && $projectId > 0) {
+            if ($target === 'project:selected' && $projectId !== null) {
                 if (self::canUseProjectAudience($viewerId, $viewerRole, $projectId)) {
                     $expanded = array_merge($expanded, self::projectTeamUserIds($projectId, $viewerId));
                 }
@@ -132,39 +196,54 @@ class MessageThread extends Model
             }
         }
 
-        $expanded = array_values(array_unique(array_filter($expanded, static fn (int $id): bool => $id > 0 && $id !== $viewerId)));
-        if ($viewerRole !== 'superadmin') {
-            $expanded = array_values(array_intersect($expanded, $allowedIds));
-        }
+        $expanded = array_values(array_unique(array_filter(
+            $expanded,
+            static fn (int $id): bool => $id > 0 && $id !== $viewerId
+        )));
+
+        // Final hard gate: every ID must be in the policy directory for this context.
+        $expanded = array_values(array_intersect($expanded, $allowedIds));
 
         return $expanded;
     }
 
-    public static function audienceOptions(int $viewerId, string $viewerRole): array
+    public static function audienceOptions(int $viewerId, string $viewerRole, ?int $projectId = null): array
     {
-        $roles = ['manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern'];
+        $viewerRole = strtolower(trim($viewerRole));
+        $roles = self::allowedRoleSlugs($viewerRole);
         $options = [];
-        $allowed = self::recipientOptions($viewerId, $viewerRole);
+        $allowed = self::recipientOptions($viewerId, $viewerRole, $projectId);
         $allowedByRole = [];
         foreach ($allowed as $row) {
             $slug = (string)($row['role_slug'] ?? '');
+            if ($slug === '') {
+                continue;
+            }
             $allowedByRole[$slug] = ($allowedByRole[$slug] ?? 0) + 1;
         }
 
-        $allCount = $viewerRole === 'superadmin'
-            ? count(self::activeUserIds($viewerId))
-            : count($allowed);
-
+        $allCount = count($allowed);
         if ($allCount > 0) {
-            $options[] = ['value' => 'all:staff', 'label' => 'All allowed staff', 'count' => $allCount];
+            $options[] = [
+                'value' => 'all:staff',
+                'label' => $viewerRole === 'superadmin'
+                    ? ($projectId ? 'All staff on selected project' : 'All active staff')
+                    : ($projectId ? 'Everyone on selected project (allowed roles)' : 'Everyone on my projects (allowed roles)'),
+                'count' => $allCount,
+            ];
         }
 
         foreach ($roles as $role) {
-            $count = $viewerRole === 'superadmin'
-                ? count(self::activeUserIdsByRole($role, $viewerId))
-                : (int)($allowedByRole[$role] ?? 0);
+            if ($role === 'superadmin') {
+                continue;
+            }
+            $count = (int)($allowedByRole[$role] ?? 0);
             if ($count > 0) {
-                $options[] = ['value' => 'role:' . $role, 'label' => 'All ' . role_label($role), 'count' => $count];
+                $options[] = [
+                    'value' => 'role:' . $role,
+                    'label' => ($projectId ? 'On project: ' : 'On my projects: ') . 'All ' . role_label($role),
+                    'count' => $count,
+                ];
             }
         }
 
@@ -237,6 +316,104 @@ class MessageThread extends Model
         return array_map('intval', array_column($rows, 'id'));
     }
 
+    /**
+     * Users this viewer can reach via shared project assignments / project links.
+     *
+     * @return list<int>
+     */
+    private static function reachableUserIds(int $viewerId, string $viewerRole, ?int $projectId = null): array
+    {
+        $viewerRole = strtolower(trim($viewerRole));
+        $ids = self::activeUserIdsByRole('superadmin', $viewerId);
+
+        if ($projectId !== null) {
+            if (!self::canUseProjectAudience($viewerId, $viewerRole, $projectId)) {
+                return array_values(array_unique($ids));
+            }
+
+            return array_values(array_unique(array_merge($ids, self::projectTeamUserIds($projectId, $viewerId))));
+        }
+
+        // Finance may have few/no project assignments — still reach managers + contractors on any active project.
+        if ($viewerRole === 'finance') {
+            $rows = Database::fetchAll("
+                SELECT DISTINCT u.id
+                FROM users u
+                INNER JOIN roles r ON r.id = u.role_id
+                WHERE u.status = 'active'
+                  AND u.id <> ?
+                  AND (
+                    r.slug IN ('superadmin', 'manager')
+                    OR r.slug = 'contractor'
+                    OR EXISTS (
+                        SELECT 1 FROM projects p
+                        WHERE p.contractor_id = u.id OR p.consultant_id = u.id
+                    )
+                  )
+            ", [$viewerId]);
+
+            return array_values(array_unique(array_merge($ids, array_map('intval', array_column($rows, 'id')))));
+        }
+
+        // People on any project where I have an active assignment, plus project contractor/consultant.
+        $rows = Database::fetchAll("
+            SELECT DISTINCT u.id
+            FROM users u
+            WHERE u.status = 'active'
+              AND u.id <> ?
+              AND (
+                EXISTS (
+                    SELECT 1
+                    FROM project_assignments mine
+                    INNER JOIN project_assignments theirs
+                        ON theirs.project_id = mine.project_id
+                       AND theirs.status = 'active'
+                       AND theirs.user_id = u.id
+                    WHERE mine.user_id = ?
+                      AND mine.status = 'active'
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM project_assignments mine
+                    INNER JOIN projects p ON p.id = mine.project_id
+                    WHERE mine.user_id = ?
+                      AND mine.status = 'active'
+                      AND (p.contractor_id = u.id OR p.consultant_id = u.id)
+                )
+              )
+        ", [$viewerId, $viewerId, $viewerId]);
+
+        return array_values(array_unique(array_merge($ids, array_map('intval', array_column($rows, 'id')))));
+    }
+
+    /**
+     * @param list<int> $ids
+     * @return list<array<string, mixed>>
+     */
+    private static function usersByIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $rows = Database::fetchAll("
+            SELECT
+                u.id,
+                CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) AS name,
+                u.email,
+                r.slug AS role_slug,
+                r.name AS role_name
+            FROM users u
+            LEFT JOIN roles r ON r.id = u.role_id
+            WHERE u.status = 'active' AND u.id IN ({$placeholders})
+            ORDER BY r.id ASC, u.first_name ASC, u.last_name ASC
+        ", $ids);
+
+        return $rows;
+    }
+
     private static function projectTeamUserIds(int $projectId, int $excludeUserId = 0): array
     {
         if ($projectId <= 0) {
@@ -246,7 +423,7 @@ class MessageThread extends Model
         $rows = Database::fetchAll("
             SELECT DISTINCT u.id
             FROM users u
-            LEFT JOIN project_assignments pa ON pa.user_id = u.id AND pa.project_id = ?
+            LEFT JOIN project_assignments pa ON pa.user_id = u.id AND pa.project_id = ? AND pa.status = 'active'
             LEFT JOIN projects p ON p.id = ? AND (p.contractor_id = u.id OR p.consultant_id = u.id)
             WHERE u.status = 'active'
               AND u.id <> ?
@@ -264,7 +441,14 @@ class MessageThread extends Model
         if ($viewerRole === 'superadmin') {
             return true;
         }
-        return ProjectAssignment::canManageProject($viewerId, $projectId, $viewerRole);
+
+        // Finance: any existing project.
+        if ($viewerRole === 'finance') {
+            return Database::fetch('SELECT id FROM projects WHERE id = ? LIMIT 1', [$projectId]) !== null;
+        }
+
+        return ProjectAssignment::canManageProject($viewerId, $projectId, $viewerRole)
+            || ProjectAccess::canViewProject($viewerId, $viewerRole, $projectId);
     }
 
     private static function filterSql(int $userId, array $filters): array

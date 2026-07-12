@@ -3,10 +3,32 @@
 class Auth
 {
     private const SESSION_KEY = 'auth_user';
+    private static bool $validated = false;
 
     public static function check(): bool
     {
-        return is_array(Session::get(self::SESSION_KEY));
+        $user = Session::get(self::SESSION_KEY);
+        if (!is_array($user) || empty($user['id'])) {
+            return false;
+        }
+
+        if (self::$validated) {
+            return true;
+        }
+
+        try {
+            if (!UserSession::currentIsValid((int)$user['id'])) {
+                self::logout(false);
+                return false;
+            }
+        } catch (Throwable) {
+            // Session validation must fail closed when its backing store is unavailable.
+            self::logout(false);
+            return false;
+        }
+
+        self::$validated = true;
+        return true;
     }
 
     public static function user(): ?array
@@ -38,6 +60,8 @@ class Auth
             'role' => $user['role'] ?? 'staff',
             'role_name' => $user['role_name'] ?? $user['role'] ?? 'staff',
         ]);
+        self::$validated = true;
+        UserSession::startForUser((int)($user['id'] ?? 0));
     }
 
     public static function refresh(array $user): void
@@ -50,9 +74,16 @@ class Auth
         self::login(array_merge($current, $user));
     }
 
-    public static function logout(): void
+    public static function logout(bool $revoke = true): void
     {
+        if ($revoke) {
+            try {
+                UserSession::revokeCurrent();
+            } catch (Throwable) {
+            }
+        }
         Session::remove(self::SESSION_KEY);
+        self::$validated = false;
         Session::regenerate();
     }
 

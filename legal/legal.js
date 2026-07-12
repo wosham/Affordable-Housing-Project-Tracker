@@ -3,6 +3,10 @@
 
   var article = document.getElementById('lgArticle');
   var readingTime = document.getElementById('lgReadingTime');
+  var tocLinks = Array.from(document.querySelectorAll('.lg-toc-link'));
+  var sections = Array.from(document.querySelectorAll('.lg-section[id]'));
+  var noResults = document.getElementById('lgNoResults');
+
   if (article && readingTime) {
     var words = article.innerText.trim().split(/\s+/).filter(Boolean).length;
     readingTime.textContent = '~' + Math.max(1, Math.round(words / 200)) + ' min read';
@@ -25,13 +29,10 @@
     });
   }
 
-  var tocLinks = Array.from(document.querySelectorAll('.lg-toc-link'));
-  var sections = Array.from(document.querySelectorAll('.lg-section[id]'));
-
   function updateActiveToc() {
     var active = null;
     sections.forEach(function (section) {
-      if (section.getBoundingClientRect().top <= 170) {
+      if (!section.classList.contains('is-filtered-out') && section.getBoundingClientRect().top <= 170) {
         active = section;
       }
     });
@@ -78,4 +79,101 @@
 
     heading.appendChild(link);
   });
+
+  var searchInput = document.getElementById('lgSearchInput');
+  var searchClear = document.getElementById('lgSearchClear');
+
+  function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function clearHighlights(section) {
+    section.querySelectorAll('mark.lg-mark').forEach(function (mark) {
+      var text = document.createTextNode(mark.textContent);
+      mark.parentNode.replaceChild(text, mark);
+      if (text.parentNode) text.parentNode.normalize();
+    });
+  }
+
+  function highlightText(section, query) {
+    clearHighlights(section);
+    if (!query) return;
+
+    var re = new RegExp(escapeRegExp(query), 'gi');
+    var walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (node) {
+        var parent = node.parentElement;
+        if (!parent || parent.closest('script, style, mark, .lg-copy-anchor')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        re.lastIndex = 0;
+        return re.test(node.nodeValue || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(function (node) {
+      var text = node.nodeValue || '';
+      var fragment = document.createDocumentFragment();
+      var lastIndex = 0;
+
+      re.lastIndex = 0;
+      text.replace(re, function (match, offset) {
+        if (offset > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+        }
+        var mark = document.createElement('mark');
+        mark.className = 'lg-mark';
+        mark.textContent = match;
+        fragment.appendChild(mark);
+        lastIndex = offset + match.length;
+        return match;
+      });
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+
+      node.parentNode.replaceChild(fragment, node);
+    });
+  }
+
+  function applySearch() {
+    var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    var visible = 0;
+
+    sections.forEach(function (section) {
+      clearHighlights(section);
+      var matched = !query || section.innerText.toLowerCase().indexOf(query) !== -1;
+      section.classList.toggle('is-filtered-out', !matched);
+      if (matched) {
+        visible += 1;
+        highlightText(section, query);
+      }
+    });
+
+    tocLinks.forEach(function (link) {
+      var id = (link.getAttribute('href') || '').replace(/^#/, '');
+      var target = document.getElementById(id);
+      link.hidden = !!query && (!target || target.classList.contains('is-filtered-out'));
+    });
+
+    if (searchClear) searchClear.hidden = !query;
+    if (noResults) noResults.hidden = visible !== 0;
+    updateActiveToc();
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', applySearch);
+  }
+
+  if (searchClear && searchInput) {
+    searchClear.addEventListener('click', function () {
+      searchInput.value = '';
+      searchInput.focus();
+      applySearch();
+    });
+  }
 })();

@@ -2,6 +2,12 @@
 
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
+ApiMiddleware::handle([
+    'methods' => ['GET'],
+    'roles' => ['superadmin'],
+    'csrf' => false,
+]);
+
 $filters = [
     'status' => Security::cleanString((string)($_GET['status'] ?? '')),
     'constituency' => Security::cleanString((string)($_GET['constituency'] ?? '')),

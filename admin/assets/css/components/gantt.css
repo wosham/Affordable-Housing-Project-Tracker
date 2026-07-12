@@ -169,11 +169,62 @@
 .gantt-bar i {
   position: absolute;
   right: 6px;
-  top: -5px;
-  color: #fff;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--admin-text-inverse);
   font-style: normal;
-  font-size: .68rem;
+  font-size: .66rem;
+  font-weight: 850;
   line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, .28);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gantt-bar i.is-outside {
+  right: auto;
+  left: calc(100% + 6px);
+  min-width: max-content;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 80%, transparent);
+  border-radius: 999px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  text-shadow: none;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
+}
+
+.gantt-row[data-chart-tip] {
+  position: relative;
+  cursor: help;
+}
+
+.gantt-row[data-chart-tip]::after {
+  content: attr(data-chart-tip);
+  position: absolute;
+  right: 18px;
+  bottom: calc(100% + 10px);
+  z-index: 25;
+  width: min(520px, calc(100vw - 48px));
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--admin-border-strong) 75%, transparent);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .16);
+  font-size: .78rem;
+  font-weight: 760;
+  line-height: 1.45;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity .16s ease, transform .16s ease;
+}
+
+.gantt-row[data-chart-tip]:hover::after,
+.gantt-row[data-chart-tip]:focus-within::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .programme-empty {
@@ -255,4 +306,83 @@
   .gantt-row {
     grid-template-columns: 220px minmax(480px, 1fr);
   }
+
+  .programme-hero__actions .btn {
+    justify-content: center;
+  }
 }
+
+/* Phase 20 polish */
+.sa-programme-page {
+  gap: 1.15rem;
+}
+
+.programme-hero {
+  padding: 1.25rem 1.35rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--admin-lime-soft) 30%, #fff) 0%, #fff 72%);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.programme-project-strip {
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: #fff;
+}
+
+.gantt-wrap {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: #fff;
+  padding: 14px 0 8px;
+}
+
+.gantt-row {
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--admin-shadow-sm);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.gantt-row:hover {
+  border-color: color-mix(in srgb, var(--admin-primary) 22%, var(--admin-border));
+  box-shadow: var(--admin-shadow);
+}
+
+.gantt-bars {
+  border-radius: 10px;
+}
+
+.gantt-bar--planned {
+  background: linear-gradient(90deg, var(--admin-primary), color-mix(in srgb, var(--admin-primary) 75%, #2f6b12));
+}
+
+.gantt-bar--actual {
+  background: linear-gradient(90deg, #8fd62a, var(--admin-lime));
+}
+
+.gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1.1rem;
+  margin: .35rem 0 0;
+  padding: 0 14px 10px;
+  color: var(--admin-text-muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.gantt-legend i {
+  display: inline-block;
+  width: 18px;
+  height: 8px;
+  margin-right: .35rem;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.gantt-legend__planned i { background: var(--admin-primary); }
+.gantt-legend__actual i { background: var(--admin-lime); }
+.gantt-legend__today i { width: 3px; height: 12px; background: var(--admin-danger); border-radius: 2px; }

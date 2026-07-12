@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -14,7 +14,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== 0 && $value !== null);
 
-$perPage = 20;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $total = ProjectAssignment::countForManager($userId, $role, $filters);
 $totalPages = max(1, (int)ceil($total / $perPage));
@@ -48,7 +48,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Project staffing</span>
     <h2>Assignments</h2>
-    <p>Assign site staff to projects, control primary coverage and keep attendance, messaging and reporting connected.</p>
+    <p>Assign site staff on projects you manage. Scope is limited to your assigned portfolio so clerk/intern dashboards stay aligned.</p>
   </div>
   <div class="assignments-hero__actions">
     <button class="btn btn--outline" type="button" data-assignment-bulk><i class="fa-solid fa-users-gear" aria-hidden="true"></i> Bulk Assign</button>
@@ -101,8 +101,28 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td><span class="badge <?= Security::e(status_badge_class($assignment['status'])) ?>"><?= Security::e(status_label($assignment['status'])) ?></span><small>By <?= Security::e($assignment['assigned_by_name']) ?></small></td>
           <td><?= Security::e(format_date($assignment['start_date'] ?: $assignment['assigned_at'])) ?><small>Ends: <?= Security::e(format_date($assignment['end_date'] ?: null)) ?></small></td>
           <td>
-            <div class="assignment-actions">
-              <button class="btn btn--icon btn--primary" type="button" data-assignment-edit='<?= Security::e(json_encode($assignment, JSON_HEX_APOS | JSON_HEX_QUOT)) ?>' title="Edit assignment" aria-label="Edit assignment"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+            <div class="manager-table-actions assignment-actions">
+              <button
+                class="btn btn--icon btn--primary"
+                type="button"
+                data-assignment-edit
+                data-id="<?= (int)$assignment['id'] ?>"
+                data-project-id="<?= (int)$assignment['project_id'] ?>"
+                data-user-id="<?= (int)$assignment['user_id'] ?>"
+                data-user-name="<?= Security::e($assignment['user_name']) ?>"
+                data-email="<?= Security::e($assignment['email']) ?>"
+                data-role-slug="<?= Security::e($assignment['role_slug']) ?>"
+                data-role-name="<?= Security::e($assignment['role_name'] ?? role_label($assignment['role_slug'])) ?>"
+                data-assignment-type="<?= Security::e($assignment['assignment_type']) ?>"
+                data-scope="<?= Security::e($assignment['scope']) ?>"
+                data-status="<?= Security::e($assignment['status']) ?>"
+                data-start-date="<?= Security::e($assignment['start_date']) ?>"
+                data-end-date="<?= Security::e($assignment['end_date']) ?>"
+                data-is-primary="<?= !empty($assignment['is_primary']) ? '1' : '0' ?>"
+                data-notes="<?= Security::e($assignment['notes'] ?? '') ?>"
+                title="Edit assignment"
+                aria-label="Edit assignment"
+              ><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
 <?php if ($assignment['status'] === 'revoked'): ?>
               <button class="btn btn--icon btn--outline" type="button" data-assignment-status="reactivate" data-id="<?= (int)$assignment['id'] ?>" title="Reactivate assignment" aria-label="Reactivate assignment"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
 <?php else: ?>
@@ -116,12 +136,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </table>
   </div>
 
-<?php if ($totalPages > 1): ?>
   <nav class="pagination" aria-label="Assignments pagination">
-    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> assignments</p>
-    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(assignments_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(assignments_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> assignments (10 per page)</p>
+    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(assignments_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(assignments_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
   </nav>
-<?php endif; ?>
 </section>
 
 <div class="modal assignment-modal" data-assignment-modal hidden>

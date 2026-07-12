@@ -29,10 +29,14 @@ class SystemSetting extends Model
             ['key' => 'attendance.default_geo_radius_m', 'group' => 'attendance', 'label' => 'Default geo radius', 'description' => 'Default site fence radius used when creating and validating attendance controls.', 'type' => 'number', 'default' => '150', 'sort' => 10, 'options' => ['min' => 20, 'max' => 3000, 'step' => 1, 'suffix' => 'm']],
             ['key' => 'attendance.gps_required', 'group' => 'attendance', 'label' => 'GPS required', 'description' => 'Require latitude and longitude for attendance sign-in.', 'type' => 'boolean', 'default' => '1', 'sort' => 20],
             ['key' => 'attendance.min_accuracy_m', 'group' => 'attendance', 'label' => 'Maximum GPS accuracy drift', 'description' => 'Attendance is flagged when device accuracy is weaker than this value.', 'type' => 'number', 'default' => '50', 'sort' => 30, 'options' => ['min' => 5, 'max' => 1000, 'step' => 1, 'suffix' => 'm']],
-            ['key' => 'attendance.signin_start', 'group' => 'attendance', 'label' => 'Sign-in opens', 'description' => 'Earliest accepted attendance sign-in time.', 'type' => 'time', 'default' => '06:00', 'sort' => 40],
-            ['key' => 'attendance.signin_end', 'group' => 'attendance', 'label' => 'Sign-in closes', 'description' => 'Default attendance gateway closing time.', 'type' => 'time', 'default' => '18:00', 'sort' => 50],
-            ['key' => 'attendance.late_after', 'group' => 'attendance', 'label' => 'Late after', 'description' => 'Sign-ins after this time are flagged for review.', 'type' => 'time', 'default' => '08:30', 'sort' => 60],
-            ['key' => 'attendance.gateway_default_minutes', 'group' => 'attendance', 'label' => 'Gateway default duration', 'description' => 'Fallback open duration when no close time is supplied.', 'type' => 'number', 'default' => '720', 'sort' => 70, 'options' => ['min' => 30, 'max' => 1440, 'step' => 15, 'suffix' => 'min']],
+            ['key' => 'attendance.signin_start', 'group' => 'attendance', 'label' => 'Sign-in opens', 'description' => 'Earliest Mon–Fri time interns and clerks may sign in. Controlled by County Director only.', 'type' => 'time', 'default' => '07:00', 'sort' => 40],
+            ['key' => 'attendance.signin_end', 'group' => 'attendance', 'label' => 'Sign-in closes', 'description' => 'Attendance window closes. No normal sign-in after this time (Mon–Fri).', 'type' => 'time', 'default' => '08:30', 'sort' => 50],
+            ['key' => 'attendance.expected_time', 'group' => 'attendance', 'label' => 'Expected report time', 'description' => 'Target report time (e.g. 08:00). Later sign-ins until close are marked late.', 'type' => 'time', 'default' => '08:00', 'sort' => 55],
+            ['key' => 'attendance.late_after', 'group' => 'attendance', 'label' => 'Late after', 'description' => 'Sign-ins after this time (within the open window) are marked late.', 'type' => 'time', 'default' => '08:00', 'sort' => 60],
+            ['key' => 'attendance.active_weekdays', 'group' => 'attendance', 'label' => 'Active weekdays', 'description' => 'Comma-separated weekdays when attendance is allowed (1=Mon … 5=Fri). Default Mon–Fri.', 'type' => 'text', 'default' => '1,2,3,4,5', 'sort' => 65],
+            ['key' => 'attendance.auto_open', 'group' => 'attendance', 'label' => 'Auto-open gateway', 'description' => 'Automatically open the policy window so early arrivals are not blocked if a clerk is late to confirm.', 'type' => 'boolean', 'default' => '1', 'sort' => 68],
+            ['key' => 'attendance.confirm_escalation_minutes', 'group' => 'attendance', 'label' => 'Clerk confirm escalation', 'description' => 'Minutes after auto-open before County Director is notified if clerk has not confirmed site open.', 'type' => 'number', 'default' => '30', 'sort' => 72, 'options' => ['min' => 5, 'max' => 180, 'step' => 5, 'suffix' => 'min']],
+            ['key' => 'attendance.gateway_default_minutes', 'group' => 'attendance', 'label' => 'Gateway default duration', 'description' => 'Legacy fallback duration. Policy open/close times take priority.', 'type' => 'number', 'default' => '90', 'sort' => 80, 'options' => ['min' => 30, 'max' => 1440, 'step' => 15, 'suffix' => 'min']],
 
             ['key' => 'ipc.retention_percent', 'group' => 'ipc', 'label' => 'Default retention percent', 'description' => 'Reference retention percentage for IPC and finance workflows.', 'type' => 'number', 'default' => '5', 'sort' => 10, 'options' => ['min' => 0, 'max' => 30, 'step' => 0.5, 'suffix' => '%']],
             ['key' => 'ipc.rejection_reason_required', 'group' => 'ipc', 'label' => 'Require rejection reason', 'description' => 'Blocks IPC rejection without a clear reason.', 'type' => 'boolean', 'default' => '1', 'sort' => 20],
@@ -239,18 +243,20 @@ class SystemSetting extends Model
         $options = self::decodeOptions($row['options_json'] ?? null);
         $value = (string)($row['value'] ?? '');
         $default = (string)($row['default_value'] ?? '');
+        $isSensitive = (int)($row['is_sensitive'] ?? 0) === 1;
         return [
             'id' => (int)($row['id'] ?? 0),
             'key' => (string)($row['setting_key'] ?? ''),
             'group' => (string)($row['setting_group'] ?? ''),
             'label' => (string)($row['label'] ?? ''),
             'description' => (string)($row['description'] ?? ''),
-            'value' => $value,
-            'default' => $default,
-            'cast_value' => self::cast($value, (string)($row['type'] ?? 'text')),
+            'value' => $isSensitive ? '' : $value,
+            'default' => $isSensitive ? '' : $default,
+            'cast_value' => $isSensitive ? null : self::cast($value, (string)($row['type'] ?? 'text')),
             'type' => (string)($row['type'] ?? 'text'),
             'options' => $options,
-            'is_sensitive' => (int)($row['is_sensitive'] ?? 0) === 1,
+            'is_sensitive' => $isSensitive,
+            'has_value' => $isSensitive && $value !== '',
             'is_public' => (int)($row['is_public'] ?? 0) === 1,
             'is_custom' => $value !== $default,
             'updated_by_name' => trim((string)($row['updated_by_name'] ?? '')),

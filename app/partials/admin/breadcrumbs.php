@@ -31,6 +31,10 @@ $normaliseHref = static function (array $item): string {
         return (string)$item['href'];
     }
 
+    if (!empty($item['url'])) {
+        return (string)$item['url'];
+    }
+
     if (!empty($item['path'])) {
         return Url::to((string)$item['path']);
     }

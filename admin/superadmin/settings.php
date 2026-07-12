@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $pageTitle = 'System Settings';
 $pageDescription = 'Configure operational controls for attendance, IPCs, BOQ, reports, public forms and security.';
@@ -12,7 +12,7 @@ $componentCss = ['settings'];
 $pageScripts = ['settings'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Settings'],
 ];
 
@@ -86,7 +86,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php endif; ?>
             </div>
             <p><?= Security::e($setting['description']) ?></p>
-            <small>Default: <code><?= Security::e(settings_display_value($setting['default'], $setting['type'])) ?></code><?= $setting['updated_at'] ? ' · Updated ' . Security::e(time_ago($setting['updated_at'])) : '' ?></small>
+            <small>Default: <code><?= Security::e(settings_display_value($setting['default'], $setting['type'], (bool)$setting['is_sensitive'])) ?></code><?= $setting['updated_at'] ? ' - Updated ' . Security::e(time_ago($setting['updated_at'])) : '' ?></small>
           </div>
           <div class="setting-row__control">
             <?= settings_control($setting) ?>
@@ -140,6 +140,7 @@ function settings_control(array $setting): string
     $value = (string)$setting['value'];
     $type = (string)$setting['type'];
     $options = $setting['options'] ?? [];
+    $isSensitive = (bool)($setting['is_sensitive'] ?? false);
 
     if ($type === 'boolean') {
         $checked = in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true) ? ' checked' : '';
@@ -159,7 +160,7 @@ function settings_control(array $setting): string
         return '<textarea class="form-textarea settings-json" data-setting-input name="' . $key . '" rows="5">' . Security::e($value) . '</textarea>';
     }
 
-    $inputType = match ($type) {
+    $inputType = $isSensitive ? 'password' : match ($type) {
         'number' => 'number',
         'time' => 'time',
         'email' => 'email',
@@ -173,11 +174,18 @@ function settings_control(array $setting): string
         }
     }
     $suffix = isset($options['suffix']) ? '<span class="settings-suffix">' . Security::e((string)$options['suffix']) . '</span>' : '';
-    return '<div class="settings-input-wrap"><input class="form-input" type="' . $inputType . '" data-setting-input name="' . $key . '" value="' . Security::e($value) . '"' . $attrs . '>' . $suffix . '</div>';
+    $sensitiveAttrs = $isSensitive
+        ? ' data-setting-sensitive="1" autocomplete="new-password" placeholder="' . Security::e(!empty($setting['has_value']) ? 'Saved value is hidden. Leave blank to keep it.' : 'Not set. Paste a key to save.') . '"'
+        : '';
+    return '<div class="settings-input-wrap"><input class="form-input" type="' . $inputType . '" data-setting-input name="' . $key . '" value="' . Security::e($value) . '"' . $attrs . $sensitiveAttrs . '>' . $suffix . '</div>';
 }
 
-function settings_display_value(string $value, string $type): string
+function settings_display_value(string $value, string $type, bool $isSensitive = false): string
 {
+    if ($isSensitive) {
+        return $value !== '' ? 'Saved value hidden' : 'No default';
+    }
+
     if ($type === 'boolean') {
         return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true) ? 'Enabled' : 'Disabled';
     }

@@ -13,6 +13,7 @@ $roleNav = [
     'superadmin' => [
         ['label' => 'Dashboard', 'icon' => 'fa-chart-line', 'path' => 'admin/superadmin/dashboard.php'],
         ['label' => 'Projects', 'icon' => 'fa-building', 'path' => 'admin/superadmin/projects.php'],
+        ['label' => 'Constituencies', 'icon' => 'fa-map-location-dot', 'path' => 'admin/superadmin/constituencies.php', 'active_paths' => ['admin/superadmin/constituencies.php', 'admin/superadmin/constituency-edit.php']],
         ['label' => 'Users', 'icon' => 'fa-users', 'path' => 'admin/superadmin/users.php'],
         ['label' => 'IPC Centre', 'icon' => 'fa-file-invoice-dollar', 'path' => 'admin/superadmin/ipcs.php', 'active_paths' => ['admin/superadmin/ipcs.php', 'admin/superadmin/ipc-detail.php']],
         ['label' => 'BOQ', 'icon' => 'fa-list-check', 'path' => 'admin/superadmin/boq.php'],
@@ -20,10 +21,12 @@ $roleNav = [
         ['label' => 'IPCs & Approvals', 'icon' => 'fa-clipboard-check', 'path' => 'admin/superadmin/approvals.php'],
         ['label' => 'Financials', 'icon' => 'fa-coins', 'path' => 'admin/superadmin/financials.php'],
         ['label' => 'Attendance', 'icon' => 'fa-calendar-check', 'path' => 'admin/superadmin/attendance.php'],
-        ['label' => 'Announcements', 'icon' => 'fa-bullhorn', 'path' => 'admin/superadmin/announcements.php'],
+        ['label' => 'Work Locations', 'icon' => 'fa-building-user', 'path' => 'admin/superadmin/work-locations.php'],
+        ['label' => 'Staff Announcements', 'icon' => 'fa-bullhorn', 'path' => 'admin/superadmin/announcements.php'],
         ['label' => 'News', 'icon' => 'fa-newspaper', 'path' => 'admin/superadmin/news.php'],
         ['label' => 'Gallery', 'icon' => 'fa-images', 'path' => 'admin/superadmin/gallery.php'],
         ['label' => 'Media Library', 'icon' => 'fa-photo-film', 'path' => 'admin/superadmin/media-library.php'],
+        ['label' => 'Site Navigation', 'icon' => 'fa-compass', 'path' => 'admin/superadmin/site-navigation.php'],
         ['label' => 'CMS Pages', 'icon' => 'fa-pen-to-square', 'path' => 'admin/superadmin/cms.php'],
         ['label' => 'FAQ', 'icon' => 'fa-circle-question', 'path' => 'admin/superadmin/faq.php'],
         ['label' => 'Leadership', 'icon' => 'fa-user-tie', 'path' => 'admin/superadmin/leadership.php'],
@@ -36,6 +39,7 @@ $roleNav = [
         ['label' => 'Audit Log', 'icon' => 'fa-magnifying-glass-chart', 'path' => 'admin/superadmin/audit-log.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/superadmin/messages.php'],
         ['label' => 'System Health', 'icon' => 'fa-server', 'path' => 'admin/superadmin/system-health.php'],
+        ['label' => 'Backups & Recovery', 'icon' => 'fa-database', 'path' => 'admin/superadmin/backups.php'],
     ],
     'manager' => [
         ['label' => 'Dashboard', 'icon' => 'fa-chart-line', 'path' => 'admin/manager/dashboard.php'],
@@ -53,6 +57,7 @@ $roleNav = [
         ['label' => 'Liquidated Damages', 'icon' => 'fa-money-bill-trend-up', 'path' => 'admin/manager/liquidated-damages.php'],
         ['label' => 'Subcontractors', 'icon' => 'fa-helmet-safety', 'path' => 'admin/manager/subcontractors.php'],
         ['label' => 'Reports', 'icon' => 'fa-file-lines', 'path' => 'admin/manager/reports.php'],
+        ['label' => 'Assigned Enquiries', 'icon' => 'fa-inbox', 'path' => 'admin/manager/assigned-enquiries.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/manager/messages.php'],
     ],
     'consultant' => [
@@ -71,6 +76,7 @@ $roleNav = [
         ['label' => 'Shop Drawings', 'icon' => 'fa-compass-drafting', 'path' => 'admin/consultant/shop-drawings.php'],
         ['label' => 'Site Reports', 'icon' => 'fa-file-signature', 'path' => 'admin/consultant/site-reports.php'],
         ['label' => 'Variations', 'icon' => 'fa-code-branch', 'path' => 'admin/consultant/variations.php'],
+        ['label' => 'Assigned Enquiries', 'icon' => 'fa-inbox', 'path' => 'admin/consultant/assigned-enquiries.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/consultant/messages.php'],
     ],
     'contractor' => [
@@ -93,6 +99,7 @@ $roleNav = [
         ['label' => 'Shop Drawings', 'icon' => 'fa-compass-drafting', 'path' => 'admin/contractor/shop-drawing-submit.php'],
         ['label' => 'Subcontractors', 'icon' => 'fa-helmet-safety', 'path' => 'admin/contractor/subcontractors.php'],
         ['label' => 'Variation Request', 'icon' => 'fa-code-branch', 'path' => 'admin/contractor/variation-request.php'],
+        ['label' => 'Assigned Enquiries', 'icon' => 'fa-inbox', 'path' => 'admin/contractor/assigned-enquiries.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/contractor/messages.php'],
     ],
     'clerk' => [
@@ -113,6 +120,7 @@ $roleNav = [
         ['label' => 'Documents', 'icon' => 'fa-folder-open', 'path' => 'admin/clerk/documents.php'],
         ['label' => 'Photos', 'icon' => 'fa-camera', 'path' => 'admin/clerk/photos.php'],
         ['label' => 'IPC Verify', 'icon' => 'fa-clipboard-check', 'path' => 'admin/clerk/ipc-verify.php'],
+        ['label' => 'Assigned Enquiries', 'icon' => 'fa-inbox', 'path' => 'admin/clerk/assigned-enquiries.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/clerk/messages.php'],
     ],
     'finance' => [
@@ -123,15 +131,17 @@ $roleNav = [
         ['label' => 'Liquidated Damages', 'icon' => 'fa-money-bill-trend-up', 'path' => 'admin/finance/liquidated-damages.php'],
         ['label' => 'Retention', 'icon' => 'fa-lock', 'path' => 'admin/finance/retention.php'],
         ['label' => 'Financial Reports', 'icon' => 'fa-file-invoice-dollar', 'path' => 'admin/finance/financial-reports.php'],
+        ['label' => 'Assigned Enquiries', 'icon' => 'fa-inbox', 'path' => 'admin/finance/assigned-enquiries.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/finance/messages.php'],
     ],
     'intern' => [
         ['label' => 'Dashboard', 'icon' => 'fa-chart-line', 'path' => 'admin/intern/dashboard.php'],
-        ['label' => 'Sign In/Out', 'icon' => 'fa-location-dot', 'path' => 'admin/intern/sign-in.php'],
+        ['label' => 'Sign In', 'icon' => 'fa-location-dot', 'path' => 'admin/intern/sign-in.php'],
         ['label' => 'My Attendance', 'icon' => 'fa-calendar-check', 'path' => 'admin/intern/my-attendance.php'],
         ['label' => 'My Project', 'icon' => 'fa-building', 'path' => 'admin/intern/my-project.php'],
         ['label' => 'Data Entry', 'icon' => 'fa-pen-to-square', 'path' => 'admin/intern/site-data-entry.php'],
         ['label' => 'Upload Photos', 'icon' => 'fa-camera', 'path' => 'admin/intern/upload-photos.php'],
+        ['label' => 'Assigned Enquiries', 'icon' => 'fa-inbox', 'path' => 'admin/intern/assigned-enquiries.php'],
         ['label' => 'Messages', 'icon' => 'fa-comments', 'path' => 'admin/intern/messages.php'],
     ],
 ];
@@ -142,39 +152,39 @@ $adminNav = $adminNav ?? ($roleNav[$roleKey] ?? [
 
 $navGroups = [
     'superadmin' => [
-        ['type' => 'links', 'items' => ['Dashboard', 'Projects', 'Users', 'IPC Centre', 'BOQ', 'Programme', 'IPCs & Approvals', 'Financials', 'Attendance']],
-        ['label' => 'Public Content', 'icon' => 'fa-newspaper', 'items' => ['Announcements', 'News', 'Gallery', 'Media Library', 'CMS Pages', 'FAQ', 'Leadership', 'Stakeholders']],
-        ['label' => 'Communication', 'icon' => 'fa-comments', 'items' => ['Contact Inbox', 'Subscribers', 'Messages']],
+        ['type' => 'links', 'items' => ['Dashboard', 'Projects', 'Constituencies', 'Users', 'IPC Centre', 'BOQ', 'Programme', 'IPCs & Approvals', 'Financials', 'Attendance', 'Work Locations']],
+        ['label' => 'Public Content', 'icon' => 'fa-newspaper', 'items' => ['News', 'Gallery', 'Media Library', 'Site Navigation', 'CMS Pages', 'FAQ', 'Leadership', 'Stakeholders']],
+        ['label' => 'Communication', 'icon' => 'fa-comments', 'items' => ['Staff Announcements', 'Contact Inbox', 'Subscribers', 'Messages']],
         ['label' => 'Intelligence', 'icon' => 'fa-chart-pie', 'items' => ['Analytics', 'Reports', 'Audit Log', 'System Health']],
-        ['label' => 'Administration', 'icon' => 'fa-screwdriver-wrench', 'items' => ['Settings']],
+        ['label' => 'Administration', 'icon' => 'fa-screwdriver-wrench', 'items' => ['Settings', 'Backups & Recovery']],
     ],
     'manager' => [
-        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Reports', 'Messages']],
+        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Reports', 'Assigned Enquiries', 'Messages']],
         ['label' => 'Delivery', 'icon' => 'fa-building-circle-check', 'items' => ['My Projects', 'Milestones', 'Programme of Works', 'Assignments']],
         ['label' => 'Claims & Cost', 'icon' => 'fa-file-invoice-dollar', 'items' => ['IPC Queue', 'BOQ', 'EOT Requests', 'Liquidated Damages']],
         ['label' => 'Site Operations', 'icon' => 'fa-helmet-safety', 'items' => ['Attendance Summary', 'Site Meeting Minutes', 'HS Incidents', 'Community Liaison', 'Subcontractors']],
     ],
     'consultant' => [
-        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Documents', 'Messages']],
+        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Documents', 'Assigned Enquiries', 'Messages']],
         ['label' => 'IPC Review', 'icon' => 'fa-file-invoice', 'items' => ['IPC Inbox', 'IPC Certify', 'BOQ Review']],
         ['label' => 'Technical Review', 'icon' => 'fa-compass-drafting', 'items' => ['Material Approvals', 'Shop Drawings', 'EOT Review', 'Variations', 'Programme Review']],
         ['label' => 'Quality & Site', 'icon' => 'fa-vial-circle-check', 'items' => ['Defects Register', 'Inspection Test Plans', 'Non-Conformance', 'Quality Register', 'Site Reports']],
     ],
     'contractor' => [
-        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'My Project', 'Messages']],
+        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'My Project', 'Assigned Enquiries', 'Messages']],
         ['label' => 'Claims', 'icon' => 'fa-file-invoice-dollar', 'items' => ['Submit IPC', 'IPC History', 'Payment History', 'BOQ']],
         ['label' => 'Progress & Programme', 'icon' => 'fa-chart-gantt', 'items' => ['Progress Update', 'Programme of Works', 'EOT Request', 'Variation Request']],
         ['label' => 'Site Records', 'icon' => 'fa-helmet-safety', 'items' => ['Documents', 'Equipment Register', 'HS Incidents', 'Labour Register', 'Material Approval', 'Material Deliveries', 'RFIs', 'Shop Drawings', 'Subcontractors']],
     ],
     'clerk' => [
-        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Messages']],
+        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Assigned Enquiries', 'Messages']],
         ['label' => 'Attendance', 'icon' => 'fa-door-open', 'items' => ['Attendance Gateway', 'Live Attendance']],
         ['label' => 'Daily Records', 'icon' => 'fa-book', 'items' => ['Daily Site Diary', 'Weather Log', 'Labour Verification', 'Material Delivery Log', 'Equipment Check']],
         ['label' => 'Quality & Safety', 'icon' => 'fa-shield-halved', 'items' => ['Quality Tests', 'Inspection Test Plans', 'HS Incidents', 'Non-Conformance', 'Defects', 'IPC Verify']],
         ['label' => 'Documents', 'icon' => 'fa-folder-open', 'items' => ['Site Meeting Minutes', 'Documents', 'Photos']],
     ],
     'finance' => [
-        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Financial Reports', 'Messages']],
+        ['label' => 'Overview', 'icon' => 'fa-gauge-high', 'items' => ['Dashboard', 'Financial Reports', 'Assigned Enquiries', 'Messages']],
         ['label' => 'Payments', 'icon' => 'fa-credit-card', 'items' => ['Approved IPCs', 'Process Payment']],
         ['label' => 'Controls', 'icon' => 'fa-chart-column', 'items' => ['Budget Tracker', 'Liquidated Damages', 'Retention']],
     ],
@@ -206,7 +216,16 @@ if (isset($navGroups[$roleKey])) {
     }
 }
 
-$renderSidebarLink = static function (array $item, bool $isChild = false): void {
+$sidebarEnquiryUnread = 0;
+try {
+    if (in_array($roleKey, ['manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern', 'superadmin'], true)) {
+        $sidebarEnquiryUnread = contact_enquiries_unread_count((int)Auth::id(), $roleKey);
+    }
+} catch (Throwable) {
+    $sidebarEnquiryUnread = 0;
+}
+
+$renderSidebarLink = static function (array $item, bool $isChild = false) use ($sidebarEnquiryUnread): void {
     $label = (string)($item['label'] ?? '');
     $icon = (string)($item['icon'] ?? 'fa-circle');
     $path = (string)($item['path'] ?? 'admin/index.php');
@@ -219,10 +238,16 @@ $renderSidebarLink = static function (array $item, bool $isChild = false): void 
         }
     }
     $linkClass = ($isChild ? 'sidebar-link sidebar-link--child' : 'sidebar-link') . ($isActive ? ' is-active' : '');
+    $showBadge = $sidebarEnquiryUnread > 0 && (
+        $label === 'Assigned Enquiries' || $label === 'Contact Inbox'
+    );
 ?>
     <a class="<?= Security::e($linkClass) ?>" href="<?= Security::e(Url::to($path)) ?>" title="<?= Security::e($label) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
       <i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i>
       <span><?= Security::e($label) ?></span>
+<?php if ($showBadge): ?>
+      <span class="sidebar-badge" aria-label="<?= (int)$sidebarEnquiryUnread ?> unread"><?= (int)$sidebarEnquiryUnread ?></span>
+<?php endif; ?>
     </a>
 <?php
 };
@@ -269,11 +294,12 @@ $renderSidebarLink = static function (array $item, bool $isChild = false): void 
     }
 ?>
     <div class="sidebar-group is-open<?= $groupActive ? ' has-active' : '' ?>" data-sidebar-group-id="<?= Security::e($groupId) ?>">
-      <div class="sidebar-group-heading">
+      <button type="button" class="sidebar-group-heading" data-sidebar-group-toggle aria-expanded="true" aria-controls="<?= Security::e($groupId) ?>-list">
         <i class="fa-solid <?= Security::e($groupIcon) ?>" aria-hidden="true"></i>
         <span class="sidebar-group-copy"><?= Security::e($groupLabel) ?></span>
-      </div>
-      <div class="sidebar-group-list">
+        <i class="fa-solid fa-chevron-down sidebar-group-chevron" aria-hidden="true"></i>
+      </button>
+      <div class="sidebar-group-list" id="<?= Security::e($groupId) ?>-list">
 <?php foreach ($groupChildren as $item): ?>
 <?php $renderSidebarLink($item, true); ?>
 <?php endforeach; ?>

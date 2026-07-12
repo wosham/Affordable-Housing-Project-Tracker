@@ -1,12 +1,21 @@
 <?php
 
+$siteBaseUrl = rtrim((string)(getenv('APP_CANONICAL_URL') ?: getenv('APP_URL') ?: ''), '/');
+$siteCanonical = static function (string $path = '') use ($siteBaseUrl): string {
+    if ($siteBaseUrl === '') {
+        return $path === '' ? '' : ltrim($path, '/');
+    }
+
+    return $siteBaseUrl . ($path === '' ? '/' : '/' . ltrim($path, '/'));
+};
+
 return [
     'site_name' => 'Trans-Nzoia County Affordable Housing Project Tracker',
     'short_name' => 'Trans-Nzoia AHP Tracker',
     'brand_label' => 'AHP Tracker',
     'county_name' => 'Trans-Nzoia County',
     'department_name' => 'Department of Land, Housing & Physical Planning',
-    'base_url' => 'https://housing.transnzoia.go.ke',
+    'base_url' => $siteBaseUrl,
     'theme_color' => '#163300',
     'language' => 'en',
     'locale' => 'en_KE',
@@ -91,28 +100,28 @@ return [
             'title' => 'Trans-Nzoia County | Affordable Housing Project Tracker',
             'description' => 'Trans-Nzoia County Affordable Housing Project Tracker - Real-time monitoring of housing construction delivery across Saboti, Cherangany, Kwanza, Endebess and Kiminini constituencies.',
             'keywords' => 'Trans-Nzoia affordable housing, AHP Kenya, Maili Tatu estate, Kitale housing project, county housing tracker, construction progress Kenya, Cherangany housing, Endebess AHP',
-            'canonical' => 'https://housing.transnzoia.go.ke/',
+            'canonical' => $siteCanonical(),
             'image' => 'uploads/heroes/hero-main.jpg',
         ],
         'projects' => [
             'title' => 'All Projects | Trans-Nzoia County Affordable Housing Tracker',
             'description' => 'Browse all affordable housing projects in Trans-Nzoia County - real-time construction progress, contractor details and unit counts across all 5 constituencies.',
             'keywords' => 'Trans-Nzoia affordable housing projects, AHP Kenya, Maili Tatu estate, Matunda estate, Saboti housing, Cherangany housing',
-            'canonical' => 'https://housing.transnzoia.go.ke/projects.php',
+            'canonical' => $siteCanonical('projects.php'),
             'image' => 'uploads/gallery/maili-tatu-1.jpg',
         ],
         'constituencies' => [
             'title' => 'Constituencies | Trans-Nzoia County Affordable Housing Tracker',
             'description' => 'Explore affordable housing coverage across all 5 constituencies in Trans-Nzoia County - Saboti, Cherangany, Endebess, Kiminini and Kwanza.',
             'keywords' => 'Trans-Nzoia constituencies, Saboti housing, Cherangany AHP, Endebess housing, Kiminini housing, Kwanza housing',
-            'canonical' => 'https://housing.transnzoia.go.ke/constituencies.php',
+            'canonical' => $siteCanonical('constituencies.php'),
             'image' => 'uploads/gallery/maili-tatu-1.jpg',
         ],
         'news' => [
             'title' => 'News & Updates | Trans-Nzoia County AHP Tracker',
             'description' => 'Latest news, official announcements, construction progress reports, and community updates from the Trans-Nzoia County Affordable Housing Programme.',
             'keywords' => 'Trans-Nzoia housing news, AHP announcements, affordable housing Kenya, county housing updates',
-            'canonical' => 'https://housing.transnzoia.go.ke/news.php',
+            'canonical' => $siteCanonical('news.php'),
             'image' => 'uploads/news/featured-maili-tatu.jpg',
         ],
     ],

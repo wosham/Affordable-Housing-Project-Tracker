@@ -42,6 +42,29 @@ try {
         'old_assigned_to' => $message['assigned_to'] ?? null,
         'assigned_to' => $assignedTo > 0 ? $assignedTo : null,
     ]);
+    if ($assignedTo > 0 && (int)($message['assigned_to'] ?? 0) !== $assignedTo) {
+        $assigneeRole = (string)(Database::fetch(
+            "SELECT r.slug FROM users u LEFT JOIN roles r ON r.id = u.role_id WHERE u.id = ? LIMIT 1",
+            [$assignedTo]
+        )['slug'] ?? '');
+        $assigneePath = match ($assigneeRole) {
+            'superadmin' => 'admin/superadmin/contact-inbox.php',
+            'manager', 'consultant', 'contractor', 'clerk', 'finance', 'intern'
+                => 'admin/' . $assigneeRole . '/assigned-enquiries.php',
+            default => 'admin/index.php',
+        };
+        Notification::push(
+            $assignedTo,
+            'contact',
+            'Public enquiry assigned to you',
+            trim((string)($message['subject'] ?? 'Contact enquiry')) ?: 'Contact enquiry',
+            $assigneePath,
+            'normal',
+            'contact_submissions',
+            $id,
+            ['assigned_by' => (int)Auth::id()]
+        );
+    }
     Database::commit();
 } catch (Throwable) {
     Database::rollBack();

@@ -93,14 +93,34 @@ class GalleryImage extends Model
         return array_map(static fn ($value) => (int)$value, $row);
     }
 
-    public static function years(): array
+    public static function years(array $filters = []): array
     {
-        $rows = Database::fetchAll('SELECT DISTINCT year FROM gallery_images WHERE year IS NOT NULL ORDER BY year DESC');
+        [$where, $bindings] = self::entryFilterSql($filters);
+        $where = $where !== '' ? $where . ' AND gi.year IS NOT NULL' : ' WHERE gi.year IS NOT NULL';
+        $rows = Database::fetchAll('
+            SELECT DISTINCT gi.year
+            FROM gallery_images gi
+            LEFT JOIN gallery_categories gc ON gc.id = gi.category_id
+            LEFT JOIN projects p ON p.id = gi.project_id
+            LEFT JOIN constituencies c ON c.id = gi.constituency_id
+            LEFT JOIN gallery_media gm ON gm.gallery_id = gi.id
+            ' . $where . '
+            ORDER BY gi.year DESC
+        ', $bindings);
         return array_map(static fn (array $row): int => (int)$row['year'], $rows);
     }
 
-    public static function siteSummary(): array
+    public static function siteSummary(array $filters = []): array
     {
+        $minYear = max(0, (int)($filters['year_from'] ?? 0));
+        $yearSql = '';
+        $bindings = [];
+
+        if ($minYear > 0) {
+            $yearSql = ' AND COALESCE(gi.year, YEAR(gi.taken_at), ?) >= ?';
+            $bindings = [$minYear, $minYear];
+        }
+
         return Database::fetchAll("
             SELECT
                 COALESCE(c.slug, gi.site_key, 'general') AS site_key,
@@ -122,14 +142,43 @@ class GalleryImage extends Model
             LEFT JOIN projects p ON p.id = gi.project_id
             WHERE gi.status = 'published'
               AND gm.id IS NOT NULL
+              {$yearSql}
             GROUP BY site_key, site_name
             ORDER BY photos DESC, site_name ASC
-        ");
+        ", $bindings);
     }
 
     public static function projectMedia(int $projectId, string $mediaType = 'image', int $limit = 24): array
     {
         return self::publicItems(['project_id' => $projectId, 'media_type' => $mediaType], $limit);
+    }
+
+    public static function publicForProject(int $projectId, int $limit = 24): array
+    {
+        $rows = self::projectMedia($projectId, 'image', $limit);
+        return array_map(static function (array $row): array {
+            $url = (string)($row['thumbnail_url'] ?: $row['media_url'] ?: $row['thumbnail_path'] ?: $row['media_path'] ?: '');
+            $full = (string)($row['media_url'] ?: $row['media_path'] ?: $url);
+
+            $alt = (string)($row['alt_text'] ?? '');
+            if ($alt === '') {
+                $alt = (string)($row['media_alt_text'] ?? '');
+            }
+            if ($alt === '') {
+                $alt = (string)($row['title'] ?? '');
+            }
+
+            return [
+                'id' => (int)($row['gallery_media_id'] ?? $row['id'] ?? 0),
+                'title' => (string)($row['title'] ?? ''),
+                'caption' => (string)($row['caption'] ?? ''),
+                'alt_text' => $alt,
+                'url' => $url,
+                'full_url' => $full,
+                'taken_at' => (string)($row['taken_at'] ?? ''),
+                'location' => (string)($row['location'] ?? ''),
+            ];
+        }, $rows);
     }
 
     public static function saveFromAdmin(array $data): int
@@ -270,7 +319,12 @@ class GalleryImage extends Model
 
     public static function deleteItem(int $id): void
     {
-        Database::query('DELETE FROM gallery_images WHERE id = ?', [$id]);
+        Database::query(
+            "UPDATE gallery_images
+             SET status = 'hidden', is_featured = 0, is_highlight = 0
+             WHERE id = ?",
+            [$id]
+        );
     }
 
     private static function replaceMedia(int $entryId, array $imageIds, array $videoIds, array $externalVideos, ?int $thumbnailId, string $caption, string $altText): void
@@ -401,6 +455,14 @@ class GalleryImage extends Model
         if (!empty($filters['year'])) {
             $where[] = 'gi.year = ?';
             $bindings[] = (int)$filters['year'];
+        }
+        if (!empty($filters['year_from'])) {
+            $year = max(0, (int)$filters['year_from']);
+            if ($year > 0) {
+                $where[] = 'COALESCE(gi.year, YEAR(gi.taken_at), ?) >= ?';
+                $bindings[] = $year;
+                $bindings[] = $year;
+            }
         }
         if (!empty($filters['site_key'])) {
             $where[] = 'gi.site_key = ?';

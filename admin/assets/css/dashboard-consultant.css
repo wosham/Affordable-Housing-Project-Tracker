@@ -34,6 +34,40 @@
   gap: .9rem;
 }
 
+.consultant-stats-more {
+  padding: .65rem 1rem 1rem;
+}
+
+.consultant-stats-more > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  font-size: .88rem;
+  list-style: none;
+}
+
+.consultant-stats-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.consultant-stats-more[open] > summary {
+  margin-bottom: .75rem;
+  color: var(--admin-text);
+}
+
+.consultant-row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  white-space: nowrap;
+}
+
+.consultant-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .55rem;
+}
+
 .consultant-stat {
   display: flex;
   align-items: center;

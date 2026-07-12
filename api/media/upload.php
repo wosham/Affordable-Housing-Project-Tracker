@@ -2,10 +2,15 @@
 
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
+$csrfForm = (string)($_POST['csrf_form'] ?? '');
+if ($csrfForm === '' || !in_array($csrfForm, ['cms_editor', 'contractor_progress', 'contractor_submission', 'contractor_site_records', 'default'], true)) {
+    $csrfForm = ((string)Auth::role() === 'contractor') ? 'contractor_progress' : 'cms_editor';
+}
+
 ApiMiddleware::handle([
     'methods' => ['POST'],
     'roles' => ['superadmin', 'contractor'],
-    'csrf_form' => $_POST['csrf_form'] ?? (((string)Auth::role() === 'contractor') ? 'contractor_progress' : 'cms_editor'),
+    'csrf_form' => $csrfForm,
 ]);
 
 if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
@@ -25,16 +30,24 @@ if ((int)$file['size'] > $maxBytes) {
 
 $original = (string)($file['name'] ?? '');
 $role = (string)Auth::role();
-$allowed = $role === 'contractor' ? ['jpg', 'jpeg', 'png', 'webp'] : MediaLibrary::allowedExtensions();
+$requestedFolder = MediaLibrary::normaliseFolder((string)($_POST['folder'] ?? ($role === 'contractor' ? 'site-photos' : 'cms')));
+$folder = $role === 'contractor'
+    ? (in_array($requestedFolder, ['site-photos', 'contractor-documents'], true) ? $requestedFolder : 'site-photos')
+    : $requestedFolder;
+$isContractorDocument = $role === 'contractor' && $folder === 'contractor-documents';
+$allowed = $role === 'contractor' && !$isContractorDocument ? ['jpg', 'jpeg', 'png', 'webp'] : MediaLibrary::allowedExtensions();
 if (!Security::extensionAllowed($original, $allowed)) {
     Response::json(['success' => false, 'message' => 'This file type is not allowed in the media library.'], 422);
 }
 
 $tmpPath = (string)($file['tmp_name'] ?? '');
-$imageInfo = @getimagesize($tmpPath);
-$folder = $role === 'contractor' ? 'site-photos' : MediaLibrary::normaliseFolder((string)($_POST['folder'] ?? 'cms'));
+if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+    Response::json(['success' => false, 'message' => 'Invalid upload source.'], 422);
+}
 
-if ($role === 'contractor' && !$imageInfo) {
+$imageInfo = @getimagesize($tmpPath);
+
+if ($role === 'contractor' && !$isContractorDocument && !$imageInfo) {
     Response::json(['success' => false, 'message' => 'Upload a valid JPG, PNG or WebP site photo.'], 422);
 }
 
@@ -45,6 +58,10 @@ if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)
 }
 
 $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
+if ($ext === 'svg') {
+    Response::json(['success' => false, 'message' => 'SVG uploads are disabled for security. Use PNG or WebP for icons and logos.'], 422);
+}
+
 $baseName = strtolower(pathinfo($original, PATHINFO_FILENAME));
 $baseName = preg_replace('/[^a-z0-9_-]+/', '-', $baseName) ?: ($role === 'contractor' ? 'site-evidence' : 'cms-image');
 $filename = $baseName . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
@@ -59,7 +76,7 @@ $mime = (string)($imageInfo['mime'] ?? mime_content_type($destination) ?: 'appli
 $altText = Security::cleanString((string)($_POST['alt_text'] ?? pathinfo($original, PATHINFO_FILENAME)));
 $title = Security::cleanString((string)($_POST['title'] ?? MediaLibrary::titleFromFilename(pathinfo($original, PATHINFO_FILENAME))));
 $caption = Security::cleanString((string)($_POST['caption'] ?? ''));
-$source = $role === 'contractor' ? 'contractor_progress' : 'upload';
+$source = $role === 'contractor' ? ($isContractorDocument ? 'contractor_documents' : 'contractor_progress') : 'upload';
 
 Database::query(
     'INSERT INTO media_library

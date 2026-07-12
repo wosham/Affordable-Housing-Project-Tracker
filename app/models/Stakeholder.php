@@ -16,6 +16,14 @@ class Stakeholder extends Model
             $where[] = 's.group_id = ?';
             $params[] = (int)$filters['group_id'];
         }
+        if (array_key_exists('featured_on_stakeholders', $filters) && $filters['featured_on_stakeholders'] !== '') {
+            $where[] = 's.featured_on_stakeholders = ?';
+            $params[] = (int)$filters['featured_on_stakeholders'];
+        }
+        if (array_key_exists('is_formal_partner', $filters) && $filters['is_formal_partner'] !== '') {
+            $where[] = 's.is_formal_partner = ?';
+            $params[] = (int)$filters['is_formal_partner'];
+        }
         if (($filters['q'] ?? '') !== '') {
             $where[] = '(s.organisation LIKE ? OR s.role LIKE ? OR s.description LIKE ?)';
             $term = '%' . $filters['q'] . '%';
@@ -69,9 +77,11 @@ class Stakeholder extends Model
     public static function saveStakeholder(array $input, ?int $id = null): int
     {
         $organisation = Security::cleanString((string)($input['organisation'] ?? ''));
+        $slug = StakeholderGroup::slug((string)($input['slug'] ?? $organisation));
+        self::ensureUniqueSlug($slug, $id);
         $data = [
             'group_id' => Security::cleanInt($input['group_id'] ?? 0) ?: null,
-            'slug' => StakeholderGroup::slug((string)($input['slug'] ?? $organisation)),
+            'slug' => $slug,
             'organisation' => $organisation,
             'role' => Security::cleanString((string)($input['role'] ?? '')),
             'category' => Security::cleanString((string)($input['category'] ?? 'partner')),
@@ -81,7 +91,7 @@ class Stakeholder extends Model
             'description' => trim((string)($input['description'] ?? '')),
             'mandate' => trim((string)($input['mandate'] ?? '')),
             'logo_path' => Security::cleanString((string)($input['logo_path'] ?? '')),
-            'website' => Security::cleanString((string)($input['website'] ?? '')),
+            'website' => self::nullableUrl($input['website'] ?? null),
             'sort_order' => max(0, Security::cleanInt($input['sort_order'] ?? 0)),
             'is_visible' => 1,
             'status' => strtolower((string)($input['status'] ?? 'published')) === 'draft' ? 'draft' : 'published',
@@ -109,5 +119,31 @@ class Stakeholder extends Model
                 SUM(CASE WHEN featured_on_stakeholders = 1 AND status = 'published' THEN 1 ELSE 0 END) AS stakeholder_page
              FROM stakeholders"
         ) ?: [];
+    }
+
+    private static function nullableUrl(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $value) === 1) {
+            return $value;
+        }
+
+        throw new RuntimeException('Stakeholder website must start with http:// or https://.');
+    }
+
+    private static function ensureUniqueSlug(string $slug, ?int $id = null): void
+    {
+        $existing = Database::fetch(
+            'SELECT id FROM stakeholders WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1',
+            [$slug, $id, $id]
+        );
+
+        if ($existing) {
+            throw new RuntimeException('This stakeholder slug is already in use.');
+        }
     }
 }

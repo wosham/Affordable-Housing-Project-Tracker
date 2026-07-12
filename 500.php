@@ -1,103 +1,76 @@
-﻿<!DOCTYPE html>
+<?php
+http_response_code(500);
+header_remove('X-Powered-By');
+
+$scriptDir = str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '')));
+$baseUrl = rtrim($scriptDir === '/' ? '' : $scriptDir, '/') . '/';
+$asset = static fn (string $path): string => htmlspecialchars($baseUrl . ltrim($path, '/'), ENT_QUOTES, 'UTF-8');
+?>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#163300">
-  <title>Server Error | Trans-Nzoia AHP Tracker</title>
-  <link rel="icon" type="image/png" href="uploads/logos/afforadablehousinglogo.png">
+  <title>Service Error | Trans-Nzoia AHP Tracker</title>
+  <base href="<?= $asset('') ?>">
+  <link rel="icon" type="image/png" href="<?= $asset('uploads/logos/afforadablehousinglogo.png') ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="assets/css/pages/500.css">
+  <link rel="stylesheet" href="<?= $asset('assets/css/pages/500.css') ?>">
 </head>
-<body>
+<body class="system-page system-page--500">
+  <a class="err-skip" href="#main-content">Skip to main content</a>
 
-  <!-- Stripped Header -->
   <header class="err-header" role="banner">
-    <a href="index.php" class="err-logo" aria-label="Trans-Nzoia AHP Tracker â€” Home">
-      <img src="uploads/logos/afforadablehousinglogo.png" alt="Trans-Nzoia AHP" onerror="this.style.display='none'">
+    <a href="<?= $asset('index.php') ?>" class="err-logo" aria-label="Trans-Nzoia AHP Tracker - Home">
+      <img src="<?= $asset('uploads/logos/afforadablehousinglogo.png') ?>" alt="Trans-Nzoia AHP" onerror="this.style.display='none'">
       <div class="err-logo-text">
         AHP Tracker
         <small>Trans-Nzoia County</small>
       </div>
     </a>
-    <a href="index.php" class="err-home-btn">
-      <i class="fa-solid fa-house-chimney" aria-hidden="true"></i> Back to Home
+    <a href="<?= $asset('index.php') ?>" class="err-home-btn">
+      <i class="fa-solid fa-house-chimney" aria-hidden="true"></i> Home
     </a>
   </header>
 
-  <!-- Main Content -->
   <main class="err-main" id="main-content">
-    <div class="err-card">
-
-      <!-- Error Code -->
+    <section class="err-card" aria-labelledby="error-title">
       <span class="err-code" aria-label="Error 500">500</span>
-
-      <!-- Icon -->
       <div class="err-icon" aria-hidden="true">
         <i class="fa-solid fa-server"></i>
       </div>
 
-      <!-- Heading + Sub -->
-      <h1 class="err-heading">Something Went Wrong</h1>
-      <p class="err-sub">Our server encountered an unexpected error. This has been logged and our ICT team has been notified. Please try again in a few moments.</p>
+      <p class="err-kicker">Temporary service issue</p>
+      <h1 class="err-heading" id="error-title">We could not complete that request</h1>
+      <p class="err-sub">The service is temporarily unavailable. Please try again shortly or return to the homepage.</p>
 
-      <!-- Action Buttons -->
       <div class="err-actions">
         <button class="err-btn err-btn--primary" id="retryBtn" type="button">
           <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-          Reload Page <span class="err-retry-count">(<span id="retryCount">30</span>s)</span>
+          Try Again
         </button>
-        <a href="index.php" class="err-btn err-btn--outline">
+        <a href="<?= $asset('index.php') ?>" class="err-btn err-btn--outline">
           <i class="fa-solid fa-house-chimney" aria-hidden="true"></i>
           Go to Homepage
         </a>
-        <button class="err-btn err-btn--outline" id="copyErrBtn" type="button">
-          <i class="fa-regular fa-copy" aria-hidden="true"></i>
-          Copy Details
-        </button>
+        <a href="mailto:ict@transnzoia.go.ke?subject=AHP%20Tracker%20service%20issue" class="err-btn err-btn--outline">
+          <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+          Contact ICT
+        </a>
       </div>
 
-      <!-- Technical Details -->
-      <div class="err-tech-details" role="region" aria-label="Technical error details">
-        <button class="err-tech-toggle" id="techToggle" type="button" aria-expanded="false" aria-controls="techBody">
-          <span><i class="fa-solid fa-terminal" aria-hidden="true"></i> Technical Details</span>
-          <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-        </button>
-        <div class="err-tech-body" id="techBody" aria-hidden="true">
-          <div class="err-tech-row">
-            <span class="err-tech-label">Status</span>
-            <span class="err-tech-value" id="errStatus">500 Internal Server Error</span>
-          </div>
-          <div class="err-tech-row">
-            <span class="err-tech-label">Timestamp</span>
-            <span class="err-tech-value" id="errTimestamp">â€”</span>
-          </div>
-          <div class="err-tech-row">
-            <span class="err-tech-label">URL</span>
-            <span class="err-tech-value" id="errUrl">â€”</span>
-          </div>
-          <div class="err-tech-row">
-            <span class="err-tech-label">Browser</span>
-            <span class="err-tech-value" id="errBrowser">â€”</span>
-          </div>
-        </div>
+      <div class="err-status-panel" role="note">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <p>No public technical details are shown on this page. If the issue continues, contact support and include the page you were trying to open.</p>
       </div>
-
-      <hr class="err-divider">
-
-      <p class="err-sub" style="font-size:.82rem;margin-bottom:.75rem;">If this problem persists, please contact our ICT support team directly:</p>
-      <a href="mailto:ict@transnzoia.go.ke?subject=500%20Server%20Error%20Report" class="err-report">
-        <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-        ict@transnzoia.go.ke
-      </a>
-
-    </div>
+    </section>
   </main>
 
-  <script src="assets/js/pages/500.js"></script>
+  <script src="<?= $asset('assets/js/pages/500.js') ?>"></script>
 </body>
 </html>

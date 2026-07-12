@@ -21,6 +21,7 @@ class MediaLibrary extends Model
         'projects' => 'Project Photos',
         'publications' => 'Publications',
         'site-photos' => 'Site Photos',
+        'contractor-documents' => 'Contractor Documents',
         'tenders' => 'Tender Documents',
         'videos' => 'Videos',
         'cms' => 'CMS Assets',
@@ -64,6 +65,7 @@ class MediaLibrary extends Model
                 SUM(CASE WHEN type = 'application/pdf' OR extension = 'pdf' THEN 1 ELSE 0 END) AS total_pdfs,
                 COALESCE(SUM(size), 0) AS total_size
             FROM media_library
+            WHERE deleted_at IS NULL
         ") ?: [];
 
         return array_map(static fn ($value) => (int)$value, $row);
@@ -186,7 +188,7 @@ class MediaLibrary extends Model
 
     private static function filterSql(array $filters): array
     {
-        $where = [];
+        $where = ['ml.deleted_at IS NULL'];
         $bindings = [];
 
         if (!empty($filters['folder'])) {

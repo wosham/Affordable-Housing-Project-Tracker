@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $userId = (int)(Auth::id() ?? 0);
 $role = (string)(Auth::role() ?? '');
@@ -13,7 +13,7 @@ $filters = [
     'to' => trim((string)($_GET['to'] ?? '')),
 ];
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
-$limit = 15;
+$limit = 10;
 $offset = ($page - 1) * $limit;
 
 $projects = ConsultantTechnicalReview::projects($userId, $role);
@@ -21,6 +21,7 @@ $summary = ConsultantTechnicalReview::drawingSummary($userId, $role, $filters);
 $items = ConsultantTechnicalReview::drawingItems($userId, $role, $filters, $limit, $offset);
 $total = ConsultantTechnicalReview::drawingCount($userId, $role, $filters);
 $pages = max(1, (int)ceil($total / $limit));
+$queue = ConsultantTechnicalReview::drawingQueueItems($userId, $role, $filters, 8);
 
 $pageTitle = 'Shop Drawings';
 $pageDescription = 'Review submitted shop drawings, revisions and coordination status.';
@@ -28,9 +29,10 @@ $adminRole = 'consultant';
 $contentClass = 'consultant-technical-page';
 $componentCss = ['consultant-technical'];
 $pageScripts = ['consultant-technical'];
+$csrfForm = 'consultant_technical';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Consultant'],
+    ['label' => 'Consultant', 'url' => Url::to('admin/consultant/dashboard.php')],
     ['label' => 'Shop Drawings'],
 ];
 
@@ -41,20 +43,20 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-compass-drafting" aria-hidden="true"></i> Drawing review</span>
     <h2>Shop Drawings</h2>
-    <p>Review submitted drawings, manage revisions and return items that need correction before site use.</p>
+    <p>Review submitted drawings, manage revisions and return items that need correction before site use on assigned projects only.</p>
   </div>
   <div class="technical-actions">
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/dashboard.php')) ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/material-approvals.php')) ?>"><i class="fa-solid fa-cubes-stacked"></i> Materials</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/dashboard.php')) ?>"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/material-approvals.php')) ?>"><i class="fa-solid fa-cubes-stacked" aria-hidden="true"></i> Materials</a>
   </div>
 </section>
 
-<section class="technical-stats">
-  <?php technical_stat('fa-drafting-compass', $summary['total'], 'Drawings', 'Assigned projects'); ?>
-  <?php technical_stat('fa-hourglass-half', $summary['under_review'], 'Under Review', 'Awaiting action'); ?>
-  <?php technical_stat('fa-circle-check', $summary['approved'], 'Approved', 'Accepted drawings'); ?>
-  <?php technical_stat('fa-rotate-left', $summary['resubmit'], 'Resubmit', 'Needs revision'); ?>
-  <?php technical_stat('fa-ban', $summary['rejected'], 'Rejected', 'Not accepted'); ?>
+<section class="technical-stats" aria-label="Drawing summary">
+  <?php technical_stat('fa-drafting-compass', $summary['total'], 'Drawings', 'Assigned projects', drawing_filter_url([])); ?>
+  <?php technical_stat('fa-hourglass-half', $summary['under_review'], 'Under Review', 'Awaiting action', drawing_filter_url(['status' => 'under-review'])); ?>
+  <?php technical_stat('fa-circle-check', $summary['approved'], 'Approved', 'Accepted drawings', drawing_filter_url(['status' => 'approved'])); ?>
+  <?php technical_stat('fa-rotate-left', $summary['resubmit'], 'Resubmit', 'Needs revision', drawing_filter_url(['status' => 'resubmit'])); ?>
+  <?php technical_stat('fa-ban', $summary['rejected'], 'Rejected', 'Not accepted', drawing_filter_url(['status' => 'rejected'])); ?>
 </section>
 
 <section class="technical-layout">
@@ -67,7 +69,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <span class="badge badge--info"><?= format_number($total) ?> records</span>
     </div>
 
-    <form class="technical-filter-grid" method="get">
+    <form class="technical-filter-grid" method="get" action="<?= Security::e(Url::to('admin/consultant/shop-drawings.php')) ?>">
       <label>Search <input type="search" name="q" value="<?= Security::e($filters['q']) ?>" placeholder="Drawing number, title or project..."></label>
       <label>Project
         <select name="project_id">
@@ -86,7 +88,8 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </select>
       </label>
       <label>From <input type="date" name="from" value="<?= Security::e($filters['from']) ?>"></label>
-      <button class="btn btn--primary" type="submit"><i class="fa-solid fa-filter"></i> Filter</button>
+      <label>To <input type="date" name="to" value="<?= Security::e($filters['to']) ?>"></label>
+      <button class="btn btn--primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i> Filter</button>
       <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/shop-drawings.php')) ?>">Reset</a>
     </form>
 
@@ -95,7 +98,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <thead><tr><th>Drawing</th><th>Project</th><th>Revision</th><th>Submitted</th><th>Status</th><th>Review</th><th>Actions</th></tr></thead>
         <tbody>
         <?php if ($items === []): ?>
-          <tr><td colspan="7"><div class="technical-empty">No shop drawings found.</div></td></tr>
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <strong class="empty-state__title">No shop drawings found</strong>
+                <span class="empty-state__text">Adjust filters or wait for drawing submissions on assigned projects.</span>
+              </div>
+            </td>
+          </tr>
         <?php endif; ?>
         <?php foreach ($items as $item): ?>
           <tr>
@@ -133,13 +143,23 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
   <aside class="technical-card card">
     <h2>Revision queue</h2>
-    <p>Drawings needing consultant action or resubmission.</p>
+    <p>Drawings needing consultant action or resubmission across your portfolio.</p>
     <div class="technical-side-list">
-      <?php foreach (array_slice(array_filter($items, static fn ($item): bool => in_array((string)$item['status'], ['under-review', 'resubmit'], true)), 0, 7) as $item): ?>
-        <div class="technical-side-item"><strong><?= Security::e($item['drawing_no']) ?> / Rev <?= Security::e($item['revision']) ?></strong><span><?= Security::e($item['project_name']) ?> / <?= Security::e(status_label($item['status'])) ?></span></div>
-      <?php endforeach; ?>
-      <?php if ((int)$summary['under_review'] + (int)$summary['resubmit'] <= 0): ?><div class="technical-empty">No drawings waiting in this view.</div><?php endif; ?>
+      <?php if ($queue === []): ?>
+        <div class="empty-state empty-state--compact">
+          <strong class="empty-state__title">No drawings waiting</strong>
+          <span class="empty-state__text">Under-review and resubmit items will appear here.</span>
+        </div>
+      <?php else: foreach ($queue as $item): ?>
+        <a class="technical-side-item technical-side-item--link" href="<?= Security::e(Url::to('admin/consultant/shop-drawings.php?project_id=' . (int)$item['project_id'] . '&status=' . rawurlencode((string)$item['status']) . '&q=' . rawurlencode((string)$item['drawing_no']))) ?>">
+          <strong><?= Security::e($item['drawing_no']) ?> / Rev <?= Security::e($item['revision']) ?></strong>
+          <span><?= Security::e($item['project_name']) ?> · <?= Security::e(status_label($item['status'])) ?></span>
+        </a>
+      <?php endforeach; endif; ?>
     </div>
+    <?php if ((int)$summary['under_review'] > 0): ?>
+      <a class="btn btn--outline btn--sm" href="<?= Security::e(drawing_filter_url(['status' => 'under-review'])) ?>">View under review</a>
+    <?php endif; ?>
   </aside>
 </section>
 
@@ -148,7 +168,66 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function technical_stat(string $icon, mixed $value, string $label, string $hint): void { echo '<article class="technical-stat card"><span class="technical-stat__icon"><i class="fa-solid ' . Security::e($icon) . '"></i></span><div><strong>' . Security::e((string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></article>'; }
-function technical_action(string $type, int $id, string $action, string $label, string $icon, string $item): void { echo '<button class="btn btn--sm btn--outline" type="button" aria-label="' . Security::e($label) . '" title="' . Security::e($label) . '" data-technical-action data-type="' . Security::e($type) . '" data-id="' . $id . '" data-action="' . Security::e($action) . '" data-title="' . Security::e($label . ' drawing') . '" data-item="' . Security::e($item) . '"><i class="fa-solid ' . Security::e($icon) . '"></i><span class="sr-only">' . Security::e($label) . '</span></button>'; }
-function technical_pagination(int $page, int $pages, int $total, int $limit): void { $query = $_GET; echo '<div class="pagination"><span>Showing ' . format_number($total === 0 ? 0 : (($page - 1) * $limit) + 1) . '-' . format_number(min($total, $page * $limit)) . ' of ' . format_number($total) . '</span><div>'; $query['page'] = max(1, $page - 1); echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left"></i></a><span class="btn btn--sm btn--primary">' . $page . '</span>'; $query['page'] = min($pages, $page + 1); echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right"></i></a></div></div>'; }
-function technical_modal(): void { ?><div class="technical-modal" data-technical-modal hidden><div class="technical-modal__panel"><div class="technical-modal__head"><div><strong data-modal-title>Review item</strong><span class="technical-secondary" data-modal-item></span></div><button class="btn btn--sm btn--ghost" type="button" data-modal-close><i class="fa-solid fa-xmark"></i></button></div><form><input type="hidden" name="type"><input type="hidden" name="id"><input type="hidden" name="action"><div class="technical-modal__body"><label>Review note <textarea name="note" placeholder="Add a clear note for the project team."></textarea></label></div><div class="technical-modal__foot"><button class="btn btn--outline" type="button" data-modal-close>Cancel</button><button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save Review</button></div></form></div></div><?php }
+function drawing_filter_url(array $extra): string
+{
+    $query = array_filter(array_merge($_GET, $extra), static fn ($v) => $v !== '' && $v !== null && $v !== 0 && $v !== '0');
+    unset($query['page']);
+    return Url::to('admin/consultant/shop-drawings.php' . ($query ? '?' . http_build_query($query) : ''));
+}
+
+function technical_stat(string $icon, mixed $value, string $label, string $hint, string $path = ''): void
+{
+    $tag = $path !== '' ? 'a' : 'article';
+    $href = $path !== '' ? ' href="' . Security::e($path) . '"' : '';
+    echo '<' . $tag . ' class="technical-stat card"' . $href . '><span class="technical-stat__icon"><i class="fa-solid ' . Security::e($icon) . '"></i></span><div><strong>' . Security::e(is_numeric($value) ? format_number($value) : (string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></' . $tag . '>';
+}
+
+function technical_action(string $type, int $id, string $action, string $label, string $icon, string $item): void
+{
+    echo '<button class="btn btn--sm btn--outline" type="button" aria-label="' . Security::e($label) . '" title="' . Security::e($label) . '" data-technical-action data-type="' . Security::e($type) . '" data-id="' . $id . '" data-action="' . Security::e($action) . '" data-title="' . Security::e($label . ' drawing') . '" data-item="' . Security::e($item) . '"><i class="fa-solid ' . Security::e($icon) . '"></i><span class="sr-only">' . Security::e($label) . '</span></button>';
+}
+
+function technical_pagination(int $page, int $pages, int $total, int $limit): void
+{
+    if ($total <= 0) {
+        return;
+    }
+    $from = min($total, (($page - 1) * $limit) + 1);
+    $to = min($total, $page * $limit);
+    $query = $_GET;
+    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number($to) . ' of ' . format_number($total) . '</span><div>';
+    $query['page'] = max(1, $page - 1);
+    $prevDis = $page <= 1 ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $prevDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left"></i></a>';
+    echo '<span class="btn btn--sm btn--primary">' . $page . ' / ' . $pages . '</span>';
+    $query['page'] = min($pages, $page + 1);
+    $nextDis = $page >= $pages ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $nextDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right"></i></a></div></div>';
+}
+
+function technical_modal(): void
+{
+    ?>
+    <div class="technical-modal" data-technical-modal hidden>
+      <div class="technical-modal__panel">
+        <div class="technical-modal__head">
+          <div>
+            <strong data-modal-title>Review item</strong>
+            <span class="technical-secondary" data-modal-item></span>
+          </div>
+          <button class="btn btn--sm btn--ghost" type="button" data-modal-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form>
+          <input type="hidden" name="type"><input type="hidden" name="id"><input type="hidden" name="action">
+          <div class="technical-modal__body">
+            <label>Review note <textarea name="note" rows="5" placeholder="Add a clear note for the project team."></textarea></label>
+          </div>
+          <div class="technical-modal__foot">
+            <button class="btn btn--outline" type="button" data-modal-close>Cancel</button>
+            <button class="btn btn--primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <?php
+}

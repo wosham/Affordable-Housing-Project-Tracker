@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -22,7 +22,7 @@ if (!empty($filters['project_id']) && !ConsultantIPC::canAccessProject($userId, 
     Response::abort(403, 'You do not have access to this project IPC inbox.');
 }
 
-$perPage = 15;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $total = ConsultantIPC::count($userId, $role, $filters);
 $totalPages = max(1, (int)ceil($total / $perPage));
@@ -63,12 +63,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="consultant-ipc-stat-grid" aria-label="IPC inbox summary">
-  <?php consultant_ipc_stat('fa-file-invoice', $summary['total'], 'Total IPCs', 'All assigned claims'); ?>
-  <?php consultant_ipc_stat('fa-stamp', $summary['certifiable'], 'To Certify', 'Verified claims waiting'); ?>
-  <?php consultant_ipc_stat('fa-clock', $summary['submitted'], 'Submitted', 'Awaiting site verification'); ?>
-  <?php consultant_ipc_stat('fa-circle-check', $summary['certified_this_month'], 'Certified This Month', 'Your recent output'); ?>
-  <?php consultant_ipc_stat('fa-ban', $summary['rejected'], 'Rejected', 'Returned claims'); ?>
-  <?php consultant_ipc_stat('fa-money-bill-transfer', format_money($summary['certifiable_value']), 'Value Waiting', 'Net amount to review'); ?>
+  <?php consultant_ipc_stat('fa-file-invoice', $summary['total'], 'Total IPCs', 'All assigned claims', 'admin/consultant/ipc-inbox.php'); ?>
+  <?php consultant_ipc_stat('fa-stamp', $summary['certifiable'], 'To Certify', 'Clerk-endorsed waiting', 'admin/consultant/ipc-inbox.php?status=clerk-endorsed'); ?>
+  <?php consultant_ipc_stat('fa-clock', $summary['submitted'], 'Submitted', 'Awaiting site verification', 'admin/consultant/ipc-inbox.php?status=submitted'); ?>
+  <?php consultant_ipc_stat('fa-circle-check', $summary['certified_this_month'], 'Certified This Month', 'Your recent output', 'admin/consultant/ipc-inbox.php?status=certified'); ?>
+  <?php consultant_ipc_stat('fa-ban', $summary['rejected'], 'Rejected', 'Returned claims', 'admin/consultant/ipc-inbox.php?status=rejected'); ?>
+  <?php consultant_ipc_stat('fa-money-bill-transfer', format_money($summary['certifiable_value']), 'Value Waiting', 'Net amount to review', 'admin/consultant/ipc-inbox.php?status=clerk-endorsed'); ?>
 </section>
 
 <section class="card consultant-ipc-registry">
@@ -131,8 +131,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td><span class="badge <?= Security::e(status_badge_class($ipc['status'])) ?>"><?= Security::e(status_label($ipc['status'])) ?></span><?php if ((int)$ipc['warnings_count'] > 0 || (float)$ipc['line_total'] <= 0): ?><small class="consultant-ipc-warning"><i class="fa-solid fa-triangle-exclamation"></i> Review needed</small><?php endif; ?></td>
           <td><strong><?= Security::e(status_label($ipc['last_action'] ?: $ipc['status'])) ?></strong><small><?= Security::e($ipc['last_action_by'] ?: 'System') ?> / <?= Security::e(time_ago($ipc['last_actioned_at'] ?? $ipc['updated_at'] ?? null)) ?></small></td>
           <td class="consultant-ipc-actions">
-            <a class="btn btn--icon btn--primary" href="<?= Security::e(Url::to('admin/consultant/ipc-certify.php?id=' . (int)$ipc['id'])) ?>" title="Open review workspace" aria-label="Open review workspace"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></a>
-            <?php if (in_array((string)$ipc['status'], ['submitted', 'clerk-endorsed'], true)): ?><button class="btn btn--icon btn--danger" type="button" data-consultant-ipc-reject data-ipc-id="<?= (int)$ipc['id'] ?>" data-ipc-label="IPC #<?= Security::e(format_number($ipc['ipc_number'])) ?>" title="Reject" aria-label="Reject"><i class="fa-solid fa-ban" aria-hidden="true"></i></button><?php endif; ?>
+            <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('admin/consultant/ipc-certify.php?id=' . (int)$ipc['id'])) ?>" title="Open review workspace" aria-label="Open review workspace"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>
+<?php if (!empty($ipc['can_certify'])): ?>
+            <a class="btn btn--icon btn--primary" href="<?= Security::e(Url::to('admin/consultant/ipc-certify.php?id=' . (int)$ipc['id'])) ?>" title="Certify IPC" aria-label="Certify IPC"><i class="fa-solid fa-stamp" aria-hidden="true"></i></a>
+<?php endif; ?>
+<?php if (in_array((string)$ipc['status'], ['submitted', 'clerk-endorsed'], true)): ?>
+            <button class="btn btn--icon btn--danger" type="button" data-consultant-ipc-reject data-ipc-id="<?= (int)$ipc['id'] ?>" data-ipc-label="IPC #<?= Security::e(format_number($ipc['ipc_number'])) ?>" title="Return / reject" aria-label="Return / reject"><i class="fa-solid fa-ban" aria-hidden="true"></i></button>
+<?php endif; ?>
           </td>
         </tr>
 <?php endforeach; endif; ?>
@@ -183,12 +188,14 @@ function consultant_ipc_page_url(array $filters, int $page): string
     return Url::to('admin/consultant/ipc-inbox.php?' . http_build_query($query));
 }
 
-function consultant_ipc_stat(string $icon, mixed $value, string $label, string $hint): void
+function consultant_ipc_stat(string $icon, mixed $value, string $label, string $hint, string $path = ''): void
 {
+    $tag = $path !== '' ? 'a' : 'article';
+    $href = $path !== '' ? ' href="' . Security::e(Url::to($path)) . '"' : '';
 ?>
-  <article class="consultant-ipc-stat card">
+  <<?= $tag ?> class="consultant-ipc-stat card"<?= $href ?>>
     <span class="consultant-ipc-stat__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span>
     <span><strong><?= Security::e(is_numeric($value) ? format_number($value) : (string)$value) ?></strong><em><?= Security::e($label) ?></em><small><?= Security::e($hint) ?></small></span>
-  </article>
+  </<?= $tag ?>>
 <?php
 }

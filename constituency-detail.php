@@ -3,28 +3,29 @@ require_once __DIR__ . '/app/core/bootstrap.php';
 
 $basePath = '';
 $activePage = 'constituencies';
-$cmsPage = CmsLoader::page('constituency-detail');
+$cmsPage = CmsLoader::publicPage('constituency-detail');
 $slug = strtolower(trim((string)($_GET['id'] ?? $_GET['slug'] ?? '')));
 
 $labels = CmsLoader::content($cmsPage, 'constituency_detail_labels', [
     'active_status_label' => 'Active Construction',
     'planning_status_label' => 'Planning Stage',
     'projects_label' => 'Projects',
-    'units_label' => 'Units Planned',
+    'units_label' => 'Tracked Outputs',
     'population_label' => 'Population',
     'completion_label' => 'Avg. Completion',
     'wards_label' => 'Wards',
     'projects_title_suffix' => 'Projects',
-    'projects_subtitle' => 'All housing developments in this constituency under the national AHP programme.',
+    'projects_subtitle' => 'All published project sites in this constituency, including housing, markets, ESP, and institutional facilities.',
     'view_all_projects_label' => 'View all projects',
-    'unit_card_label' => 'Units',
+    'unit_card_label' => 'Outputs',
     'complete_card_label' => 'Complete',
     'view_project_label' => 'View Project',
-    'empty_projects_text' => 'No projects listed yet for this constituency.',
+    'empty_projects_text' => 'No published project sites yet for this constituency.',
     'progress_eyebrow' => 'Progress Overview',
-    'progress_title_suffix' => 'Construction Progress',
-    'progress_subtitle' => 'Across {projects} active {project_word}, {constituency} Constituency has delivered {units} units under the national AHP programme. Work is progressing across {wards} wards.',
-    'total_units_label' => 'Total Units',
+    'progress_title_suffix' => 'Project Delivery Progress',
+    'progress_subtitle' => 'Across {projects} active {project_word}, {constituency} Constituency is tracking {units} project outputs across {wards} wards.',
+    'total_units_label' => 'Tracked Outputs',
+    'empty_progress_subtitle' => 'No active project progress has been published yet for {constituency}. The tracker will update once a site is approved and published.',
 ]);
 $facts = CmsLoader::content($cmsPage, 'constituency_detail_facts', [
     'facts_title' => 'Constituency Facts',
@@ -32,17 +33,17 @@ $facts = CmsLoader::content($cmsPage, 'constituency_detail_facts', [
     'population_label' => 'Population',
     'wards_label' => 'Wards',
     'lead_agency_label' => 'Lead Agency',
-    'lead_agency_value' => 'State Dept. of Housing',
+    'lead_agency_value' => 'Trans-Nzoia County + Implementing Agencies',
     'funding_label' => 'Funding',
-    'funding_value' => 'National AHP Fund + County Budget',
+    'funding_value' => 'National and County Programme Budgets',
     'programme_label' => 'Programme',
-    'programme_value' => 'National Affordable Housing Programme',
+    'programme_value' => 'County Project Delivery Tracker',
     'location_title' => 'Location',
     'all_constituencies_label' => 'All Constituencies',
 ]);
 $relatedCopy = CmsLoader::content($cmsPage, 'constituency_detail_related', [
     'title' => 'Other Constituencies',
-    'subtitle' => 'Explore housing developments across Trans-Nzoia County.',
+    'subtitle' => 'Explore project coverage across Trans-Nzoia County.',
     'view_all_label' => 'View all',
     'explore_label' => 'Explore',
     'not_found_title' => 'Constituency Not Found',
@@ -52,49 +53,15 @@ $relatedCopy = CmsLoader::content($cmsPage, 'constituency_detail_related', [
 $cta = CmsLoader::content($cmsPage, 'constituency_detail_apply_cta', [
     'title' => 'Ready to Apply for Affordable Housing?',
     'subtitle' => 'Register on the national Boma Yangu portal to join the allocation list for this constituency.',
+    'tracking_title' => 'Follow Project Updates in This Constituency',
+    'tracking_subtitle' => 'Published project sites, milestones, and constituency updates will appear here as the county tracker is updated.',
     'primary_label' => 'Apply on Boma Yangu',
     'primary_url' => 'https://bomayangu.go.ke',
     'secondary_label' => 'View All Projects',
     'secondary_url' => 'projects.php',
 ]);
 
-function cd_constituency_rows(): array
-{
-    $rows = Database::fetchAll("
-        SELECT
-            c.*,
-            COUNT(DISTINCT p.id) AS live_project_count,
-            COALESCE(SUM(p.units), 0) AS live_total_units,
-            COALESCE(AVG(p.pct_complete), 0) AS live_avg_completion
-        FROM constituencies c
-        LEFT JOIN projects p ON p.constituency_id = c.id
-        WHERE c.slug IN ('saboti','cherangany','endebess','kiminini','kwanza')
-        GROUP BY c.id
-        ORDER BY FIELD(c.slug, 'saboti','cherangany','endebess','kiminini','kwanza'), c.name ASC
-    ");
-
-    $wards = [];
-    foreach (Database::fetchAll("
-        SELECT c.slug AS constituency_slug, w.name
-        FROM wards w
-        INNER JOIN constituencies c ON c.id = w.constituency_id
-        WHERE c.slug IN ('saboti','cherangany','endebess','kiminini','kwanza')
-        ORDER BY FIELD(c.slug, 'saboti','cherangany','endebess','kiminini','kwanza'), w.id ASC
-    ") as $ward) {
-        $wards[(string)$ward['constituency_slug']][] = (string)$ward['name'];
-    }
-
-    foreach ($rows as &$row) {
-        $row['wards'] = $wards[(string)$row['slug']] ?? [];
-        $row['project_count'] = (int)$row['live_project_count'] > 0 ? (int)$row['live_project_count'] : (int)($row['total_projects'] ?? 0);
-        $row['total_units_live'] = (int)$row['live_total_units'] > 0 ? (int)$row['live_total_units'] : (int)($row['total_units'] ?? 0);
-        $row['avg_completion_live'] = (int)round((float)$row['live_avg_completion'] > 0 ? (float)$row['live_avg_completion'] : (float)($row['avg_completion'] ?? 0));
-    }
-    unset($row);
-
-    return $rows;
-}
-
+if (!function_exists('cd_replace_tokens')) {
 function cd_replace_tokens(string $text, array $values): string
 {
     return strtr($text, [
@@ -105,26 +72,37 @@ function cd_replace_tokens(string $text, array $values): string
         '{wards}' => (string)$values['wards'],
     ]);
 }
-
-$constituencies = cd_constituency_rows();
-$constituency = null;
-foreach ($constituencies as $row) {
-    if ((string)$row['slug'] === $slug) {
-        $constituency = $row;
-        break;
-    }
 }
 
+if (!function_exists('cd_output_label')) {
+function cd_output_label(array $project): string
+{
+    $category = strtolower((string)($project['category_slug'] ?? ''));
+    return match ($category) {
+        'modern-market' => 'Stalls',
+        'esps' => ((int)($project['units'] ?? 0) === 1 ? 'Site' : 'Sites'),
+        default => 'Units',
+    };
+}
+}
+
+$constituency = Constituency::publicDetail($slug);
 $projects = $constituency ? Project::forPublic(['constituency' => (string)$constituency['slug']]) : [];
-$otherConstituencies = array_values(array_filter($constituencies, static fn (array $row): bool => (string)$row['slug'] !== $slug));
+$otherConstituencies = $constituency ? Constituency::publicRelated((string)$constituency['slug']) : Constituency::publicList();
 $projectCount = count($projects);
 $totalUnits = array_sum(array_map(static fn (array $project): int => (int)($project['units'] ?? 0), $projects));
 $avgCompletion = $projectCount > 0 ? (int)round(array_sum(array_map(static fn (array $project): int => (int)($project['pct_complete'] ?? 0), $projects)) / $projectCount) : 0;
+$hasAhpProject = count(array_filter($projects, static fn (array $project): bool => strtolower((string)($project['category_slug'] ?? '')) === 'ahps')) > 0;
 $wardCount = $constituency ? count($constituency['wards']) : 0;
 $isFound = $constituency !== null;
 if (!$isFound) {
     http_response_code(404);
 }
+$pagePayload = public_page_payload('constituency-detail', [
+    'constituency' => $constituency ?: null,
+    'projects' => $projects,
+    'related_constituencies' => $otherConstituencies,
+]);
 
 $e = static fn (mixed $value): string => Security::e($value);
 $text = static fn (array $content, string $key, string $default = ''): string => CmsLoader::text($content, $key, $default);
@@ -134,6 +112,39 @@ $asset = static function (?string $path): string {
         return '';
     }
     return preg_match('#^https?://#i', $path) ? $path : $path;
+};
+$assetExists = static function (?string $path): bool {
+    $path = trim((string)$path);
+    if ($path === '') {
+        return false;
+    }
+    if (preg_match('#^https?://#i', $path) || str_starts_with($path, 'data:')) {
+        return true;
+    }
+    $relative = ltrim((string)(parse_url($path, PHP_URL_PATH) ?: $path), '/\\');
+    return is_file(__DIR__ . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relative));
+};
+$firstExistingAsset = static function (array $paths) use ($asset, $assetExists): string {
+    foreach ($paths as $path) {
+        $candidate = $asset((string)$path);
+        if ($candidate !== '' && $assetExists($candidate)) {
+            return $candidate;
+        }
+    }
+    return '';
+};
+$versionedAsset = static function (string $path): string {
+    $path = trim($path);
+    if ($path === '' || preg_match('#^https?://#i', $path) || str_starts_with($path, 'data:')) {
+        return $path;
+    }
+    $relative = ltrim((string)(parse_url($path, PHP_URL_PATH) ?: $path), '/\\');
+    $absolute = __DIR__ . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relative);
+    if (!is_file($absolute)) {
+        return $path;
+    }
+    $separator = str_contains($path, '?') ? '&' : '?';
+    return $path . $separator . 'v=' . filemtime($absolute);
 };
 $statusLabel = static function (string $status, array $labels): string {
     return in_array($status, ['active', 'completed'], true)
@@ -150,15 +161,15 @@ $pageTitle = $isFound
     ? (string)$constituency['name'] . ' Constituency | Trans-Nzoia AHP Tracker'
     : ($cmsPage['seo_title'] ?? 'Constituency Detail | Trans-Nzoia County Affordable Housing Tracker');
 $pageDescription = $isFound
-    ? (string)($constituency['description'] ?? 'Detailed affordable housing information for this Trans-Nzoia constituency.')
-    : ($cmsPage['seo_description'] ?? 'Detailed affordable housing information for Trans-Nzoia constituencies, including live projects, progress, wards and local facts.');
-$pageKeywords = $cmsPage['seo_keywords'] ?? 'Trans-Nzoia constituency housing, AHP Kenya, affordable housing projects';
+    ? (string)($constituency['description'] ?? 'Detailed project information for this Trans-Nzoia constituency.')
+    : ($cmsPage['seo_description'] ?? 'Detailed project information for Trans-Nzoia constituencies, including live projects, progress, wards and local facts.');
+$pageKeywords = $cmsPage['seo_keywords'] ?? 'Trans-Nzoia constituency projects, affordable housing Kenya, county project tracker';
 $pageAuthor = 'Trans-Nzoia County Government - Department of Land, Housing & Physical Planning';
 $pageRobots = $isFound ? 'index, follow' : 'noindex, follow';
 $themeColor = '#163300';
 $canonicalUrl = $isFound
-    ? 'https://housing.transnzoia.go.ke/constituency-detail.php?id=' . rawurlencode((string)$constituency['slug'])
-    : ($cmsPage['canonical_url'] ?? 'https://housing.transnzoia.go.ke/constituency-detail.php');
+    ? Url::canonical('constituency-detail.php?id=' . rawurlencode((string)$constituency['slug']))
+    : (trim((string)($cmsPage['canonical_url'] ?? '')) ?: Url::canonical('constituency-detail.php'));
 $pageStyles = [
     'assets/css/global.css',
     'assets/css/pages/constituency-detail.css',
@@ -167,7 +178,16 @@ $pageScripts = [
     'assets/js/global.js',
     'assets/js/pages/constituency-detail.js',
 ];
-$heroImage = $isFound ? $asset((string)($constituency['hero_image'] ?? '')) : '';
+$cmsHeroImage = $asset((string)($cmsPage['hero_image'] ?? ''));
+$projectHeroCandidates = array_values(array_filter(array_map(static fn (array $project): string => (string)($project['hero_image'] ?? ''), $projects)));
+$heroImage = $isFound ? $firstExistingAsset(array_merge([
+    (string)($constituency['hero_image'] ?? ''),
+    $cmsHeroImage,
+], $projectHeroCandidates, [
+    'uploads/gallery/maili-tatu-3.jpg',
+    'uploads/gallery/modern-market.jpg',
+])) : '';
+$heroImageForHtml = $heroImage !== '' ? $versionedAsset($heroImage) : '';
 $headMeta = [
     '<meta property="og:title" content="' . $e($pageTitle) . '">',
     '<meta property="og:description" content="' . $e($pageDescription) . '">',
@@ -177,8 +197,8 @@ $headMeta = [
     '<meta property="og:site_name" content="Trans-Nzoia AHP Tracker">',
     '<meta name="twitter:card" content="summary_large_image">',
 ];
-if ($heroImage !== '') {
-    $headMeta[] = '<meta property="og:image" content="' . $e($heroImage) . '">';
+if ($heroImageForHtml !== '') {
+    $headMeta[] = '<meta property="og:image" content="' . $e($heroImageForHtml) . '">';
 }
 
 include __DIR__ . '/app/partials/head.php';
@@ -192,19 +212,13 @@ include __DIR__ . '/app/partials/head.php';
 <?php if ($isFound): ?>
     <section class="cd-hero" id="cdHero" aria-label="Constituency overview">
       <div class="cd-hero-bg" id="cdHeroBg" aria-hidden="true">
-<?php if ($heroImage !== ''): ?>
-        <img src="<?= $e($heroImage) ?>" alt="" loading="eager" onerror="this.style.display='none'">
+<?php if ($heroImageForHtml !== ''): ?>
+        <img <?= public_image_attrs($heroImageForHtml, '', ['loading' => 'eager', 'fetchpriority' => 'high', 'onerror' => "this.style.display='none'"]) ?>>
 <?php endif; ?>
         <div class="cd-hero-overlay"></div>
       </div>
       <div class="container">
-        <nav class="breadcrumb" aria-label="Breadcrumb" id="cdBreadcrumb">
-          <a href="index.php" class="breadcrumb-link">Home</a>
-          <i class="fa-solid fa-chevron-right breadcrumb-sep" aria-hidden="true"></i>
-          <a href="constituencies.php" class="breadcrumb-link">Constituencies</a>
-          <i class="fa-solid fa-chevron-right breadcrumb-sep" aria-hidden="true"></i>
-          <span class="breadcrumb-current" id="cdBreadcrumbCurrent"><?= $e($constituency['name']) ?></span>
-        </nav>
+
         <div class="cd-hero-body" id="cdHeroBody">
           <div class="cd-hero-eyebrow">
             <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
@@ -226,7 +240,7 @@ include __DIR__ . '/app/partials/head.php';
           </div>
           <div class="cd-kpi-card">
             <i class="fa-solid fa-users cd-kpi-icon" aria-hidden="true"></i>
-            <span class="cd-kpi-val"><?= $e($shortPopulation($constituency['population'] ?? 0)) ?></span>
+            <span class="cd-kpi-val"><?= $e($shortPopulation($constituency['population_raw'] ?? 0)) ?></span>
             <span class="cd-kpi-lbl"><?= $e($text($labels, 'population_label', 'Population')) ?></span>
           </div>
           <div class="cd-kpi-card">
@@ -254,7 +268,7 @@ include __DIR__ . '/app/partials/head.php';
         <div class="cd-section-header">
           <div>
             <h2 class="cd-section-title" id="cdProjectsTitle"><?= $e($constituency['name']) ?> <?= $e($text($labels, 'projects_title_suffix', 'Projects')) ?></h2>
-            <p class="cd-section-sub"><?= $e($text($labels, 'projects_subtitle', 'All housing developments in this constituency under the national AHP programme.')) ?></p>
+            <p class="cd-section-sub"><?= $e($text($labels, 'projects_subtitle', 'All published project sites in this constituency.')) ?></p>
           </div>
           <a href="projects.php?constituency=<?= $e(rawurlencode((string)$constituency['slug'])) ?>" class="cd-view-all" id="cdViewAll">
             <?= $e($text($labels, 'view_all_projects_label', 'View all projects')) ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
@@ -271,7 +285,7 @@ include __DIR__ . '/app/partials/head.php';
           <article class="proj-card">
             <div class="proj-card-img">
 <?php if ($image !== ''): ?>
-              <img src="<?= $e($image) ?>" alt="<?= $e($project['name'] ?? '') ?>" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <img <?= public_image_attrs($image, $project['name'] ?? '', ['onerror' => "this.style.display='none';this.nextElementSibling.style.display='flex'"]) ?>>
               <div class="proj-card-img-placeholder" style="display:none"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
 <?php else: ?>
               <div class="proj-card-img-placeholder"><i class="fa-solid fa-building" aria-hidden="true"></i></div>
@@ -285,7 +299,7 @@ include __DIR__ . '/app/partials/head.php';
               <div class="proj-card-stats">
                 <div class="proj-stat">
                   <span class="proj-stat-val"><?= $e(format_number((int)($project['units'] ?? 0))) ?></span>
-                  <span class="proj-stat-lbl"><?= $e($text($labels, 'unit_card_label', 'Units')) ?></span>
+                  <span class="proj-stat-lbl"><?= $e(cd_output_label($project)) ?></span>
                 </div>
                 <div class="proj-stat">
                   <span class="proj-stat-val"><?= $pct ?>%</span>
@@ -293,7 +307,7 @@ include __DIR__ . '/app/partials/head.php';
                 </div>
               </div>
               <div class="proj-progress" role="progressbar" aria-valuenow="<?= $pct ?>" aria-valuemin="0" aria-valuemax="100">
-                <div class="proj-progress-fill" data-target="<?= $pct ?>"></div>
+                <div class="proj-progress-fill" data-target="<?= $pct ?>" style="width:<?= $pct ?>%"></div>
               </div>
               <div class="proj-milestone">
                 <i class="fa-solid fa-hard-hat" aria-hidden="true"></i>
@@ -320,7 +334,9 @@ include __DIR__ . '/app/partials/head.php';
             <div class="cd-prog-label"><?= $e($text($labels, 'progress_eyebrow', 'Progress Overview')) ?></div>
             <h2 class="cd-prog-title"><?= $e($constituency['name']) ?> <?= $e($text($labels, 'progress_title_suffix', 'Construction Progress')) ?></h2>
             <p class="cd-prog-sub">
-              <?= $e(cd_replace_tokens($text($labels, 'progress_subtitle', 'Across {projects} active {project_word}, {constituency} Constituency has delivered {units} units under the national AHP programme. Work is progressing across {wards} wards.'), [
+              <?= $e(cd_replace_tokens($projectCount > 0
+                  ? $text($labels, 'progress_subtitle', 'Across {projects} active {project_word}, {constituency} Constituency is tracking {units} project outputs across {wards} wards.')
+                  : $text($labels, 'empty_progress_subtitle', 'No active project progress has been published yet for {constituency}. The tracker will update once a site is approved and published.'), [
                   'projects' => format_number($projectCount),
                   'project_word' => $projectCount === 1 ? 'project' : 'projects',
                   'constituency' => (string)$constituency['name'],
@@ -335,7 +351,7 @@ include __DIR__ . '/app/partials/head.php';
               <div class="cd-prog-pct-lbl"><?= $e($text($labels, 'completion_label', 'Average Completion')) ?></div>
             </div>
             <div class="cd-prog-bar-wrap" role="progressbar" aria-valuenow="<?= $avgCompletion ?>" aria-valuemin="0" aria-valuemax="100">
-              <div class="cd-prog-bar-fill" data-target="<?= $avgCompletion ?>"></div>
+              <div class="cd-prog-bar-fill" data-target="<?= $avgCompletion ?>" style="width:<?= $avgCompletion ?>%"></div>
             </div>
             <div class="cd-prog-stats-row">
               <div class="cd-prog-stat">
@@ -365,18 +381,27 @@ include __DIR__ . '/app/partials/head.php';
               <?php
                 $factRows = [
                     ['fa-map-pin', $text($facts, 'county_label', 'County'), 'Trans-Nzoia County, Kenya'],
-                    ['fa-users', $text($facts, 'population_label', 'Population'), $shortPopulation($constituency['population'] ?? 0)],
-                    ['fa-map', $text($facts, 'wards_label', 'Wards'), implode(', ', $constituency['wards'])],
+                    ['fa-users', $text($facts, 'population_label', 'Population'), $shortPopulation($constituency['population_raw'] ?? 0)],
+                    ['fa-map', $text($facts, 'wards_label', 'Wards'), $constituency['wards'], true],
                     ['fa-person-shelter', $text($facts, 'lead_agency_label', 'Lead Agency'), $text($facts, 'lead_agency_value', 'State Dept. of Housing')],
                     ['fa-coins', $text($facts, 'funding_label', 'Funding'), $text($facts, 'funding_value', 'National AHP Fund + County Budget')],
                     ['fa-building-columns', $text($facts, 'programme_label', 'Programme'), $text($facts, 'programme_value', 'National Affordable Housing Programme')],
                 ];
               ?>
-<?php foreach ($factRows as [$icon, $label, $value]): ?>
-              <div class="cd-fact-card">
+<?php foreach ($factRows as $factRow): ?>
+<?php [$icon, $label, $value] = $factRow; $isWardList = (bool)($factRow[3] ?? false); ?>
+              <div class="cd-fact-card<?= $isWardList ? ' cd-fact-card--wide' : '' ?>">
                 <i class="fa-solid <?= $e($icon) ?> cd-fact-icon" aria-hidden="true"></i>
                 <span class="cd-fact-label"><?= $e($label) ?></span>
+<?php if ($isWardList && is_array($value)): ?>
+                <span class="cd-fact-ward-list">
+<?php foreach ($value as $ward): ?>
+                  <span class="cd-fact-ward-chip"><?= $e($ward) ?></span>
+<?php endforeach; ?>
+                </span>
+<?php else: ?>
                 <span class="cd-fact-value"><?= $e($value) ?></span>
+<?php endif; ?>
               </div>
 <?php endforeach; ?>
             </div>
@@ -386,18 +411,12 @@ include __DIR__ . '/app/partials/head.php';
             <div class="cd-mini-map-wrap">
               <svg id="cdMiniMap" viewBox="0 0 480 400" xmlns="http://www.w3.org/2000/svg" aria-label="Trans-Nzoia County map with selected constituency highlighted">
 <?php
-$mapShapes = [
-    'endebess' => ['M 20,20 L 220,20 L 220,185 L 120,205 L 20,165 Z', 112, 105, 'Endebess'],
-    'cherangany' => ['M 220,20 L 460,20 L 460,235 L 265,235 L 220,185 Z', 352, 120, 'Cherangany'],
-    'kiminini' => ['M 20,165 L 120,205 L 120,385 L 20,385 Z', 62, 295, 'Kiminini'],
-    'saboti' => ['M 120,205 L 220,185 L 265,235 L 265,385 L 120,385 Z', 190, 308, 'Saboti'],
-    'kwanza' => ['M 265,235 L 460,235 L 460,385 L 265,385 Z', 365, 313, 'Kwanza'],
-];
+$mapNames = array_column(Constituency::publicList(), 'name', 'slug');
 ?>
-<?php foreach ($mapShapes as $mapSlug => [$path, $x, $y, $name]): ?>
+<?php foreach (Constituency::mapShapes() as $mapSlug => $shape): ?>
                 <g class="cdm-path-group<?= $mapSlug === (string)$constituency['slug'] ? ' is-selected' : '' ?>" data-id="<?= $e($mapSlug) ?>">
-                  <path d="<?= $e($path) ?>" class="cdm-path"/>
-                  <text class="cdm-label" x="<?= (int)$x ?>" y="<?= (int)$y ?>"><?= $e($name) ?></text>
+                  <path d="<?= $e($shape['path']) ?>" class="cdm-path"/>
+                  <text class="cdm-label" x="<?= (int)$shape['label_x'] ?>" y="<?= (int)$shape['label_y'] ?>"><?= $e($mapNames[$mapSlug] ?? ucwords($mapSlug)) ?></text>
                 </g>
 <?php endforeach; ?>
               </svg>
@@ -417,7 +436,7 @@ $mapShapes = [
         <div class="cd-section-header">
           <div>
             <h2 class="cd-section-title"><?= $e($text($relatedCopy, 'title', 'Other Constituencies')) ?></h2>
-            <p class="cd-section-sub"><?= $e($text($relatedCopy, 'subtitle', 'Explore housing developments across Trans-Nzoia County.')) ?></p>
+            <p class="cd-section-sub"><?= $e($text($relatedCopy, 'subtitle', 'Explore project coverage across Trans-Nzoia County.')) ?></p>
           </div>
           <a href="constituencies.php" class="cd-view-all">
             <?= $e($text($relatedCopy, 'view_all_label', 'View all')) ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
@@ -430,7 +449,7 @@ $mapShapes = [
             <div class="cd-related-head">
               <div>
                 <div class="cd-related-name"><?= $e($other['name']) ?></div>
-                <div class="cd-related-pop"><?= $e($shortPopulation($other['population'] ?? 0)) ?></div>
+                <div class="cd-related-pop"><?= $e($shortPopulation($other['population_raw'] ?? 0)) ?></div>
               </div>
               <span class="con-browse-status con-browse-status--<?= $e($otherStatus) ?>"><?= $e($otherStatus === 'active' ? 'Active' : 'Planning') ?></span>
             </div>
@@ -440,8 +459,8 @@ $mapShapes = [
                 <span class="cd-related-stat-lbl"><?= $e($text($labels, 'projects_label', 'Projects')) ?></span>
               </div>
               <div class="cd-related-stat">
-                <span class="cd-related-stat-val"><?= $e(format_number((int)$other['total_units_live'])) ?></span>
-                <span class="cd-related-stat-lbl"><?= $e($text($labels, 'unit_card_label', 'Units')) ?></span>
+                <span class="cd-related-stat-val"><?= $e(format_number((int)$other['total_units'])) ?></span>
+                <span class="cd-related-stat-lbl"><?= $e($text($labels, 'total_units_label', 'Tracked Outputs')) ?></span>
               </div>
               <div class="cd-related-stat">
                 <span class="cd-related-stat-val"><?= $e(format_number(count($other['wards'] ?? []))) ?></span>
@@ -477,8 +496,8 @@ $mapShapes = [
       <div class="cd-apply-inner">
         <div class="cd-apply-icon"><i class="fa-solid fa-house-circle-check" aria-hidden="true"></i></div>
         <div class="cd-apply-copy">
-          <h3 class="cd-apply-title"><?= $e($text($cta, 'title', 'Ready to Apply for Affordable Housing?')) ?></h3>
-          <p class="cd-apply-sub"><?= $e($text($cta, 'subtitle', 'Register on the national Boma Yangu portal to join the allocation list for this constituency.')) ?></p>
+          <h3 class="cd-apply-title"><?= $e($hasAhpProject ? $text($cta, 'title', 'Ready to Apply for Affordable Housing?') : $text($cta, 'tracking_title', 'Follow Project Updates in This Constituency')) ?></h3>
+          <p class="cd-apply-sub"><?= $e($hasAhpProject ? $text($cta, 'subtitle', 'Register on the national Boma Yangu portal to join the allocation list for this constituency.') : $text($cta, 'tracking_subtitle', 'Published project sites, milestones, and constituency updates will appear here as the county tracker is updated.')) ?></p>
         </div>
         <div class="cd-apply-ctas">
           <a href="<?= $e($text($cta, 'primary_url', 'https://bomayangu.go.ke')) ?>" target="_blank" rel="noopener noreferrer" class="cd-btn-lime">
@@ -492,6 +511,7 @@ $mapShapes = [
     </div>
   </div>
 <?php endif; ?>
+<?= public_json_script('ahp-page-data', $pagePayload) ?>
 <?php include __DIR__ . '/app/partials/footer.php'; ?>
 <?php include __DIR__ . '/app/partials/back-to-top.php'; ?>
 <?php include __DIR__ . '/app/partials/mobile-menu.php'; ?>

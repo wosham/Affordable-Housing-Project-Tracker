@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_user_form';
 $userId = Security::cleanInt($_GET['id'] ?? 0);
@@ -12,11 +12,23 @@ if (!$user) {
     Response::redirect(Url::to('admin/superadmin/users.php'));
 }
 
-$roles = Database::fetchAll('SELECT * FROM roles ORDER BY id ASC');
+$roles = Role::allOrdered();
 $rolesById = [];
 foreach ($roles as $role) {
     $rolesById[(int)$role['id']] = $role;
 }
+$projects = user_project_options();
+$workLocations = user_work_location_options();
+$userAssignments = ProjectAssignment::projectsForUser($userId);
+$userWorkLocationAssignments = WorkLocation::forUser($userId);
+$selectedProjectIds = array_values(array_unique(array_map(
+    'intval',
+    array_column(array_filter($userAssignments, fn ($row) => (string)($row['status'] ?? '') === 'active'), 'project_id')
+)));
+$selectedWorkLocationIds = array_values(array_unique(array_map(
+    'intval',
+    array_column($userWorkLocationAssignments, 'work_location_id')
+)));
 
 $statusOptions = ['active', 'inactive', 'suspended'];
 $currentUserId = (int)(Auth::id() ?? 0);
@@ -33,8 +45,10 @@ $values = [
     'role_id' => (int)($user['role_id'] ?? 0),
     'status' => (string)($user['status'] ?? 'inactive'),
     'is_public' => 1,
+    'send_invite' => 0,
 ];
 $isProtectedSuperadminView = ($user['role_slug'] ?? '') === 'superadmin';
+$oldRoleSlug = (string)($user['role_slug'] ?? '');
 
 if (Security::isPost()) {
     if (!Csrf::verify(Csrf::fromRequest(), $csrfForm)) {
@@ -43,6 +57,8 @@ if (Security::isPost()) {
     }
 
     $values = user_form_values($_POST, $values);
+    $selectedProjectIds = user_selected_project_ids($_POST['project_ids'] ?? []);
+    $selectedWorkLocationIds = user_selected_project_ids($_POST['work_location_ids'] ?? []);
     $errors = user_validate_values($values, $rolesById, $statusOptions);
 
     $password = (string)($_POST['password'] ?? '');
@@ -56,7 +72,10 @@ if (Security::isPost()) {
     }
 
     if ($values['email'] !== '' && User::emailExists($values['email'], $userId)) {
-        $errors['email'] = 'A different user already uses this email.';
+        $errors['email'] = 'A different user already uses this Gmail address.';
+    }
+    if ($values['phone'] !== '' && User::phoneExists($values['phone'], $userId)) {
+        $errors['phone'] = 'A different user already uses this phone number.';
     }
 
     $submittedRole = $rolesById[(int)$values['role_id']]['slug'] ?? '';
@@ -69,10 +88,17 @@ if (Security::isPost()) {
         $errors['status'] = 'You cannot deactivate or suspend your own account.';
     }
     if ($removesLastSuperadmin) {
-        $errors['role_id'] = 'The super administrator account is protected and must remain active.';
+        $errors['role_id'] = 'The County Director account is protected and must remain active.';
     }
     if ($createsSecondSuperadmin) {
-        $errors['role_id'] = 'Only one super administrator account is allowed.';
+        $errors['role_id'] = 'Only one County Director account is allowed.';
+    }
+    if (in_array($submittedRole, ProjectAssignment::assignableRoles(), true) && $selectedProjectIds === [] && !($submittedRole === 'intern' && $selectedWorkLocationIds !== [])) {
+        $errors['project_ids'] = 'Select at least one project site or HQ work location for this role.';
+    }
+    if (ProjectAssignment::isSingleSiteRole($submittedRole) && count($selectedProjectIds) > 1) {
+        $errors['project_ids'] = 'Clerks and interns may be assigned to only one project site. Select a single site.';
+        $selectedProjectIds = [(int)$selectedProjectIds[0]];
     }
 
     $oldAvatar = (string)($user['avatar'] ?? '');
@@ -101,8 +127,19 @@ if (Security::isPost()) {
         }
 
         User::update($userId, $payload);
+        if (in_array($submittedRole, ProjectAssignment::assignableRoles(), true)) {
+            ProjectAssignment::syncUserAssignments($userId, $selectedProjectIds, $currentUserId);
+        } else {
+            ProjectAssignment::syncUserAssignments($userId, [], $currentUserId);
+        }
+        WorkLocation::syncUserAssignments($userId, $submittedRole === 'intern' ? $selectedWorkLocationIds : [], $submittedRole, $currentUserId);
         if ($avatarPath !== null && $oldAvatar !== '' && $oldAvatar !== $avatarPath) {
             user_delete_avatar_file($oldAvatar);
+        }
+        $accessChanged = $password !== '' || $oldRoleSlug !== $submittedRole || $values['status'] !== (string)($user['status'] ?? 'inactive');
+        if ($accessChanged) {
+            $exceptToken = $userId === $currentUserId ? UserSession::currentToken() : null;
+            UserSession::revokeForUser($userId, $exceptToken);
         }
         if ($userId === $currentUserId) {
             Auth::refresh([
@@ -117,8 +154,29 @@ if (Security::isPost()) {
                 'role_name' => $rolesById[(int)$values['role_id']]['name'] ?? role_label($submittedRole),
             ]);
         }
+        $message = 'User account updated successfully.';
+        if ((int)$values['send_invite'] === 1) {
+            try {
+                $updatedUser = User::findDetailed($userId) ?: ['id' => $userId] + $values;
+                $reset = PasswordReset::createForUser($updatedUser, 1440);
+                $result = AuthEmailService::sendUserInvitation($updatedUser, $reset['token'], $reset['expires_at'], [
+                    'role_label' => role_label($submittedRole),
+                    'access_summary' => user_access_summary($submittedRole, $projects, $selectedProjectIds, $workLocations, $selectedWorkLocationIds),
+                ]);
+                Logger::log(!empty($result['success']) ? 'invite-sent' : 'invite-failed', 'users', $userId, [
+                    'email' => $values['email'],
+                    'message' => $result['message'] ?? null,
+                ]);
+                $message = !empty($result['success'])
+                    ? 'User account updated and setup email sent successfully.'
+                    : 'User account updated, but the setup email could not be sent. Check email settings.';
+            } catch (Throwable $emailError) {
+                Logger::log('invite-failed', 'users', $userId, ['email' => $values['email'], 'error' => $emailError->getMessage()]);
+                $message = 'User account updated, but the setup email could not be prepared.';
+            }
+        }
         Logger::log('update', 'users', $userId, ['email' => $values['email']]);
-        Session::flash('status', 'User account updated successfully.');
+        Session::flash('status', $message);
         Response::redirect(Url::to('admin/superadmin/user-edit.php?id=' . $userId));
     }
 }
@@ -131,7 +189,7 @@ $componentCss = ['user-profile'];
 $pageScripts = ['user-form'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Users', 'url' => Url::to('admin/superadmin/users.php')],
     ['label' => 'Edit User'],
 ];
@@ -155,7 +213,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   </section>
 
   <section class="stat-grid stat-grid--3 sa-user-edit-stats" aria-label="User account summary">
-    <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--info"><i class="fa-solid fa-id-card" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e($rolesById[(int)$values['role_id']]['name'] ?? 'No role') ?></strong><span class="stat-widget__label">Current Role</span><small class="stat-widget__trend">Dashboard permission group</small></span></article>
+    <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--info"><i class="fa-solid fa-id-card" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(role_label((string)($rolesById[(int)$values['role_id']]['slug'] ?? ''))) ?></strong><span class="stat-widget__label">Current Role</span><small class="stat-widget__trend">Dashboard permission group</small></span></article>
     <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--success"><i class="fa-solid fa-signal" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(status_label($values['status'])) ?></strong><span class="stat-widget__label">Account Status</span><small class="stat-widget__trend">Sign-in eligibility</small></span></article>
     <article class="stat-widget"><span class="stat-widget__icon stat-widget__icon--warning"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(time_ago($user['last_login'] ?? null)) ?></strong><span class="stat-widget__label">Last Login</span><small class="stat-widget__trend">Most recent portal access</small></span></article>
   </section>
@@ -177,6 +235,28 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <?= user_field('Job title', 'job_title', $values, $errors, true, 'text', 'County Director, Resident Engineer...') ?>
           <?= user_field('Department / organisation', 'department', $values, $errors, true, 'text', 'County Housing Department') ?>
         </div>
+        <?php render_user_selected_project_summary($projects, $selectedProjectIds, (string)($user['role_slug'] ?? '')); ?>
+      </section>
+
+      <section class="card sa-form-card sa-user-form-card sa-assignment-card">
+        <div class="card__header">
+          <div>
+            <h2 class="card__title"><?= in_array((string)($user['role_slug'] ?? ''), ['superadmin', 'finance'], true) ? 'Project Sites' : 'Project Access' ?></h2>
+            <p class="card__subtitle"><?= in_array((string)($user['role_slug'] ?? ''), ['superadmin', 'finance'], true) ? 'This role receives portfolio visibility automatically.' : 'Control which project sites this user can see and update from their dashboard.' ?></p>
+          </div>
+        </div>
+        <?php render_user_project_assignment_picker($projects, $selectedProjectIds, $userAssignments, (string)($user['role_slug'] ?? '')); ?>
+        <?= sa_user_error($errors, 'project_ids') ?>
+      </section>
+
+      <section class="card sa-form-card sa-user-form-card sa-assignment-card">
+        <div class="card__header">
+          <div>
+            <h2 class="card__title">Work Location Access</h2>
+            <p class="card__subtitle">Assign office-based interns to internal locations such as Headquarters Office. These assignments are managed by County Director/Superadmin, not site clerks.</p>
+          </div>
+        </div>
+        <?php render_user_work_location_picker($workLocations, $selectedWorkLocationIds, (string)($user['role_slug'] ?? '')); ?>
       </section>
 
       <section class="card sa-form-card sa-user-form-card">
@@ -191,13 +271,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
             <span class="form-label">Role <strong>*</strong></span>
 <?php if ($isProtectedSuperadminView): ?>
             <input type="hidden" name="role_id" value="<?= Security::e((string)$values['role_id']) ?>">
-            <input class="form-input" type="text" value="<?= Security::e($rolesById[(int)$values['role_id']]['name'] ?? 'Super Administrator') ?>" disabled>
+            <input class="form-input" type="text" value="<?= Security::e(role_label((string)($rolesById[(int)$values['role_id']]['slug'] ?? 'superadmin'))) ?>" disabled>
             <span class="form-hint">System owner role is locked.</span>
 <?php else: ?>
-            <select class="form-select <?= isset($errors['role_id']) ? 'is-error' : '' ?>" name="role_id" required>
+            <select class="form-select <?= isset($errors['role_id']) ? 'is-error' : '' ?>" name="role_id" required data-role-select>
               <option value="">Choose role</option>
               <?php foreach ($roles as $role): ?>
-                <option value="<?= Security::e((string)$role['id']) ?>" <?= (string)$values['role_id'] === (string)$role['id'] ? 'selected' : '' ?>><?= Security::e($role['name']) ?></option>
+                <option value="<?= Security::e((string)$role['id']) ?>" data-role-slug="<?= Security::e((string)$role['slug']) ?>" <?= (string)$values['role_id'] === (string)$role['id'] ? 'selected' : '' ?>><?= Security::e(role_label((string)$role['slug'])) ?></option>
               <?php endforeach; ?>
             </select>
 <?php endif; ?>
@@ -235,6 +315,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
             </div>
             <?= sa_user_error($errors, 'password_confirm') ?>
           </label>
+          <label class="form-field sa-toggle-field">
+            <span class="form-label">Account email</span>
+            <span class="sa-checkbox-line">
+              <input type="checkbox" name="send_invite" value="1" <?= (int)$values['send_invite'] === 1 ? 'checked' : '' ?>>
+              <span>Email this user a fresh setup link and current login details.</span>
+            </span>
+            <span class="form-hint">Use this after changing role, project access or resetting a user who cannot sign in.</span>
+          </label>
         </div>
       </section>
 
@@ -266,22 +354,17 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </div>
 
     <aside class="sa-editor-aside">
-      <section class="card sa-user-preview">
-        <div class="sa-user-preview__top">
-          <span class="sa-user-preview__avatar" data-profile-avatar><?php if ($values['avatar'] !== ''): ?><img src="<?= Security::e(Url::asset($values['avatar'])) ?>" alt=""><?php else: ?><?= Security::e(user_initials($values)) ?><?php endif; ?></span>
-          <span class="badge <?= Security::e(status_badge_class($values['status'])) ?>" data-profile-status><?= Security::e(status_label($values['status'])) ?></span>
-        </div>
-        <div class="sa-user-preview__body">
-          <span class="sa-panel-label"><i class="fa-solid fa-id-card" aria-hidden="true"></i> Live profile preview</span>
-          <h3 data-profile-name><?= Security::e(trim($values['first_name'] . ' ' . $values['last_name']) ?: 'User') ?></h3>
-          <p data-profile-title><?= Security::e($values['job_title'] ?: 'Role title will appear here') ?></p>
-          <dl class="sa-preview-list">
-            <div><dt>Email</dt><dd data-profile-email><?= Security::e($values['email'] ?: 'email@example.com') ?></dd></div>
-            <div><dt>Department</dt><dd data-profile-department><?= Security::e($values['department'] ?: 'Not set') ?></dd></div>
-            <div><dt>Created</dt><dd><?= Security::e(format_date($user['created_at'] ?? null)) ?></dd></div>
-          </dl>
-        </div>
-      </section>
+      <?php
+      $selectedPreviewProjects = array_values(array_filter($projects, static fn (array $project): bool => in_array((int)$project['id'], $selectedProjectIds, true)));
+      $previewValues = $values;
+      $previewUser = $user + [
+          'role_name' => (string)($rolesById[(int)$values['role_id']]['name'] ?? role_label((string)($user['role_slug'] ?? 'staff'))),
+          'status' => $values['status'],
+      ];
+      $previewProjects = in_array((string)($user['role_slug'] ?? ''), ['superadmin', 'finance'], true) ? $projects : $selectedPreviewProjects;
+      $previewMode = 'edit';
+      include __DIR__ . '/../../app/partials/admin/user-preview-card.php';
+      ?>
     </aside>
   </div>
 
@@ -302,8 +385,8 @@ function user_form_values(array $source, array $defaults): array
     return [
         'first_name' => Security::cleanString((string)($source['first_name'] ?? $defaults['first_name'])),
         'last_name' => Security::cleanString((string)($source['last_name'] ?? $defaults['last_name'])),
-        'email' => Security::cleanEmail((string)($source['email'] ?? $defaults['email'])),
-        'phone' => Security::cleanString((string)($source['phone'] ?? $defaults['phone'])),
+        'email' => User::normaliseEmail(Security::cleanEmail((string)($source['email'] ?? $defaults['email']))),
+        'phone' => User::normalisePhone(Security::cleanString((string)($source['phone'] ?? $defaults['phone']))),
         'job_title' => Security::cleanString((string)($source['job_title'] ?? $defaults['job_title'])),
         'department' => Security::cleanString((string)($source['department'] ?? $defaults['department'])),
         'bio' => trim(strip_tags((string)($source['bio'] ?? $defaults['bio']))),
@@ -311,6 +394,7 @@ function user_form_values(array $source, array $defaults): array
         'role_id' => Security::cleanInt($source['role_id'] ?? $defaults['role_id']),
         'status' => Security::cleanString((string)($source['status'] ?? $defaults['status'])),
         'is_public' => 1,
+        'send_invite' => !empty($source['send_invite']) ? 1 : 0,
     ];
 }
 
@@ -323,11 +407,11 @@ function user_validate_values(array $values, array $rolesById, array $statusOpti
     if ($values['last_name'] === '') {
         $errors['last_name'] = 'Last name is required.';
     }
-    if ($values['email'] === '' || !filter_var($values['email'], FILTER_VALIDATE_EMAIL) || strtolower(substr($values['email'], -10)) !== '@gmail.com') {
-        $errors['email'] = 'Enter a valid Gmail address.';
+    if (!User::isValidGmail((string)$values['email'])) {
+        $errors['email'] = 'Only Gmail addresses are accepted.';
     }
-    if (!preg_match('/^\+254[17][0-9]{8}$/', trim((string)$values['phone']))) {
-        $errors['phone'] = 'Enter a Kenyan phone number in +2547XXXXXXXX or +2541XXXXXXXX format.';
+    if (!User::isValidKenyanPhone((string)$values['phone'])) {
+        $errors['phone'] = 'Enter a Kenyan phone number, for example +254712345678.';
     }
     if ($values['job_title'] === '') {
         $errors['job_title'] = 'Job title is required.';
@@ -342,6 +426,290 @@ function user_validate_values(array $values, array $rolesById, array $statusOpti
         $errors['status'] = 'Choose a valid account status.';
     }
     return $errors;
+}
+
+function user_selected_project_ids(mixed $source): array
+{
+    if (!is_array($source)) {
+        return [];
+    }
+
+    return array_values(array_unique(array_filter(array_map('intval', $source), fn ($id) => $id > 0)));
+}
+
+function user_project_options(): array
+{
+    return Database::fetchAll(
+        'SELECT p.id, p.name, p.slug, p.status, p.units,
+                c.name AS constituency_name,
+                w.name AS ward_name
+         FROM projects p
+         LEFT JOIN constituencies c ON c.id = p.constituency_id
+         LEFT JOIN wards w ON w.id = p.ward_id
+         ORDER BY COALESCE(c.name, "Unassigned Constituency") ASC, p.name ASC'
+    );
+}
+
+function user_work_location_options(): array
+{
+    return WorkLocation::active();
+}
+
+function render_user_selected_project_summary(array $projects, array $selectedProjectIds, string $roleSlug = ''): void
+{
+    $selected = array_values(array_filter($projects, static fn (array $project): bool => in_array((int)$project['id'], $selectedProjectIds, true)));
+    $allAccess = in_array(strtolower($roleSlug), ['superadmin', 'county_director'], true);
+    $financeAccess = strtolower($roleSlug) === 'finance';
+    $count = $allAccess || $financeAccess ? count($projects) : count($selected);
+?>
+  <div class="sa-selected-projects" data-selected-project-summary data-empty-text="No project sites selected yet.">
+    <div class="sa-selected-projects__head">
+      <span><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Selected project sites</span>
+      <strong data-selected-project-count><?= Security::e((string)$count) ?></strong>
+    </div>
+    <div class="sa-selected-projects__list" data-selected-project-list>
+<?php if ($allAccess): ?>
+      <span class="sa-selected-project-pill is-all-access">All project sites</span>
+<?php elseif ($financeAccess): ?>
+      <span class="sa-selected-project-pill is-all-access">Finance portfolio visibility</span>
+<?php elseif ($selected === []): ?>
+      <span class="sa-selected-projects__empty">No project sites selected yet.</span>
+<?php else: foreach ($selected as $project): ?>
+      <span class="sa-selected-project-pill" data-project-id="<?= (int)$project['id'] ?>"><?= Security::e((string)$project['name']) ?></span>
+<?php endforeach; endif; ?>
+    </div>
+  </div>
+<?php
+}
+
+function render_user_project_assignment_picker(array $projects, array $selectedProjectIds, array $assignments = [], string $currentRole = ''): void
+{
+    $currentRole = strtolower($currentRole);
+    if (in_array($currentRole, ['superadmin', 'county_director'], true)) {
+?>
+  <div class="sa-assignment-picker sa-assignment-picker--readonly">
+    <div class="sa-assignment-mode sa-assignment-mode--all">
+      <i class="fa-solid fa-crown" aria-hidden="true"></i>
+      <div>
+        <strong>All project sites</strong>
+        <span>County Director accounts automatically see every project site. Manual project selection is not required.</span>
+      </div>
+    </div>
+    <p class="form-hint">To assign specific project sites, use manager, consultant, contractor, clerk or intern roles.</p>
+  </div>
+<?php
+        return;
+    }
+
+    if ($currentRole === 'finance') {
+?>
+  <div class="sa-assignment-picker sa-assignment-picker--readonly">
+    <div class="sa-assignment-mode sa-assignment-mode--finance">
+      <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+      <div>
+        <strong>Finance project portfolio</strong>
+        <span>Finance users see project financial workflows without site-operation assignment.</span>
+      </div>
+    </div>
+    <p class="form-hint">Site-operation assignment is only required for manager, consultant, contractor, clerk and intern roles.</p>
+  </div>
+<?php
+        return;
+    }
+
+    $assignmentByProject = [];
+    foreach ($assignments as $assignment) {
+        $assignmentByProject[(int)$assignment['project_id']] = $assignment;
+    }
+    $grouped = [];
+    foreach ($projects as $project) {
+        $constituency = trim((string)($project['constituency_name'] ?? '')) ?: 'Unassigned Constituency';
+        $grouped[$constituency][] = $project;
+    }
+?>
+  <div class="sa-assignment-picker" data-assignment-picker data-static-role="<?= Security::e($currentRole) ?>">
+    <div class="sa-assignment-mode sa-assignment-mode--all" data-assignment-all-access hidden>
+      <i class="fa-solid fa-crown" aria-hidden="true"></i>
+      <div>
+        <strong>Automatic all-site access</strong>
+        <span>This role can access every project site by default. Manual project selection is not required.</span>
+      </div>
+    </div>
+    <div class="sa-assignment-mode sa-assignment-mode--finance" data-assignment-finance-access hidden>
+      <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+      <div>
+        <strong>Finance portfolio visibility</strong>
+        <span>Finance users can view project financial workflows without being assigned as site operators.</span>
+      </div>
+    </div>
+<?php
+    $singleSite = ProjectAssignment::isSingleSiteRole($currentRole);
+    $inputType = $singleSite ? 'radio' : 'checkbox';
+    $inputName = $singleSite ? 'project_ids[]' : 'project_ids[]';
+?>
+    <div class="sa-assignment-picker__tools">
+      <span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> <?= $singleSite ? 'Select one project site' : 'Select project access' ?></span>
+      <label class="sa-assignment-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" placeholder="Search project sites..." data-assignment-search></label>
+      <div>
+        <button class="btn btn--outline btn--sm" type="button" data-assignment-show-selected aria-pressed="false">Selected only</button>
+<?php if (!$singleSite): ?>
+        <button class="btn btn--outline btn--sm" type="button" data-assignment-select-all>Select all</button>
+        <button class="btn btn--outline btn--sm" type="button" data-assignment-group-toggle-all hidden>Select constituency</button>
+<?php endif; ?>
+        <button class="btn btn--outline btn--sm" type="button" data-assignment-clear>Clear</button>
+      </div>
+    </div>
+    <div class="sa-assignment-groups" data-single-site="<?= $singleSite ? '1' : '0' ?>">
+<?php foreach ($grouped as $constituency => $items): ?>
+      <section class="sa-assignment-group" data-assignment-group>
+        <div class="sa-assignment-group__head">
+          <span><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> <?= Security::e($constituency) ?></span>
+<?php if (!$singleSite): ?>
+          <button class="btn btn--outline btn--sm" type="button" data-assignment-group-toggle>Select constituency</button>
+<?php endif; ?>
+        </div>
+        <div class="sa-assignment-grid">
+<?php foreach ($items as $project): ?>
+<?php
+    $projectId = (int)$project['id'];
+    $assignment = $assignmentByProject[$projectId] ?? null;
+    $assignmentStatus = (string)($assignment['status'] ?? '');
+    $isSelected = in_array($projectId, $selectedProjectIds, true);
+    if ($singleSite && count($selectedProjectIds) > 1) {
+        $isSelected = $projectId === (int)$selectedProjectIds[0];
+    }
+?>
+          <label class="sa-assignment-option">
+            <input type="<?= Security::e($inputType) ?>" name="<?= Security::e($inputName) ?>" value="<?= Security::e((string)$projectId) ?>" <?= $isSelected ? 'checked' : '' ?> data-project-name="<?= Security::e((string)$project['name']) ?>" <?= $singleSite ? 'data-single-site-input' : '' ?>>
+            <span>
+              <strong><?= Security::e((string)$project['name']) ?></strong>
+              <small>
+                <?= Security::e(status_label((string)($project['status'] ?? 'active'))) ?><?= $assignmentStatus !== '' ? ' / ' . Security::e(status_label($assignmentStatus)) : '' ?>
+                <?php if (!empty($project['ward_name'])): ?>/ <?= Security::e((string)$project['ward_name']) ?><?php endif; ?>
+                <?php if ((int)($project['units'] ?? 0) > 0): ?>/ <?= Security::e(format_number((int)$project['units'])) ?> units<?php endif; ?>
+              </small>
+            </span>
+          </label>
+<?php endforeach; ?>
+        </div>
+      </section>
+<?php endforeach; ?>
+    </div>
+    <p class="form-hint"><?= $singleSite
+        ? 'Clerks and interns may only be assigned to one active project site. A site may still have many clerks and interns.'
+        : 'You are assigning access as County Director. Site selection is required only for manager, consultant, contractor, clerk and intern roles.' ?></p>
+  </div>
+<?php
+}
+
+function render_user_work_location_picker(array $locations, array $selectedLocationIds, string $currentRole = ''): void
+{
+    $currentRole = strtolower($currentRole);
+    if ($currentRole === 'superadmin') {
+?>
+  <div class="sa-assignment-picker sa-work-location-picker sa-assignment-picker--readonly">
+    <div class="sa-assignment-mode sa-assignment-mode--all">
+      <i class="fa-solid fa-ban" aria-hidden="true"></i>
+      <div>
+        <strong>Not applicable</strong>
+        <span>Only office-based interns use internal work locations. Manual assignment is not required.</span>
+      </div>
+    </div>
+  </div>
+<?php
+        return;
+    }
+?>
+  <div class="sa-assignment-picker sa-work-location-picker" data-static-role="<?= Security::e($currentRole) ?>">
+    
+    <div class="sa-assignment-mode sa-assignment-mode--empty" data-work-location-empty-state hidden>
+      <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+      <div>
+        <strong>Choose a role first</strong>
+        <span>Work location options will appear here if the selected role requires them.</span>
+      </div>
+    </div>
+
+    <div class="sa-assignment-mode sa-assignment-mode--all" data-work-location-not-applicable hidden>
+      <i class="fa-solid fa-ban" aria-hidden="true"></i>
+      <div>
+        <strong>Not applicable</strong>
+        <span>Only office-based interns are assigned to internal work locations.</span>
+      </div>
+    </div>
+
+    <div data-work-location-groups>
+      <?php if ($locations === []): ?>
+        <div class="sa-assignment-mode sa-assignment-mode--empty">
+          <i class="fa-solid fa-building-user" aria-hidden="true"></i>
+          <div><strong>No work locations configured</strong><span>Create internal work locations from the Work Locations page.</span></div>
+        </div>
+      <?php else: ?>
+        <div class="sa-assignment-groups">
+          <section class="sa-assignment-group">
+            <div class="sa-assignment-group__head">
+              <span><i class="fa-solid fa-building-user" aria-hidden="true"></i> Internal work locations</span>
+            </div>
+            <div class="sa-assignment-grid">
+            <?php foreach ($locations as $location): ?>
+            <?php $locationId = (int)$location['id']; ?>
+              <label class="sa-assignment-option">
+                <input type="checkbox" name="work_location_ids[]" value="<?= $locationId ?>" <?= in_array($locationId, $selectedLocationIds, true) ? 'checked' : '' ?>>
+                <span>
+                  <strong><?= Security::e((string)$location['name']) ?></strong>
+                  <small><?= Security::e(status_label((string)$location['status'])) ?> / <?= Security::e((string)($location['address'] ?: 'Internal office')) ?></small>
+                </span>
+              </label>
+            <?php endforeach; ?>
+            </div>
+          </section>
+        </div>
+        <p class="form-hint">Use this for HQ interns. Site clerks do not open or supervise these office assignments.</p>
+      <?php endif; ?>
+    </div>
+  </div>
+<?php
+}
+
+function user_project_access_summary(string $roleSlug, array $projects, array $selectedProjectIds): string
+{
+    $roleSlug = strtolower($roleSlug);
+    if (in_array($roleSlug, ['superadmin', 'county_director'], true)) {
+        return 'All project sites (' . count($projects) . ' total)';
+    }
+    if ($roleSlug === 'finance') {
+        return 'Finance portfolio visibility across project financial workflows';
+    }
+
+    $names = [];
+    foreach ($projects as $project) {
+        if (in_array((int)$project['id'], $selectedProjectIds, true)) {
+            $names[] = (string)$project['name'];
+        }
+    }
+
+    if ($names === []) {
+        return 'No project sites selected';
+    }
+
+    return implode(', ', array_slice($names, 0, 8)) . (count($names) > 8 ? ' and ' . (count($names) - 8) . ' more' : '');
+}
+
+function user_access_summary(string $roleSlug, array $projects, array $selectedProjectIds, array $locations, array $selectedLocationIds): string
+{
+    $projectSummary = user_project_access_summary($roleSlug, $projects, $selectedProjectIds);
+    $locationNames = [];
+    foreach ($locations as $location) {
+        if (in_array((int)$location['id'], $selectedLocationIds, true)) {
+            $locationNames[] = (string)$location['name'];
+        }
+    }
+
+    if ($locationNames === []) {
+        return $projectSummary;
+    }
+
+    return $projectSummary . '; Work locations: ' . implode(', ', $locationNames);
 }
 
 function user_store_avatar(?array $file, array &$errors): ?string

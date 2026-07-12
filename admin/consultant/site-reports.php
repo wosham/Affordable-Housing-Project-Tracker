@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $userId = (int)(Auth::id() ?? 0);
 $role = (string)(Auth::role() ?? '');
@@ -13,7 +13,7 @@ $filters = [
     'to' => trim((string)($_GET['to'] ?? '')),
 ];
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
-$limit = 15;
+$limit = 10;
 $offset = ($page - 1) * $limit;
 
 $projects = ConsultantDocumentCentre::projects($userId, $role);
@@ -21,6 +21,7 @@ $summary = ConsultantDocumentCentre::siteReportSummary($userId, $role, $filters)
 $reports = ConsultantDocumentCentre::siteReports($userId, $role, $filters, $limit, $offset);
 $total = ConsultantDocumentCentre::siteReportCount($userId, $role, $filters);
 $pages = max(1, (int)ceil($total / $limit));
+$attention = ConsultantDocumentCentre::siteReportAttentionItems($userId, $role, $filters, 8);
 
 $pageTitle = 'Site Reports';
 $pageDescription = 'Review site diaries, field issues, next-day plans and consultant report actions.';
@@ -31,7 +32,7 @@ $pageScripts = ['consultant-documents'];
 $csrfForm = 'consultant_reports';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Consultant'],
+    ['label' => 'Consultant', 'url' => Url::to('admin/consultant/dashboard.php')],
     ['label' => 'Site Reports'],
 ];
 
@@ -42,7 +43,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i> Site reporting</span>
     <h2>Site Reports</h2>
-    <p>Review daily site records, field issues, next-day plans and project reporting signals.</p>
+    <p>Review daily site records, field issues, next-day plans and project reporting signals on assigned projects only.</p>
   </div>
   <div class="doc-actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/dashboard.php')) ?>"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard</a>
@@ -52,12 +53,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="doc-stats" aria-label="Site report summary">
-  <?php doc_stat('fa-clipboard-list', $summary['total'], 'Reports', 'Assigned portfolio'); ?>
-  <?php doc_stat('fa-calendar-week', $summary['this_week'], 'This Week', 'Recent records'); ?>
-  <?php doc_stat('fa-hourglass-half', $summary['pending'], 'Pending', 'Needs review'); ?>
-  <?php doc_stat('fa-flag', $summary['flagged'], 'Flagged', 'Needs attention'); ?>
-  <?php doc_stat('fa-circle-check', $summary['reviewed'], 'Reviewed', 'Closed or checked'); ?>
-  <?php doc_stat('fa-building', $summary['projects'], 'Projects', 'With reports'); ?>
+  <?php doc_stat('fa-clipboard-list', $summary['total'], 'Reports', 'Assigned portfolio', site_filter_url([])); ?>
+  <?php doc_stat('fa-calendar-week', $summary['this_week'], 'This Week', 'Recent records', site_filter_url([])); ?>
+  <?php doc_stat('fa-hourglass-half', $summary['pending'], 'Pending', 'Needs review', site_filter_url(['status' => 'pending'])); ?>
+  <?php doc_stat('fa-flag', $summary['flagged'], 'Flagged', 'Needs attention', site_filter_url(['status' => 'flagged'])); ?>
+  <?php doc_stat('fa-circle-check', $summary['reviewed'], 'Reviewed', 'Closed or checked', site_filter_url(['status' => 'reviewed'])); ?>
+  <?php doc_stat('fa-building', $summary['projects'], 'Projects', 'With reports', site_filter_url([])); ?>
 </section>
 
 <section class="doc-layout">
@@ -70,7 +71,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <span class="badge badge--info"><?= format_number($total) ?> records</span>
     </div>
 
-    <form class="doc-filter-grid doc-filter-grid--reports" method="get">
+    <form class="doc-filter-grid doc-filter-grid--reports" method="get" action="<?= Security::e(Url::to('admin/consultant/site-reports.php')) ?>">
       <label>Search <input type="search" name="q" value="<?= Security::e($filters['q']) ?>" placeholder="Report, project or issue..."></label>
       <label>Project
         <select name="project_id">
@@ -101,7 +102,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </thead>
         <tbody>
           <?php if ($reports === []): ?>
-            <tr><td colspan="6"><div class="doc-empty">No site reports found for the current view.</div></td></tr>
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <strong class="empty-state__title">No site reports found</strong>
+                  <span class="empty-state__text">Adjust filters or wait for daily diaries on your assigned projects.</span>
+                </div>
+              </td>
+            </tr>
           <?php endif; ?>
           <?php foreach ($reports as $report): ?>
             <?php $reportTitle = trim((string)($report['report_title'] ?? '')) ?: 'Daily site report'; ?>
@@ -147,18 +155,23 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
   <aside class="doc-card card">
     <h2>Report focus</h2>
-    <p>Open reporting items appear first for quick follow-up.</p>
+    <p>Open reporting items across your portfolio (not limited to this page).</p>
     <div class="doc-side-list">
-      <?php foreach (array_slice(array_filter($reports, static fn ($report): bool => in_array((string)($report['consultant_review_status'] ?? 'pending'), ['pending', 'flagged', 'returned'], true)), 0, 7) as $report): ?>
-        <div class="doc-side-item">
-          <strong><?= Security::e(trim((string)($report['report_title'] ?? '')) ?: 'Daily site report') ?></strong>
-          <span><?= Security::e($report['project_name']) ?> / <?= Security::e(format_date($report['diary_date'] ?? null)) ?></span>
+      <?php if ($attention === []): ?>
+        <div class="empty-state empty-state--compact">
+          <strong class="empty-state__title">No open report reviews</strong>
+          <span class="empty-state__text">Pending or flagged diaries will appear here.</span>
         </div>
-      <?php endforeach; ?>
-      <?php if ($summary['pending'] <= 0 && $summary['flagged'] <= 0): ?>
-        <div class="doc-empty">No open report reviews in the current view.</div>
-      <?php endif; ?>
+      <?php else: foreach ($attention as $report): ?>
+        <a class="doc-side-item doc-side-item--link" href="<?= Security::e(Url::to('admin/consultant/site-reports.php?project_id=' . (int)$report['project_id'] . '&status=' . rawurlencode((string)($report['consultant_review_status'] ?? 'pending')))) ?>">
+          <strong><?= Security::e(trim((string)($report['report_title'] ?? '')) ?: 'Daily site report') ?></strong>
+          <span><?= Security::e($report['project_name']) ?> · <?= Security::e(format_date($report['diary_date'] ?? null)) ?> · <?= Security::e(status_label($report['consultant_review_status'] ?? 'pending')) ?></span>
+        </a>
+      <?php endforeach; endif; ?>
     </div>
+    <?php if ((int)$summary['pending'] > 0): ?>
+      <a class="btn btn--outline btn--sm" href="<?= Security::e(site_filter_url(['status' => 'pending'])) ?>">View pending only</a>
+    <?php endif; ?>
   </aside>
 </section>
 
@@ -167,9 +180,18 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function doc_stat(string $icon, mixed $value, string $label, string $hint): void
+function site_filter_url(array $extra): string
 {
-    echo '<article class="doc-stat card"><span class="doc-stat__icon"><i class="fa-solid ' . Security::e($icon) . '" aria-hidden="true"></i></span><div><strong>' . Security::e((string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></article>';
+    $query = array_filter(array_merge($_GET, $extra), static fn ($v) => $v !== '' && $v !== null && $v !== 0 && $v !== '0');
+    unset($query['page']);
+    return Url::to('admin/consultant/site-reports.php' . ($query ? '?' . http_build_query($query) : ''));
+}
+
+function doc_stat(string $icon, mixed $value, string $label, string $hint, string $path = ''): void
+{
+    $tag = $path !== '' ? 'a' : 'article';
+    $href = $path !== '' ? ' href="' . Security::e($path) . '"' : '';
+    echo '<' . $tag . ' class="doc-stat card"' . $href . '><span class="doc-stat__icon"><i class="fa-solid ' . Security::e($icon) . '" aria-hidden="true"></i></span><div><strong>' . Security::e(is_numeric($value) ? format_number($value) : (string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></' . $tag . '>';
 }
 
 function doc_action(string $type, int $id, string $action, string $label, string $icon, string $item): void
@@ -179,14 +201,20 @@ function doc_action(string $type, int $id, string $action, string $label, string
 
 function doc_pagination(int $page, int $pages, int $total, int $limit): void
 {
-    $from = $total > 0 ? min($total, (($page - 1) * $limit) + 1) : 0;
-    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number(min($total, $page * $limit)) . ' of ' . format_number($total) . '</span><div>';
+    if ($total <= 0) {
+        return;
+    }
+    $from = min($total, (($page - 1) * $limit) + 1);
+    $to = min($total, $page * $limit);
     $query = $_GET;
+    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number($to) . ' of ' . format_number($total) . '</span><div>';
     $query['page'] = max(1, $page - 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>';
-    echo '<span class="btn btn--sm btn--primary">' . format_number($page) . '</span>';
+    $prevDis = $page <= 1 ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $prevDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>';
+    echo '<span class="btn btn--sm btn--primary">' . format_number($page) . ' / ' . format_number($pages) . '</span>';
     $query['page'] = min($pages, $page + 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div></div>';
+    $nextDis = $page >= $pages ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $nextDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div></div>';
 }
 
 function doc_modal(): void

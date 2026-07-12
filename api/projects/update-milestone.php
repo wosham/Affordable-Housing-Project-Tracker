@@ -3,14 +3,20 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
 
+$csrfForm = (string)($_SERVER['HTTP_X_CSRF_FORM'] ?? 'manager_milestones');
+if ($csrfForm === '') {
+    $csrfForm = 'manager_milestones';
+}
+
 ApiMiddleware::handle([
     'methods' => ['POST'],
     'roles' => ['superadmin', 'manager', 'clerk'],
     'csrf' => false,
 ]);
 
+// Accept page-specific CSRF forms used by manager/clerk/superadmin UIs.
 if (!milestone_update_csrf_ok()) {
-    Response::json(['success' => false, 'message' => 'Invalid security token.'], 419);
+    Response::json(['success' => false, 'message' => 'Invalid security token. Refresh the page and try again.'], 419);
 }
 
 $input = milestone_update_input();
@@ -171,14 +177,13 @@ function milestone_update_input(): array
 
 function milestone_update_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach (['manager_milestones', 'manager_projects', 'manager_dashboard', 'clerk_site_records', 'superadmin_projects', 'default'] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
+    $headerForm = trim((string)($_SERVER['HTTP_X_CSRF_FORM'] ?? ''));
+    $forms = ApiCsrf::forms('project_milestone');
+    if ($headerForm !== '') {
+        array_unshift($forms, $headerForm);
     }
 
-    return false;
+    return ApiCsrf::checkAny($forms);
 }
 
 function milestone_update_date(mixed $value): ?string

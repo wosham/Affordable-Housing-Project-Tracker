@@ -19,7 +19,6 @@ if (!$thread) {
     Response::json(['success' => false, 'message' => 'Thread was not found or access is denied.'], 404);
 }
 
-MessageRead::markThread($threadId, $userId);
 $messages = Message::forThread($threadId, 200);
 $attachments = MessageAttachment::forMessages(array_column($messages, 'id'));
 

@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -60,9 +60,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> Site attendance</span>
     <h2>Attendance Summary</h2>
-    <p>Monitor assigned site attendance, gateway coverage and GPS exceptions.</p>
+    <p>Monitor attendance for your assigned projects: gateway coverage, sign-ins and GPS exceptions for the selected day.</p>
   </div>
-  <form class="manager-attendance-date" method="get">
+  <form class="manager-attendance-date" method="get" action="<?= Security::e(Url::to('admin/manager/attendance-summary.php')) ?>">
+    <?php foreach (['project_id', 'constituency_id', 'role', 'status', 'gps', 'q'] as $keep): ?>
+      <?php if (!empty($filters[$keep])): ?><input type="hidden" name="<?= Security::e($keep) ?>" value="<?= Security::e((string)$filters[$keep]) ?>"><?php endif; ?>
+    <?php endforeach; ?>
     <label><span>Report date</span><input class="form-input" type="date" name="date" value="<?= Security::e($date) ?>"></label>
     <button class="btn btn--primary" type="submit"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Load Day</button>
   </form>
@@ -87,7 +90,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <h2 class="card__title">Project Coverage</h2>
           <p class="card__subtitle">Gateway, sign-in and GPS coverage for assigned projects.</p>
         </div>
-        <a class="btn btn--outline" href="<?= Security::e(Url::to('api/attendance/daily-report.php?' . http_build_query($filters))) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-code" aria-hidden="true"></i> JSON Report</a>
+        <a class="btn btn--outline btn--sm" href="<?= Security::e(Url::to('api/attendance/daily-report.php?' . http_build_query($filters))) ?>" target="_blank" rel="noopener noreferrer" title="Technical export for integrations"><i class="fa-solid fa-download" aria-hidden="true"></i> Export JSON</a>
       </div>
       <div class="table-wrap">
         <table class="data-table manager-attendance-table">
@@ -105,7 +108,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
               <td><?= Security::e(format_number(max(0, $expected - $signed))) ?></td>
               <td><div class="manager-attendance-meter"><span style="width: <?= (int)$pct ?>%"></span></div><small><?= Security::e(format_percentage($pct)) ?></small></td>
               <td><?= Security::e(format_number($row['gps_flags'] ?? 0)) ?></td>
-              <td><button class="btn btn--icon btn--outline" type="button" data-attendance-project="<?= (int)$row['project_id'] ?>" data-attendance-date="<?= Security::e($date) ?>" title="View details" aria-label="View details"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></td>
+              <td><div class="manager-table-actions"><button class="btn btn--icon btn--outline" type="button" data-attendance-project="<?= (int)$row['project_id'] ?>" data-attendance-date="<?= Security::e($date) ?>" title="View details" aria-label="View details"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div></td>
             </tr>
 <?php endforeach; endif; ?>
           </tbody>
@@ -132,7 +135,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <thead><tr><th>Staff</th><th>Role</th><th>Project</th><th>Sign-in</th><th>Gateway</th><th>GPS / Distance</th><th>Status</th><th>Review</th></tr></thead>
           <tbody>
 <?php if ($records === []): ?>
-            <tr><td colspan="8"><div class="empty-state"><strong class="empty-state__title">No attendance records found</strong><span class="empty-state__text">Records appear after gateways are opened and staff sign in.</span></div></td></tr>
+            <tr><td colspan="8"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i></span><strong class="empty-state__title">No sign-ins for <?= Security::e(format_date($date)) ?></strong><span class="empty-state__text">Open a site gateway (clerk) and have assigned staff check in. Missing sign-ins still appear in the side panel from active assignments.</span></div></td></tr>
 <?php else: foreach ($records as $record): ?>
             <tr>
               <td><strong><?= Security::e($record['user_name']) ?></strong><small><?= Security::e($record['email']) ?></small></td>
@@ -148,12 +151,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           </tbody>
         </table>
       </div>
-<?php if ($totalPages > 1): ?>
       <nav class="pagination" aria-label="Attendance pagination">
-        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> records</p>
-        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_attendance_page_url(max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_attendance_page_url(min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+        <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> records (<?= (int)$perPage ?> per page)</p>
+        <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_attendance_page_url(max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_attendance_page_url(min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
       </nav>
-<?php endif; ?>
     </section>
   </div>
 

@@ -4,27 +4,31 @@ require_once __DIR__ . '/app/core/bootstrap.php';
 $basePath = '';
 $activePage = 'home';
 $homePage = CmsLoader::page('home');
-$projectStats = Project::stats();
-$featuredProjects = Project::withRelations(['featured' => '1'], 3);
+$projectStats = Project::publicStats();
+$featuredProjects = Project::featured();
 if (!$featuredProjects) {
-    $featuredProjects = Project::withRelations([], 3);
+    $featuredProjects = Project::publicListing([], 3);
 }
 $constituencies = Constituency::withProjectCounts();
-$newsItems = home_news_items(9);
+$publicStories = home_public_story_items(9);
+$featuredStories = home_featured_story_items(3);
+$displayStories = $featuredStories ?: array_slice($publicStories, 0, 3);
+$latestAlerts = home_latest_alert_items(6);
+$mapProjects = Project::publicListing(['sort' => 'updated-desc']);
 
-$hero = CmsLoader::content($homePage, 'home_hero', home_defaults('home_hero'));
-$featured = CmsLoader::content($homePage, 'featured_projects', home_defaults('featured_projects'));
-$coverage = CmsLoader::content($homePage, 'constituency_coverage', home_defaults('constituency_coverage'));
-$reports = CmsLoader::content($homePage, 'ground_reports', home_defaults('ground_reports'));
-$cta = CmsLoader::content($homePage, 'ecitizen_cta', home_defaults('ecitizen_cta'));
+$hero = CmsLoader::content($homePage, 'home_hero');
+$featured = CmsLoader::content($homePage, 'featured_projects');
+$coverage = CmsLoader::content($homePage, 'constituency_coverage');
+$reports = CmsLoader::content($homePage, 'ground_reports');
+$cta = CmsLoader::content($homePage, 'ecitizen_cta');
 
-$pageTitle = (string)($homePage['seo_title'] ?? 'Trans-Nzoia County | Affordable Housing Project Tracker');
-$pageDescription = (string)($homePage['seo_description'] ?? 'Trans-Nzoia County Affordable Housing Project Tracker - real-time monitoring of housing construction delivery.');
-$pageKeywords = (string)($homePage['seo_keywords'] ?? 'Trans-Nzoia affordable housing, AHP Kenya, county housing tracker');
+$pageTitle = (string)($homePage['seo_title'] ?? 'Trans-Nzoia County | Project Delivery Tracker');
+$pageDescription = (string)($homePage['seo_description'] ?? 'Trans-Nzoia County project delivery tracker for AHP housing, modern markets, ESP sites, and institutional housing.');
+$pageKeywords = (string)($homePage['seo_keywords'] ?? 'Trans-Nzoia projects, affordable housing, modern markets, ESP Kenya, institutional housing');
 $pageAuthor = 'Trans-Nzoia County Government - Department of Land, Housing & Physical Planning';
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = (string)($homePage['canonical_url'] ?? 'https://housing.transnzoia.go.ke/');
+$canonicalUrl = trim((string)($homePage['canonical_url'] ?? '')) ?: Url::canonical();
 $heroImage = CmsLoader::text($hero, 'background_image', (string)($homePage['hero_image'] ?? 'uploads/heroes/hero-main.jpg'));
 $pageStyles = [
     'assets/css/global.css',
@@ -52,6 +56,10 @@ $headMeta = [
 include __DIR__ . '/app/partials/head.php';
 ?>
 <body>
+<?= public_page_json('home', [
+    'map_projects' => home_map_project_payload($mapProjects),
+    'constituencies' => home_constituency_payload($constituencies),
+], [], 'ahp-page-data') ?>
 <?php include __DIR__ . '/app/partials/cursor.php'; ?>
 <?php include __DIR__ . '/app/partials/skip-link.php'; ?>
 <?php include __DIR__ . '/app/partials/navbar.php'; ?>
@@ -60,17 +68,17 @@ include __DIR__ . '/app/partials/head.php';
 <?php if (CmsLoader::visible($homePage, 'home_hero')): ?>
   <section class="tracker-hero" aria-label="Programme overview">
     <div class="tracker-hero-bg">
-      <img src="<?= Security::e($heroImage) ?>" alt="<?= Security::e(CmsLoader::text($hero, 'background_alt', 'Affordable housing construction site in Trans-Nzoia County, Kenya')) ?>" loading="eager" onerror="this.style.display='none'">
+      <img <?= public_image_attrs($heroImage, CmsLoader::text($hero, 'background_alt', 'Affordable housing construction site in Trans-Nzoia County, Kenya'), ['loading' => 'eager', 'fetchpriority' => 'high', 'onerror' => "this.style.display='none'"]) ?>>
       <div class="tracker-hero-overlay" aria-hidden="true"></div>
     </div>
     <div class="container tracker-hero-content">
       <div class="tracker-hero-inner">
         <div class="programme-badge" role="status">
           <span class="programme-badge-dot" aria-hidden="true"></span>
-          <?= Security::e(CmsLoader::text($hero, 'eyebrow', 'Ongoing Projects - Trans-Nzoia County')) ?>
+          <?= Security::e(CmsLoader::text($hero, 'eyebrow', 'County Delivery Tracker - Trans-Nzoia')) ?>
         </div>
-        <h1 class="tracker-hero-title"><?= nl2br(Security::e(CmsLoader::text($hero, 'title', "Affordable Housing\nProject Tracker")), false) ?></h1>
-        <p class="tracker-hero-subtitle"><?= Security::e(CmsLoader::text($hero, 'subtitle', 'Transparent, real-time monitoring of housing construction delivery across all five constituencies of Trans-Nzoia County.')) ?></p>
+        <h1 class="tracker-hero-title"><?= nl2br(Security::e(CmsLoader::text($hero, 'title', "Trans-Nzoia\nProject Delivery Tracker")), false) ?></h1>
+        <p class="tracker-hero-subtitle"><?= Security::e(CmsLoader::text($hero, 'subtitle', 'Transparent monitoring of AHP housing, modern markets, ESP sites, and institutional housing across all five constituencies.')) ?></p>
         <div class="tracker-hero-cta">
           <a href="<?= Security::e(CmsLoader::text($hero, 'primary_url', 'projects.php')) ?>" class="btn btn-lg btn-white">
             <i class="fa-solid <?= Security::e(CmsLoader::text($hero, 'primary_icon', 'fa-table-cells-large')) ?>" aria-hidden="true"></i>
@@ -87,11 +95,11 @@ include __DIR__ . '/app/partials/head.php';
       <div class="hero-kpi-strip" role="region" aria-label="Programme key metrics">
         <?php home_kpi('Active Projects', (int)($projectStats['active_projects'] ?? 0)); ?>
         <div class="hero-kpi-divider" aria-hidden="true"></div>
-        <?php home_kpi('Units Under Construction', (int)($projectStats['total_units'] ?? 0), '+'); ?>
+        <?php home_kpi('Tracked Outputs', (int)($projectStats['total_units'] ?? 0), '+'); ?>
         <div class="hero-kpi-divider" aria-hidden="true"></div>
         <?php home_kpi('Constituencies Covered', count($constituencies)); ?>
         <div class="hero-kpi-divider" aria-hidden="true"></div>
-        <?php home_kpi('Avg. Completion', (int)round((float)($projectStats['avg_completion'] ?? 0)), '%'); ?>
+        <?php home_kpi('Avg. Progress', (int)round((float)($projectStats['avg_completion'] ?? $projectStats['average_completion'] ?? 0)), '%'); ?>
       </div>
 <?php endif; ?>
     </div>
@@ -101,7 +109,7 @@ include __DIR__ . '/app/partials/head.php';
 <?php if (CmsLoader::visible($homePage, 'featured_projects')): ?>
   <section class="section projects-section" id="featured-projects" aria-labelledby="projects-heading">
     <div class="container">
-      <?php home_section_header('projects-heading', $featured, 'Featured Projects', 'Track ongoing affordable housing construction across Trans-Nzoia County.', 'Full Portfolio', 'projects.php'); ?>
+      <?php home_section_header('projects-heading', $featured, 'Featured Project Sites', 'Track housing, market, ESP, and institutional projects across Trans-Nzoia County.', 'Full Portfolio', 'projects.php'); ?>
       <div class="project-cards-grid stagger-children">
 <?php foreach (array_slice($featuredProjects, 0, max(1, (int)($featured['display_count'] ?? 3))) as $project): ?>
         <?php home_project_card($project); ?>
@@ -120,7 +128,7 @@ include __DIR__ . '/app/partials/head.php';
 <?php if (CmsLoader::visible($homePage, 'constituency_coverage')): ?>
   <section class="section map-section" aria-labelledby="map-heading">
     <div class="container">
-      <?php home_section_header('map-heading', $coverage, 'Coverage by Constituency', 'All five constituencies are part of the Trans-Nzoia AHP.', 'All Constituencies', 'constituencies.php'); ?>
+      <?php home_section_header('map-heading', $coverage, 'Coverage by Constituency', 'All five constituencies are tracked for county delivery progress.', 'All Constituencies', 'constituencies.php'); ?>
       <div class="map-interactive-wrap">
         <div class="map-canvas-wrap">
           <svg viewBox="0 0 480 400" class="county-map" role="img" aria-label="Interactive map of Trans-Nzoia County showing five constituencies">
@@ -133,17 +141,11 @@ include __DIR__ . '/app/partials/head.php';
               <text class="map-label" x="<?= Security::e($shape['x']) ?>" y="<?= Security::e($shape['y']) ?>"><?= Security::e($c['name'] ?? $shape['name']) ?></text>
             </g>
 <?php endforeach; ?>
-            <g class="map-sites" aria-hidden="true">
-              <circle class="map-site-dot site-active" cx="178" cy="255" r="6"/><circle class="map-site-pulse" cx="178" cy="255" r="6"/>
-              <circle class="map-site-dot site-active" cx="304" cy="125" r="6"/><circle class="map-site-pulse" cx="304" cy="125" r="6"/>
-              <circle class="map-site-dot site-planning" cx="88" cy="82" r="5"/>
-            </g>
           </svg>
           <div class="map-compass" aria-hidden="true"><i class="fa-solid fa-location-crosshairs"></i><span>N</span></div>
           <div class="map-legend" aria-hidden="true">
             <span class="map-legend-item"><span class="map-legend-dot map-legend-active"></span><?= Security::e(CmsLoader::text($coverage, 'legend_active', 'Active')) ?></span>
             <span class="map-legend-item"><span class="map-legend-dot map-legend-plan"></span><?= Security::e(CmsLoader::text($coverage, 'legend_planning', 'Planning')) ?></span>
-            <span class="map-legend-item"><i class="fa-solid fa-location-dot" style="color:var(--lime-muted);font-size:11px"></i> <?= Security::e(CmsLoader::text($coverage, 'legend_site', 'Project site')) ?></span>
           </div>
         </div>
         <aside class="map-side-panel" id="mapPanel" aria-live="polite">
@@ -153,7 +155,7 @@ include __DIR__ . '/app/partials/head.php';
             <div class="map-panel-overview">
               <div class="map-ov-item"><span class="map-ov-val"><?= Security::e(format_number(count($constituencies))) ?></span><span class="map-ov-lbl">Constituencies</span></div>
               <div class="map-ov-item"><span class="map-ov-val"><?= Security::e(format_number((int)($projectStats['active_projects'] ?? 0))) ?></span><span class="map-ov-lbl">Active Projects</span></div>
-              <div class="map-ov-item"><span class="map-ov-val"><?= Security::e(format_number((int)($projectStats['total_units'] ?? 0))) ?>+</span><span class="map-ov-lbl">Units Planned</span></div>
+              <div class="map-ov-item"><span class="map-ov-val"><?= Security::e(format_number((int)($projectStats['total_units'] ?? 0))) ?>+</span><span class="map-ov-lbl">Tracked Outputs</span></div>
             </div>
           </div>
           <div class="map-panel-detail" id="mapPanelDetail"></div>
@@ -168,17 +170,19 @@ include __DIR__ . '/app/partials/head.php';
     <div class="container">
       <?php home_section_header('news-heading', $reports, 'From the Ground', 'Project milestones, tender notices, and official clearances.', 'All Reports', 'news.php'); ?>
       <div class="news-asymmetric">
-<?php if ($newsItems): ?>
-        <?php home_news_card($newsItems[0], true); ?>
+<?php if ($displayStories || $latestAlerts): ?>
+<?php if ($displayStories): ?>
+        <?php home_news_card($displayStories[0], true); ?>
         <div class="news-stack">
-<?php foreach (array_slice($newsItems, 1, max(0, (int)($reports['compact_count'] ?? 2))) as $item): ?>
+<?php foreach (array_slice($displayStories, 1, max(0, (int)($reports['compact_count'] ?? 2))) as $item): ?>
           <?php home_news_card($item, false); ?>
 <?php endforeach; ?>
         </div>
+<?php endif; ?>
         <aside class="news-alerts-sidebar" aria-label="Latest programme alerts">
           <div class="nas-header"><i class="fa-solid fa-bolt nas-icon" aria-hidden="true"></i><span class="nas-title"><?= Security::e(CmsLoader::text($reports, 'alerts_title', 'Latest Alerts')) ?></span></div>
           <ul class="nas-list">
-<?php foreach (array_slice($newsItems, 0, max(1, (int)($reports['alert_count'] ?? 6))) as $index => $item): ?>
+<?php foreach (array_slice($latestAlerts, 0, max(1, (int)($reports['alert_count'] ?? 6))) as $index => $item): ?>
             <li class="nas-item <?= $index === 0 ? 'nas-item--urgent' : '' ?>">
               <span class="nas-dot" aria-hidden="true"></span>
               <div class="nas-content">
@@ -204,21 +208,21 @@ include __DIR__ . '/app/partials/head.php';
 <?php if (CmsLoader::visible($homePage, 'ecitizen_cta')): ?>
   <section class="ecitizen-cta" aria-labelledby="ecitizen-heading">
     <div class="ecitizen-cta-bg" aria-hidden="true">
-      <img src="<?= Security::e(CmsLoader::text($cta, 'background_image', 'uploads/site-photos/maili-tatu-2.jpg')) ?>" alt="" loading="lazy" onerror="this.style.display='none'">
+      <img <?= public_image_attrs(CmsLoader::text($cta, 'background_image', 'uploads/site-photos/maili-tatu-2.jpg'), '', ['onerror' => "this.style.display='none'"]) ?>>
       <div class="ecitizen-cta-overlay"></div>
     </div>
     <div class="container">
       <div class="ecitizen-inner fade-up">
         <div class="ecitizen-left">
           <div class="ecitizen-eyebrow">
-            <img src="<?= Security::e(CmsLoader::text($cta, 'logo_image', 'uploads/logos/BomaYanguLogo.png')) ?>" alt="Boma Yangu" loading="lazy" onerror="this.style.display='none'">
+            <img <?= public_image_attrs(CmsLoader::text($cta, 'logo_image', 'uploads/logos/BomaYanguLogo.png'), 'Boma Yangu', ['onerror' => "this.style.display='none'"]) ?>>
             <span><?= Security::e(CmsLoader::text($cta, 'eyebrow', 'Boma Yangu - eCitizen')) ?></span>
           </div>
           <h2 id="ecitizen-heading" class="ecitizen-headline"><?= nl2br(Security::e(CmsLoader::text($cta, 'title', "Your Home.\nApplied Online.")), false) ?></h2>
-          <p class="ecitizen-sub"><?= Security::e(CmsLoader::text($cta, 'subtitle', 'Register on the national Boma Yangu portal via eCitizen.')) ?></p>
+          <p class="ecitizen-sub"><?= Security::e(CmsLoader::text($cta, 'subtitle', 'Register on the national Boma Yangu portal via eCitizen to apply for affordable housing units.')) ?></p>
           <div class="ecitizen-actions">
             <a href="<?= Security::e(CmsLoader::text($cta, 'primary_url', 'https://ecitizen.go.ke')) ?>" target="_blank" rel="noopener noreferrer" class="ecitizen-btn-main">
-              <?= Security::e(CmsLoader::text($cta, 'primary_label', 'Apply via eCitizen')) ?> <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              <?= Security::e(CmsLoader::text($cta, 'primary_label', 'Apply for Housing')) ?> <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
             </a>
             <a href="<?= Security::e(CmsLoader::text($cta, 'secondary_url', 'about.php')) ?>" class="ecitizen-btn-ghost">
               <?= Security::e(CmsLoader::text($cta, 'secondary_label', 'About the programme')) ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
@@ -255,31 +259,6 @@ include __DIR__ . '/app/partials/head.php';
 </html>
 
 <?php
-function home_defaults(string $key): array
-{
-    return match ($key) {
-        'home_hero' => [
-            'eyebrow' => 'Ongoing Projects - Trans-Nzoia County',
-            'title' => "Affordable Housing\nProject Tracker",
-            'subtitle' => 'Transparent, real-time monitoring of housing construction delivery across all five constituencies of Trans-Nzoia County.',
-            'background_image' => 'uploads/heroes/hero-main.jpg',
-            'background_alt' => 'Affordable housing construction site in Trans-Nzoia County, Kenya',
-            'primary_label' => 'View All Projects',
-            'primary_url' => 'projects.php',
-            'primary_icon' => 'fa-table-cells-large',
-            'secondary_label' => 'By Constituency',
-            'secondary_url' => 'constituencies.php',
-            'secondary_icon' => 'fa-map-location-dot',
-            'show_kpis' => '1',
-        ],
-        'featured_projects' => ['title' => 'Featured Projects', 'subtitle' => 'Track ongoing affordable housing construction across Trans-Nzoia County.', 'button_label' => 'Full Portfolio', 'button_url' => 'projects.php'],
-        'constituency_coverage' => ['title' => 'Coverage by Constituency', 'subtitle' => 'All five constituencies are part of the Trans-Nzoia AHP.', 'button_label' => 'All Constituencies', 'button_url' => 'constituencies.php'],
-        'ground_reports' => ['title' => 'From the Ground', 'subtitle' => 'Project milestones, tender notices, and official clearances.', 'button_label' => 'All Reports', 'button_url' => 'news.php', 'alerts_title' => 'Latest Alerts'],
-        'ecitizen_cta' => ['title' => "Your Home.\nApplied Online.", 'subtitle' => 'Register on the national Boma Yangu portal via eCitizen.', 'primary_label' => 'Apply via eCitizen', 'primary_url' => 'https://ecitizen.go.ke'],
-        default => [],
-    };
-}
-
 function home_kpi(string $label, int $value, string $suffix = ''): void
 {
     ?>
@@ -313,10 +292,11 @@ function home_project_card(array $project): void
     $image = home_project_image($project);
     $status = status_label($project['status'] ?? 'planning');
     $pct = (int)($project['pct_complete'] ?? 0);
+    $outputLabel = home_project_output_label($project);
     ?>
     <article class="ptc">
       <div class="ptc-image">
-        <img src="<?= Security::e($image) ?>" alt="<?= Security::e(($project['name'] ?? 'Project') . ' construction site') ?>" loading="lazy" onerror="this.parentElement.classList.add('ptc-img-fallback')">
+        <img <?= public_image_attrs($image, ($project['name'] ?? 'Project') . ' construction site', ['onerror' => "this.parentElement.classList.add('ptc-img-fallback')"]) ?>>
         <div class="ptc-image-overlay" aria-hidden="true"></div>
         <div class="ptc-badges">
           <span class="badge <?= ($project['status'] ?? '') === 'active' ? 'badge-ongoing' : 'badge-warning' ?>"><?= Security::e($status) ?></span>
@@ -327,7 +307,7 @@ function home_project_card(array $project): void
         <div class="ptc-location"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <?= Security::e(($project['constituency_name'] ?? 'Trans-Nzoia') . ' Constituency - ' . ($project['ward_name'] ?? $project['location_label'] ?? '')) ?></div>
         <h3 class="ptc-title"><?= Security::e($project['name'] ?? 'Project') ?></h3>
         <div class="ptc-stats-row">
-          <div class="ptc-stat"><span class="ptc-stat-val"><?= Security::e(format_number((int)($project['units'] ?? 0))) ?></span><span class="ptc-stat-lbl">Units</span></div>
+          <div class="ptc-stat"><span class="ptc-stat-val"><?= Security::e(format_number((int)($project['units'] ?? 0))) ?></span><span class="ptc-stat-lbl"><?= Security::e($outputLabel) ?></span></div>
           <div class="ptc-stat-sep" aria-hidden="true"></div>
           <div class="ptc-stat"><span class="ptc-stat-val ptc-stat-pct"><?= $pct ?>%</span><span class="ptc-stat-lbl">Complete</span></div>
           <div class="ptc-stat-sep" aria-hidden="true"></div>
@@ -339,13 +319,43 @@ function home_project_card(array $project): void
         </div>
         <div class="ptc-actions">
           <a href="project-detail.php?id=<?= Security::e($project['slug'] ?? '') ?>" class="btn btn-primary btn-sm">View Details</a>
-          <a href="https://ecitizen.go.ke" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Apply on eCitizen <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+          <?php if (home_project_is_housing($project)): ?>
+          <a href="https://ecitizen.go.ke" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Apply on Boma Yangu <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+          <?php else: ?>
+          <a href="projects.php?category=<?= Security::e($project['category_slug'] ?? '') ?>" class="btn btn-outline btn-sm">View Category <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+          <?php endif; ?>
         </div>
       </div>
     </article>
     <?php
 }
 
+function home_project_output_label(array $project): string
+{
+    $slug = strtolower((string)($project['category_slug'] ?? ''));
+    $name = strtolower((string)($project['category_name'] ?? ''));
+
+    if ($slug === 'modern-market' || strpos($name, 'market') !== false) {
+        return 'Stalls';
+    }
+
+    if ($slug === 'esps' || strpos($name, 'esp') !== false) {
+        return 'Site';
+    }
+
+    return 'Units';
+}
+
+function home_project_is_housing(array $project): bool
+{
+    $slug = strtolower((string)($project['category_slug'] ?? ''));
+    $name = strtolower((string)($project['category_name'] ?? ''));
+
+    return $slug === 'ahps'
+        || $slug === 'institutional-housing'
+        || strpos($name, 'housing') !== false
+        || strpos($name, 'ahp') !== false;
+}
 function home_project_image(array $project): string
 {
     if (!empty($project['hero_image'])) {
@@ -388,7 +398,7 @@ function home_map_shapes(): array
     ];
 }
 
-function home_news_items(int $limit): array
+function home_public_story_items(int $limit): array
 {
     try {
         return Database::fetchAll("
@@ -397,6 +407,9 @@ function home_news_items(int $limit): array
             LEFT JOIN news_categories nc ON nc.id = na.category_id
             LEFT JOIN media_library ml ON ml.id = na.featured_image_id
             WHERE na.status = 'published'
+              AND COALESCE(na.is_visible, 1) = 1
+              AND na.deleted_at IS NULL
+              AND na.post_format <> 'announcement'
             ORDER BY COALESCE(na.published_at, na.created_at) DESC, na.id DESC
             LIMIT {$limit}
         ");
@@ -405,23 +418,116 @@ function home_news_items(int $limit): array
     }
 }
 
+function home_featured_story_items(int $limit): array
+{
+    try {
+        return Database::fetchAll("
+            SELECT na.*, nc.name AS category_name, nc.slug AS category_slug, ml.path AS image_path
+            FROM news_articles na
+            LEFT JOIN news_categories nc ON nc.id = na.category_id
+            LEFT JOIN media_library ml ON ml.id = na.featured_image_id
+            WHERE na.status = 'published'
+              AND COALESCE(na.is_visible, 1) = 1
+              AND COALESCE(na.is_featured, 0) = 1
+              AND na.deleted_at IS NULL
+              AND na.post_format <> 'announcement'
+            ORDER BY COALESCE(na.published_at, na.created_at) DESC, na.id DESC
+            LIMIT {$limit}
+        ");
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+function home_latest_alert_items(int $limit): array
+{
+    return home_public_story_items($limit);
+}
+
+function home_constituency_payload(array $constituencies): array
+{
+    $payload = [];
+    foreach ($constituencies as $row) {
+        $slug = (string)($row['slug'] ?? '');
+        if ($slug === '') {
+            continue;
+        }
+        $payload[$slug] = [
+            'name' => (string)($row['name'] ?? ''),
+            'projectCount' => (int)($row['live_project_count'] ?? 0),
+            'totalUnits' => (int)($row['live_total_units'] ?? 0),
+            'avgCompletion' => (int)round((float)($row['live_avg_completion'] ?? 0)),
+            'link' => 'constituency-detail.php?id=' . rawurlencode($slug),
+        ];
+    }
+    return $payload;
+}
+
+function home_map_project_payload(array $projects): array
+{
+    $grouped = [];
+    foreach ($projects as $project) {
+        $slug = (string)($project['constituency_slug'] ?? '');
+        if ($slug === '') {
+            continue;
+        }
+        $grouped[$slug][] = [
+            'name' => (string)($project['name'] ?? ''),
+            'ward' => (string)($project['ward_name'] ?: ($project['location_label'] ?? '')),
+            'units' => (int)($project['units'] ?? 0),
+            'pct' => (int)($project['pct_complete'] ?? 0),
+            'status' => (string)($project['status'] ?? 'planning'),
+            'statusLabel' => (string)($project['status_label'] ?? status_label($project['status'] ?? 'planning')),
+            'contractor' => (string)($project['contractor_name'] ?: 'TBD'),
+            'funding' => (string)($project['funding_source'] ?: 'TBD'),
+            'leadAgency' => (string)($project['lead_agency'] ?: 'TBD'),
+            'siteEngineer' => (string)($project['site_engineer'] ?: 'TBD'),
+            'startDate' => home_project_date_label($project['start_date'] ?? null),
+            'estDelivery' => home_project_quarter_label($project['est_delivery'] ?? null),
+            'milestone' => (string)($project['current_milestone'] ?: 'Project update pending'),
+            'link' => 'project-detail.php?id=' . rawurlencode((string)($project['slug'] ?? '')),
+        ];
+    }
+    return $grouped;
+}
+
+function home_project_date_label(mixed $date): string
+{
+    $date = trim((string)$date);
+    if ($date === '' || $date === '0000-00-00') {
+        return 'TBD';
+    }
+    $timestamp = strtotime($date);
+    return $timestamp ? date('M Y', $timestamp) : $date;
+}
+
+function home_project_quarter_label(mixed $date): string
+{
+    $date = trim((string)$date);
+    if ($date === '' || $date === '0000-00-00') {
+        return 'TBD';
+    }
+    $timestamp = strtotime($date);
+    return $timestamp ? 'Q' . (int)ceil((int)date('n', $timestamp) / 3) . ' ' . date('Y', $timestamp) : $date;
+}
+
 function home_news_card(array $item, bool $feature): void
 {
     $image = (string)($item['image_path'] ?? 'uploads/news/modern-market.jpg');
     $class = $feature ? 'news-card news-card--feature' : 'news-card news-card--compact';
+    $articleUrl = 'news-article.php?id=' . rawurlencode((string)($item['slug'] ?? ''));
     ?>
     <article class="<?= $class ?>">
       <div class="news-card-img">
-        <img src="<?= Security::e($image) ?>" alt="<?= Security::e($item['title'] ?? 'Programme report') ?>" loading="lazy" onerror="this.parentElement.classList.add('news-img-fallback')">
+        <a href="<?= Security::e($articleUrl) ?>" aria-label="Read <?= Security::e($item['title'] ?? 'programme report') ?>">
+          <img <?= public_image_attrs($image, $item['title'] ?? 'Programme report', ['onerror' => "this.parentElement.parentElement.classList.add('news-img-fallback')"]) ?>>
+        </a>
         <span class="news-cat-badge news-cat-milestone"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i> <?= Security::e($item['category_name'] ?? 'Report') ?></span>
       </div>
       <div class="news-card-body">
         <time class="news-date" datetime="<?= Security::e(substr((string)($item['published_at'] ?? $item['created_at'] ?? ''), 0, 10)) ?>"><i class="fa-regular fa-calendar" aria-hidden="true"></i> <?= Security::e(format_date($item['published_at'] ?? $item['created_at'] ?? null, 'd M Y')) ?></time>
-        <h3 class="news-card-title"><?= Security::e($item['title'] ?? 'Programme report') ?></h3>
-        <p class="news-card-text <?= $feature ? '' : 'line-clamp-2' ?>"><?= Security::e($item['excerpt'] ?? '') ?></p>
-<?php if ($feature): ?>
-        <a href="news-article.php?id=<?= Security::e($item['slug'] ?? '') ?>" class="news-read-link">Read full report <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
-<?php endif; ?>
+        <h3 class="news-card-title"><a href="<?= Security::e($articleUrl) ?>"><?= Security::e($item['title'] ?? 'Programme report') ?></a></h3>
+        <p class="news-card-text <?= $feature ? 'line-clamp-4' : 'line-clamp-4' ?>"><?= Security::e(safe_truncate((string)($item['excerpt'] ?? ''), $feature ? 210 : 150)) ?></p>
       </div>
     </article>
     <?php

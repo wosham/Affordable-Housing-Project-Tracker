@@ -50,6 +50,8 @@ class Contractor extends Model
         $company = Security::cleanString((string)($data['company_name'] ?? ''));
         $slug = trim((string)($data['slug'] ?? ''));
         $slug = $slug !== '' ? self::slug($slug) : self::slug($company);
+        self::ensureUniqueSlug($slug, $id);
+        $website = self::nullableUrl($data['website'] ?? null);
         $initials = trim((string)($data['initials'] ?? ''));
         $initials = $initials !== '' ? strtoupper(substr(preg_replace('/[^a-z0-9]/i', '', $initials), 0, 12)) : self::initials($company);
         $status = strtolower((string)($data['status'] ?? 'active'));
@@ -63,7 +65,7 @@ class Contractor extends Model
             'contact_person' => Security::cleanString((string)($data['contact_person'] ?? '')),
             'email' => Security::cleanString((string)($data['email'] ?? '')),
             'phone' => Security::cleanString((string)($data['phone'] ?? '')),
-            'website' => Security::cleanString((string)($data['website'] ?? '')),
+            'website' => $website,
             'project_id' => ((int)($data['project_id'] ?? 0)) > 0 ? (int)$data['project_id'] : null,
             'constituency_id' => ((int)($data['constituency_id'] ?? 0)) > 0 ? (int)$data['constituency_id'] : null,
             'status' => $status,
@@ -124,5 +126,31 @@ class Contractor extends Model
         }
 
         return [$where ? 'WHERE ' . implode(' AND ', $where) : '', $bindings];
+    }
+
+    private static function nullableUrl(mixed $value): ?string
+    {
+        $value = trim((string)$value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $value) === 1) {
+            return $value;
+        }
+
+        throw new RuntimeException('Contractor website must start with http:// or https://.');
+    }
+
+    private static function ensureUniqueSlug(string $slug, ?int $id = null): void
+    {
+        $existing = Database::fetch(
+            'SELECT id FROM contractors WHERE slug = ? AND (? IS NULL OR id <> ?) LIMIT 1',
+            [$slug, $id, $id]
+        );
+
+        if ($existing) {
+            throw new RuntimeException('This contractor slug is already in use.');
+        }
     }
 }

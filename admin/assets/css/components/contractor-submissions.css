@@ -1,0 +1,706 @@
+.contractor-submission-page {
+  display: grid;
+  gap: 1.05rem;
+}
+
+.contractor-submission-page .card {
+  border-radius: 8px;
+}
+
+.contractor-submission-hero,
+.contractor-submission-selector,
+.contractor-submission-panel,
+.contractor-submission-stat,
+.contractor-submission-peers {
+  overflow: hidden;
+}
+
+.contractor-submission-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.contractor-submission-hero h2,
+.contractor-submission-panel h2,
+.contractor-submission-panel .card__title {
+  margin: .25rem 0;
+}
+
+.contractor-submission-hero h2 {
+  font-size: clamp(1.2rem, 1.55vw, 1.55rem);
+  line-height: 1.2;
+}
+
+.contractor-submission-hero p,
+.contractor-submission-panel .card__subtitle,
+.contractor-submission-selector label,
+.contractor-submission-table small,
+.contractor-submission-stat small,
+.contractor-submission-context small,
+.contractor-submission-filter-note,
+.contractor-submission-detail-note,
+.contractor-submission-peer span {
+  color: var(--admin-text-muted);
+}
+
+.contractor-submission-help {
+  margin: .85rem 0 0;
+  color: var(--admin-text-muted);
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.contractor-submission-actions,
+.contractor-submission-filter__actions,
+.contractor-submission-form__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .55rem;
+}
+
+.contractor-submission-peers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .55rem;
+  padding: .7rem;
+}
+
+.contractor-submission-peer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 42px;
+  padding: .55rem .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 750;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.contractor-submission-peer:hover,
+.contractor-submission-peer:focus-visible {
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
+  outline: none;
+}
+
+.contractor-submission-peer.is-active {
+  border-color: var(--admin-primary);
+  background: var(--admin-lime-soft);
+  color: var(--admin-primary);
+}
+
+.contractor-submission-peer i {
+  color: var(--admin-primary);
+}
+
+.contractor-submission-selector {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .85rem 1rem;
+  min-height: 66px;
+}
+
+.contractor-submission-selector label,
+.contractor-submission-form label > span,
+.contractor-submission-filter label > span {
+  color: var(--admin-text-muted);
+  font-size: .76rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.contractor-submission-selector select,
+.contractor-submission-form input,
+.contractor-submission-form select,
+.contractor-submission-form textarea,
+.contractor-submission-filter input,
+.contractor-submission-filter select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  padding: .64rem .72rem;
+  color: var(--admin-text);
+  font: inherit;
+  font-weight: 650;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.contractor-submission-form input::placeholder,
+.contractor-submission-form textarea::placeholder,
+.contractor-submission-filter input::placeholder {
+  color: var(--admin-text-muted);
+  opacity: .82;
+}
+
+.contractor-submission-form textarea {
+  min-height: 112px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.contractor-submission-selector select {
+  max-width: 440px;
+}
+
+.contractor-submission-selector select:focus,
+.contractor-submission-form input:focus,
+.contractor-submission-form select:focus,
+.contractor-submission-form textarea:focus,
+.contractor-submission-filter input:focus,
+.contractor-submission-filter select:focus {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, .22);
+  outline: 0;
+}
+
+.contractor-submission-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: .9rem;
+}
+
+.contractor-submission-stat {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 104px;
+  padding: 1rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+a.contractor-submission-stat:hover,
+a.contractor-submission-stat:focus-visible {
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+  outline: none;
+}
+
+.contractor-submission-stat > span {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--admin-lime-soft);
+  color: var(--admin-primary);
+}
+
+.contractor-submission-stat div {
+  min-width: 0;
+}
+
+.contractor-submission-stat strong,
+.contractor-submission-stat b,
+.contractor-submission-stat small {
+  display: block;
+}
+
+.contractor-submission-stat strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.02rem, 1.2vw, 1.24rem);
+  line-height: 1.14;
+}
+
+.contractor-submission-stat b {
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.contractor-submission-stat small {
+  font-size: .78rem;
+}
+
+.contractor-submission-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 350px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.contractor-submission-panel {
+  padding: 1rem;
+}
+
+.contractor-submission-panel .card__header {
+  gap: .8rem;
+  align-items: flex-start;
+}
+
+.contractor-submission-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .85rem;
+}
+
+.contractor-submission-fields label {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.contractor-submission-fields label.is-wide {
+  grid-column: 1 / -1;
+}
+
+.contractor-submission-media {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: .85rem;
+  align-items: start;
+  min-width: 0;
+  padding: .85rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface-muted, #f8fafc);
+}
+
+.contractor-submission-media__preview {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--admin-primary);
+  font-size: 1.35rem;
+}
+
+.contractor-submission-media__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.contractor-submission-media__body {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.contractor-submission-media__body strong {
+  font-size: .95rem;
+  overflow-wrap: anywhere;
+}
+
+.contractor-submission-media__body small {
+  color: var(--admin-text-muted);
+  font-size: .82rem;
+  line-height: 1.4;
+}
+
+.contractor-submission-media__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  margin-top: .35rem;
+}
+
+.contractor-submission-form__footer {
+  justify-content: space-between;
+  min-height: 44px;
+  margin-top: 1rem;
+}
+
+[data-submission-status][data-state="error"] {
+  color: #b91c1c;
+  font-weight: 850;
+}
+
+[data-submission-status][data-state="success"] {
+  color: var(--admin-primary);
+  font-weight: 850;
+}
+
+[data-submission-status][data-state="loading"] {
+  color: var(--admin-text-muted);
+  font-weight: 850;
+}
+
+.contractor-submission-context {
+  display: grid;
+  gap: .6rem;
+}
+
+.contractor-submission-context span {
+  display: grid;
+  gap: .15rem;
+  min-width: 0;
+  padding: .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.contractor-submission-context span:hover {
+  border-color: rgba(22, 51, 0, .22);
+  box-shadow: var(--admin-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.contractor-submission-filter {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(190px, .6fr) auto;
+  gap: .85rem;
+  align-items: end;
+  margin: .9rem 0 1rem;
+  padding: .9rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+}
+
+.contractor-submission-filter label {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.contractor-submission-filter-note {
+  margin: 0 0 .85rem;
+  font-size: .86rem;
+}
+
+.contractor-submission-table-wrap {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.contractor-submission-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.contractor-submission-table th,
+.contractor-submission-table td {
+  padding: .78rem .85rem;
+  border-bottom: 1px solid var(--admin-border);
+  text-align: left;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.contractor-submission-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.contractor-submission-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.contractor-submission-table strong,
+.contractor-submission-table small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.contractor-submission-table td:nth-child(3) {
+  max-width: 360px;
+}
+
+.contractor-submission-support {
+  display: inline-flex !important;
+  align-items: center;
+  gap: .3rem;
+  width: max-content;
+  max-width: 100%;
+  margin-top: .25rem;
+  padding: .18rem .45rem;
+  border-radius: 999px;
+  background: var(--admin-lime-soft);
+  color: var(--admin-primary) !important;
+  font-weight: 850;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: .9rem;
+  flex-wrap: wrap;
+}
+
+.pagination > div {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.pagination .is-disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+body.contractor-modal-open {
+  overflow: hidden;
+}
+
+.contractor-submission-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, .58);
+}
+
+.contractor-submission-overlay[hidden] {
+  display: none !important;
+}
+
+.contractor-submission-modal {
+  width: min(860px, 100%);
+  max-height: min(90vh, 900px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .3);
+}
+
+.contractor-submission-modal header,
+.contractor-submission-modal footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--admin-border);
+  background: #fff;
+}
+
+.contractor-submission-modal footer {
+  border-bottom: 0;
+  border-top: 1px solid var(--admin-border);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.contractor-submission-modal header h2 {
+  margin: .25rem 0 .15rem;
+  font-size: 1.2rem;
+}
+
+.contractor-submission-modal header p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: .88rem;
+}
+
+.contractor-submission-modal__body {
+  overflow: auto;
+  padding: 1rem 1.15rem;
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.contractor-submission-detail-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .65rem;
+}
+
+.contractor-submission-detail-chips article,
+.contractor-submission-detail-grid article {
+  min-width: 0;
+  padding: .8rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.contractor-submission-detail-chips small,
+.contractor-submission-detail-grid small {
+  display: block;
+  color: var(--admin-text-muted);
+  font-size: .72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.contractor-submission-detail-chips strong,
+.contractor-submission-detail-grid strong {
+  display: block;
+  margin-top: .28rem;
+  overflow-wrap: anywhere;
+  font-size: .95rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.contractor-submission-detail-block {
+  padding: .95rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.contractor-submission-detail-block h3 {
+  margin: 0 0 .55rem;
+  font-size: 1rem;
+}
+
+.contractor-submission-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.contractor-submission-detail-grid article.is-wide {
+  grid-column: 1 / -1;
+}
+
+.contractor-submission-detail-note {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.contractor-submission-attach-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: .55rem;
+}
+
+.contractor-submission-attach-list li {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: .7rem;
+  align-items: center;
+  padding: .7rem .8rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface-muted, #f8fafc);
+}
+
+.contractor-submission-attach-thumb {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  color: var(--admin-primary);
+}
+
+.contractor-submission-attach-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.contractor-submission-attach-list a {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.contractor-submission-attach-list a:hover {
+  color: var(--admin-primary);
+  text-decoration: underline;
+}
+
+.contractor-submission-attach-list small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-text-muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .contractor-submission-media {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-submission-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-submission-detail-grid article.is-wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 1180px) {
+  .contractor-submission-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-submission-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .contractor-submission-hero,
+  .contractor-submission-selector {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .contractor-submission-actions,
+  .contractor-submission-actions .btn,
+  .contractor-submission-filter,
+  .contractor-submission-filter__actions,
+  .contractor-submission-filter__actions .btn,
+  .contractor-submission-filter__actions a,
+  .contractor-submission-form__footer .btn {
+    width: 100%;
+  }
+
+  .contractor-submission-filter,
+  .contractor-submission-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .contractor-submission-panel {
+    padding: .85rem;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

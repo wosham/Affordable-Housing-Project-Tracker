@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $projects = ProgrammeTask::projectOptions();
 $defaultProjectId = 0;
@@ -26,7 +26,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== 0 && $value !== null);
 
-$perPage = 30;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalTasks = ProgrammeTask::countItems($filters);
 $totalPages = max(1, (int)ceil($totalTasks / $perPage));
@@ -159,14 +159,20 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     $actualEnd = $task['end_date'] ?: $plannedEnd;
     [$plannedLeft, $plannedWidth] = programme_gantt_bar($plannedStart, $plannedEnd, $timelineStartTs, $timelineDays);
     [$actualLeft, $actualWidth] = programme_gantt_bar($actualStart, $actualEnd, $timelineStartTs, $timelineDays);
+    $plannedLabelClass = $plannedWidth < 10 ? ' class="is-outside"' : '';
+    $ganttTip = $task['task_name']
+        . ' | Planned: ' . format_date($plannedStart) . ' to ' . format_date($plannedEnd)
+        . ' | Actual: ' . format_date($actualStart) . ' to ' . format_date($actualEnd)
+        . ' | Progress: ' . format_percentage($task['pct_complete'])
+        . ' | State: ' . ucfirst((string)$task['delay_state']);
 ?>
-      <article class="gantt-row gantt-row--<?= Security::e($task['delay_state']) ?><?= $task['critical_path'] ? ' is-critical' : '' ?>">
+      <article class="gantt-row gantt-row--<?= Security::e($task['delay_state']) ?><?= $task['critical_path'] ? ' is-critical' : '' ?>" data-chart-tip="<?= Security::e($ganttTip) ?>" title="<?= Security::e($ganttTip) ?>">
         <div class="gantt-task">
           <strong><?= Security::e($task['task_name']) ?></strong>
           <small><?= Security::e($task['assignee_name'] ?: 'Unassigned') ?><?= $task['dependency_name'] ? ' | after ' . Security::e($task['dependency_name']) : '' ?></small>
         </div>
         <div class="gantt-bars">
-          <span class="gantt-bar gantt-bar--planned" style="left: <?= Security::e((string)$plannedLeft) ?>%; width: <?= Security::e((string)$plannedWidth) ?>%;"><i><?= Security::e(format_percentage($task['pct_complete'])) ?></i></span>
+          <span class="gantt-bar gantt-bar--planned" style="left: <?= Security::e((string)$plannedLeft) ?>%; width: <?= Security::e((string)$plannedWidth) ?>%;"><i<?= $plannedLabelClass ?>><?= Security::e(format_percentage($task['pct_complete'])) ?></i></span>
           <span class="gantt-bar gantt-bar--actual" style="left: <?= Security::e((string)$actualLeft) ?>%; width: <?= Security::e((string)$actualWidth) ?>%;"></span>
         </div>
       </article>
@@ -221,7 +227,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php if ($totalPages > 1): ?>
   <nav class="pagination" aria-label="Programme pagination">
     <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($totalTasks)) ?> tasks</p>
-    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(programme_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(programme_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+    <div class="pagination__list">
+      <a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(programme_page_url($filters, max(1, $page - 1))) ?>" aria-label="Previous page"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
+<?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+      <a class="pagination__link<?= $i === $page ? ' is-active' : '' ?>" href="<?= Security::e(programme_page_url($filters, $i)) ?>"><?= Security::e(format_number($i)) ?></a>
+<?php endfor; ?>
+      <a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(programme_page_url($filters, min($totalPages, $page + 1))) ?>" aria-label="Next page"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+    </div>
   </nav>
 <?php endif; ?>
 </section>

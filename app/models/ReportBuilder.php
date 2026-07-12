@@ -77,6 +77,8 @@ class ReportBuilder extends Model
             throw new InvalidArgumentException('Unknown report type.');
         }
 
+        $filters = self::filtersForType($filters, $type);
+
         return match ($type) {
             'executive_summary' => self::executiveSummary($filters),
             'project_progress' => self::projectProgress($filters),
@@ -306,7 +308,7 @@ class ReportBuilder extends Model
              LEFT JOIN (
                 SELECT project_id, SUM(amount) AS paid
                 FROM payments
-                WHERE payment_date BETWEEN ? AND ?
+                WHERE payment_date BETWEEN ? AND ? AND status = 'processed'
                 GROUP BY project_id
              ) pay ON pay.project_id = p.id
              LEFT JOIN (
@@ -354,10 +356,9 @@ class ReportBuilder extends Model
              FROM payments pay
              JOIN projects p ON p.id = pay.project_id
              LEFT JOIN users u ON u.id = pay.processed_by
-             WHERE pay.payment_date BETWEEN ? AND ?"
+             WHERE pay.payment_date BETWEEN ? AND ? AND pay.status = 'processed'"
              . self::projectWhereSuffix($filters, 'p') . "
-             ORDER BY pay.payment_date DESC, p.name
-             LIMIT 500",
+             ORDER BY pay.payment_date DESC, p.name",
             [$filters['date_from'], $filters['date_to']]
         );
         $retention = self::rows(
@@ -367,8 +368,7 @@ class ReportBuilder extends Model
              LEFT JOIN users u ON u.id = r.processed_by
              WHERE 1 = 1"
              . self::projectWhereSuffix($filters, 'p') . "
-             ORDER BY r.created_at DESC
-             LIMIT 500"
+             ORDER BY r.created_at DESC"
         );
 
         return self::report('financial', $filters, [
@@ -389,28 +389,29 @@ class ReportBuilder extends Model
     {
         [$where, $bindings] = self::attendanceWhere($filters);
         $rows = self::rows(
-            "SELECT ar.date, COALESCE(p.name, 'Unassigned') AS project, COALESCE(c.name, '-') AS constituency,
+            "SELECT ar.date, COALESCE(p.name, wl.name, 'Unassigned') AS project, COALESCE(c.name, 'Internal Office') AS constituency,
                     COALESCE(ar.role_at_signin, '-') AS role, ar.status, ar.review_status,
                     COUNT(*) AS records
              FROM attendance_records ar
              LEFT JOIN projects p ON p.id = ar.project_id
+             LEFT JOIN work_locations wl ON wl.id = ar.work_location_id
              LEFT JOIN constituencies c ON c.id = p.constituency_id
              {$where}
-             GROUP BY ar.date, p.name, c.name, ar.role_at_signin, ar.status, ar.review_status
+             GROUP BY ar.date, p.name, wl.name, c.name, ar.role_at_signin, ar.status, ar.review_status
              ORDER BY ar.date DESC, records DESC",
             $bindings
         );
         $details = self::rows(
             "SELECT ar.date, ar.signin_time, COALESCE(CONCAT(u.first_name, ' ', u.last_name), '-') AS staff_name,
-                    COALESCE(r.name, ar.role_at_signin, '-') AS role, COALESCE(p.name, 'Unassigned') AS project,
+                    COALESCE(r.name, ar.role_at_signin, '-') AS role, COALESCE(p.name, wl.name, 'Unassigned') AS project,
                     ar.status, ar.review_status, ar.distance_from_site_m, ar.accuracy_meters
              FROM attendance_records ar
              LEFT JOIN users u ON u.id = ar.user_id
              LEFT JOIN roles r ON r.id = u.role_id
              LEFT JOIN projects p ON p.id = ar.project_id
+             LEFT JOIN work_locations wl ON wl.id = ar.work_location_id
              " . $where . "
-             ORDER BY ar.date DESC, ar.signin_time DESC
-             LIMIT 500",
+             ORDER BY ar.date DESC, ar.signin_time DESC",
             $bindings
         );
 
@@ -495,6 +496,30 @@ class ReportBuilder extends Model
         return $filters;
     }
 
+    private static function filtersForType(array $filters, string $type): array
+    {
+        $status = (string)($filters['status'] ?? '');
+        $projectStatuses = ['planning', 'active', 'on_hold', 'stalled', 'completed', 'cancelled'];
+        $attendanceStatuses = ['present', 'late', 'absent', 'geo-fail', 'outside-window'];
+
+        // Financial reports do not use project status the same way; ignore status filter.
+        if (in_array($type, ['financial', 'public_content'], true)) {
+            $filters['status'] = '';
+        } elseif (in_array($type, ['project_progress', 'project_register', 'executive_summary'], true)) {
+            if ($status !== '' && !in_array($status, $projectStatuses, true)) {
+                $filters['status'] = '';
+            }
+        } elseif ($type === 'attendance') {
+            if ($status !== '' && !in_array($status, $attendanceStatuses, true)) {
+                $filters['status'] = '';
+            }
+        } else {
+            $filters['status'] = '';
+        }
+
+        return $filters;
+    }
+
     private static function createRun(array $data): int
     {
         Database::query(
@@ -534,6 +559,7 @@ class ReportBuilder extends Model
         $where = ['ar.date BETWEEN ? AND ?'];
         $bindings = [$filters['date_from'], $filters['date_to']];
         if (!empty($filters['project_id'])) {
+            // Include HQ rows only when not filtering a specific project.
             $where[] = 'ar.project_id = ?';
             $bindings[] = (int)$filters['project_id'];
         } elseif (!empty($filters['project_ids']) && is_array($filters['project_ids'])) {
@@ -543,7 +569,12 @@ class ReportBuilder extends Model
                 array_push($bindings, ...$ids);
             }
         }
+        if (!empty($filters['work_location_id'])) {
+            $where[] = 'ar.work_location_id = ?';
+            $bindings[] = (int)$filters['work_location_id'];
+        }
         if (!empty($filters['constituency_id'])) {
+            // Constituency applies to project-based records; keep HQ rows out of constituency slices.
             $where[] = 'p.constituency_id = ?';
             $bindings[] = (int)$filters['constituency_id'];
         }
@@ -598,11 +629,7 @@ class ReportBuilder extends Model
 
     private static function rows(string $sql, array $bindings = []): array
     {
-        try {
-            return Database::fetchAll($sql, $bindings);
-        } catch (Throwable) {
-            return [];
-        }
+        return Database::fetchAll($sql, $bindings);
     }
 
     private static function average(array $rows, string $key): float

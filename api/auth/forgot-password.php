@@ -43,8 +43,24 @@ try {
         'email' => $email,
         'provider' => 'resend',
     ]);
+
+    $appConfig = $GLOBALS['app_config'] ?? [];
+    if (empty($result['success']) && !empty($appConfig['debug'])) {
+        Response::json([
+            'success' => false,
+            'message' => (string)($result['message'] ?? 'Password reset email could not be sent. Check email settings.'),
+        ], 502);
+    }
 } catch (Throwable $error) {
     Logger::log('request-failed', 'password_resets', (int)($user['id'] ?? 0), ['email' => $email, 'error' => $error->getMessage()]);
+
+    $appConfig = $GLOBALS['app_config'] ?? [];
+    if (!empty($appConfig['debug'])) {
+        Response::json([
+            'success' => false,
+            'message' => 'Password reset could not be prepared. Please check the system email settings and try again.',
+        ], 500);
+    }
 }
 
 Response::json($generic);

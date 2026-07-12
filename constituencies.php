@@ -3,18 +3,23 @@ require_once __DIR__ . '/app/core/bootstrap.php';
 
 $basePath = '';
 $activePage = 'constituencies';
-$cmsPage = CmsLoader::page('constituencies');
+$cmsPage = CmsLoader::publicPage('constituencies');
 
+if (!function_exists('constituencies_content')) {
 function constituencies_content(array $page, string $key, array $defaults): array
 {
     return CmsLoader::content($page, $key, $defaults);
 }
+}
 
+if (!function_exists('constituencies_number')) {
 function constituencies_number(int|float $value): string
 {
     return number_format((float)$value, 0);
 }
+}
 
+if (!function_exists('constituencies_short_number')) {
 function constituencies_short_number(int|float $value): string
 {
     $value = (float)$value;
@@ -26,12 +31,16 @@ function constituencies_short_number(int|float $value): string
     }
     return number_format($value, 0);
 }
+}
 
+if (!function_exists('constituencies_plural')) {
 function constituencies_plural(int $count, string $singular, string $plural): string
 {
     return $count === 1 ? $singular : $plural;
 }
+}
 
+if (!function_exists('constituencies_replace_stats')) {
 function constituencies_replace_stats(string $text, array $stats): string
 {
     return strtr($text, [
@@ -41,80 +50,6 @@ function constituencies_replace_stats(string $text, array $stats): string
         '{residents}' => constituencies_short_number((int)$stats['residents']),
     ]);
 }
-
-function constituencies_map_shapes(): array
-{
-    return [
-        'endebess' => ['path' => 'M 20,20 L 220,20 L 220,185 L 120,205 L 20,165 Z', 'label_x' => 112, 'label_y' => 100, 'sub_y' => 116],
-        'cherangany' => ['path' => 'M 220,20 L 460,20 L 460,235 L 265,235 L 220,185 Z', 'label_x' => 352, 'label_y' => 115, 'sub_y' => 131],
-        'kiminini' => ['path' => 'M 20,165 L 120,205 L 120,385 L 20,385 Z', 'label_x' => 62, 'label_y' => 295, 'sub_y' => 311],
-        'saboti' => ['path' => 'M 120,205 L 220,185 L 265,235 L 265,385 L 120,385 Z', 'label_x' => 190, 'label_y' => 308, 'sub_y' => 324],
-        'kwanza' => ['path' => 'M 265,235 L 460,235 L 460,385 L 265,385 Z', 'label_x' => 365, 'label_y' => 313, 'sub_y' => 329],
-    ];
-}
-
-function constituencies_rows(): array
-{
-    $rows = Database::fetchAll("
-        SELECT
-            c.id,
-            c.slug,
-            c.name,
-            c.mp,
-            c.description,
-            c.population,
-            c.total_units,
-            c.total_projects,
-            c.avg_completion,
-            c.status,
-            c.hero_image,
-            COUNT(DISTINCT p.id) AS live_project_count,
-            COALESCE(SUM(p.units), 0) AS live_total_units,
-            COALESCE(AVG(p.pct_complete), 0) AS live_avg_completion
-        FROM constituencies c
-        LEFT JOIN projects p ON p.constituency_id = c.id
-        WHERE c.slug IN ('saboti','cherangany','endebess','kiminini','kwanza')
-        GROUP BY c.id
-        ORDER BY FIELD(c.slug, 'saboti','cherangany','endebess','kiminini','kwanza')
-    ");
-
-    $wardsByConstituency = [];
-    foreach (Database::fetchAll("
-        SELECT c.slug AS constituency_slug, w.name
-        FROM wards w
-        INNER JOIN constituencies c ON c.id = w.constituency_id
-        WHERE c.slug IN ('saboti','cherangany','endebess','kiminini','kwanza')
-        ORDER BY FIELD(c.slug, 'saboti','cherangany','endebess','kiminini','kwanza'), w.id ASC
-    ") as $ward) {
-        $wardsByConstituency[(string)$ward['constituency_slug']][] = (string)$ward['name'];
-    }
-
-    $data = [];
-    foreach ($rows as $row) {
-        $slug = (string)$row['slug'];
-        $projectCount = (int)$row['live_project_count'] > 0 ? (int)$row['live_project_count'] : (int)$row['total_projects'];
-        $totalUnits = (int)$row['live_total_units'] > 0 ? (int)$row['live_total_units'] : (int)$row['total_units'];
-        $avgCompletion = (int)round((float)$row['live_avg_completion'] > 0 ? (float)$row['live_avg_completion'] : (float)$row['avg_completion']);
-        $population = (int)($row['population'] ?? 0);
-
-        $data[] = [
-            'id' => $slug,
-            'name' => (string)$row['name'],
-            'wards' => $wardsByConstituency[$slug] ?? [],
-            'population' => $population > 0 ? '~' . constituencies_number($population) : '-',
-            'populationRaw' => $population,
-            'mp' => (string)($row['mp'] ?? ''),
-            'totalUnits' => $totalUnits,
-            'avgCompletion' => max(0, min(100, $avgCompletion)),
-            'status' => in_array((string)$row['status'], ['active', 'completed'], true) ? 'active' : 'planning',
-            'projectCount' => $projectCount,
-            'description' => (string)($row['description'] ?? ''),
-            'link' => 'constituency-detail.php?id=' . rawurlencode($slug),
-            'heroImage' => $row['hero_image'] ?: null,
-        ];
-    }
-
-    return $data;
 }
 
 $hero = constituencies_content($cmsPage, 'constituencies_hero', [
@@ -123,15 +58,15 @@ $hero = constituencies_content($cmsPage, 'constituencies_hero', [
     'eyebrow' => 'Coverage Map',
     'title_prefix' => 'All',
     'title_highlight' => '5 Constituencies',
-    'subtitle' => 'Explore how the Affordable Housing Programme reaches every corner of Trans-Nzoia County - from Endebess on the Uganda border to Kwanza in the south.',
+    'subtitle' => 'Explore how the county project tracker covers every constituency in Trans-Nzoia County - from Endebess on the Uganda border to Kwanza in the south.',
     'constituencies_label' => 'Constituencies',
     'projects_label' => 'Projects',
-    'units_label' => 'Units Planned',
+    'units_label' => 'Tracked Outputs',
     'residents_label' => 'Residents Served',
 ]);
 $mapCopy = constituencies_content($cmsPage, 'constituencies_map', [
     'title' => 'Trans-Nzoia County',
-    'subtitle' => 'Click a constituency to explore its housing projects',
+    'subtitle' => 'Click a constituency to explore its project sites',
     'active_label' => 'Active construction',
     'planning_label' => 'Planning stage',
     'selected_label' => 'Selected',
@@ -139,7 +74,7 @@ $mapCopy = constituencies_content($cmsPage, 'constituencies_map', [
 ]);
 $progressCopy = constituencies_content($cmsPage, 'constituencies_progress', [
     'title' => "County-Wide\nProgramme\nProgress",
-    'subtitle' => 'Across all {constituencies} constituencies, the programme is delivering {units} affordable housing units - targeting Kenyans registered on the national Boma Yangu portal.',
+    'subtitle' => 'Across all {constituencies} constituencies, the programme is tracking {units} project outputs across housing, markets, ESP sites, and institutional facilities.',
     'button_label' => 'Browse All Projects',
     'button_url' => 'projects.php',
 ]);
@@ -150,7 +85,7 @@ $gridCopy = constituencies_content($cmsPage, 'constituencies_grid', [
     'sort_label' => 'Sort:',
     'default_label' => 'Default',
     'progress_label' => 'Highest Progress',
-    'units_label' => 'Most Units',
+    'units_label' => 'Most Outputs',
     'alpha_label' => 'A - Z',
 ]);
 $ctaCopy = constituencies_content($cmsPage, 'constituencies_apply_cta', [
@@ -162,25 +97,39 @@ $ctaCopy = constituencies_content($cmsPage, 'constituencies_apply_cta', [
     'secondary_url' => 'projects.php',
 ]);
 
-$constituencies = constituencies_rows();
-$stats = [
-    'constituencies' => count($constituencies),
-    'projects' => array_sum(array_map(static fn (array $item): int => (int)$item['projectCount'], $constituencies)),
-    'units' => array_sum(array_map(static fn (array $item): int => (int)$item['totalUnits'], $constituencies)),
-    'residents' => array_sum(array_map(static fn (array $item): int => (int)$item['populationRaw'], $constituencies)),
-];
+$constituencies = Constituency::publicList();
+$stats = Constituency::publicStats();
 $constituenciesBySlug = [];
 foreach ($constituencies as $item) {
     $constituenciesBySlug[$item['id']] = $item;
 }
+$clientLabels = [
+    'active' => 'Active',
+    'planning' => 'Planning',
+    'residents' => 'residents',
+    'projects' => CmsLoader::text($hero, 'projects_label', 'Projects'),
+    'units' => 'Outputs',
+    'wards' => 'Wards',
+    'completion' => 'Avg. Completion',
+    'explore' => 'Explore',
+    'previous' => 'Prev',
+    'next' => 'Next',
+    'showing' => 'Showing',
+    'of' => 'of',
+];
+$pagePayload = public_page_payload('constituencies', [
+    'constituencies' => $constituencies,
+    'stats' => $stats,
+    'labels' => $clientLabels,
+]);
 
 $pageTitle = $cmsPage['seo_title'] ?? 'Constituencies | Trans-Nzoia County Affordable Housing Tracker';
-$pageDescription = $cmsPage['seo_description'] ?? 'Explore affordable housing coverage across all 5 constituencies in Trans-Nzoia County - Saboti, Cherangany, Endebess, Kiminini and Kwanza.';
+$pageDescription = $cmsPage['seo_description'] ?? 'Explore project coverage across all 5 constituencies in Trans-Nzoia County - Saboti, Cherangany, Endebess, Kiminini and Kwanza.';
 $pageKeywords = $cmsPage['seo_keywords'] ?? 'Trans-Nzoia constituencies, Saboti housing, Cherangany AHP, Endebess housing, Kiminini housing, Kwanza housing';
 $pageAuthor = 'Trans-Nzoia County Government - Department of Land, Housing & Physical Planning';
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = $cmsPage['canonical_url'] ?? 'https://housing.transnzoia.go.ke/constituencies.php';
+$canonicalUrl = trim((string)($cmsPage['canonical_url'] ?? '')) ?: Url::canonical('constituencies.php');
 $heroImage = CmsLoader::text($hero, 'background_image', (string)($cmsPage['hero_image'] ?? 'uploads/gallery/maili-tatu-3.jpg'));
 $pageStyles = ['assets/css/global.css', 'assets/css/pages/constituencies.css'];
 $pageScripts = ['assets/js/global.js', 'assets/js/pages/constituencies.js'];
@@ -206,15 +155,10 @@ include __DIR__ . '/app/partials/head.php';
 
     <section class="page-hero page-hero--constituencies" aria-label="Constituencies overview">
       <div class="page-hero-bg" aria-hidden="true">
-        <img src="<?= Security::e($heroImage) ?>" alt="" loading="eager" onerror="this.style.display='none'">
+        <img <?= public_image_attrs($heroImage, '', ['loading' => 'eager', 'fetchpriority' => 'high', 'onerror' => "this.style.display='none'"]) ?>>
         <div class="page-hero-overlay"></div>
       </div>
       <div class="container">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <a href="index.php" class="breadcrumb-link">Home</a>
-          <i class="fa-solid fa-chevron-right breadcrumb-sep" aria-hidden="true"></i>
-          <span class="breadcrumb-current">Constituencies</span>
-        </nav>
         <div class="page-hero-body">
           <div class="page-hero-eyebrow">
             <span class="page-hero-tag"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> <?= Security::e(CmsLoader::text($hero, 'eyebrow', 'Coverage Map')) ?></span>
@@ -249,7 +193,7 @@ include __DIR__ . '/app/partials/head.php';
                     <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(10,31,5,0.25)"/>
                   </filter>
                 </defs>
-<?php foreach (constituencies_map_shapes() as $slug => $shape): ?>
+<?php foreach (Constituency::mapShapes() as $slug => $shape): ?>
 <?php $item = $constituenciesBySlug[$slug] ?? ['name' => ucwords($slug), 'projectCount' => 0, 'avgCompletion' => 0]; ?>
                 <g class="con-path-group" data-id="<?= Security::e($slug) ?>" tabindex="0" role="button" aria-label="<?= Security::e($item['name'] . ' - ' . $item['projectCount'] . ' ' . constituencies_plural((int)$item['projectCount'], 'project', 'projects') . ', ' . $item['avgCompletion'] . '% average completion') ?>">
                   <path d="<?= Security::e($shape['path']) ?>" class="con-path"/>
@@ -267,7 +211,45 @@ include __DIR__ . '/app/partials/head.php';
           </div>
         </div>
         <div class="con-cards-panel" id="conCardsPanel" aria-label="Constituency listings">
-          <?php if (!$constituencies): ?><p class="con-map-hint"><?= Security::e(CmsLoader::text($mapCopy, 'empty_text', 'Constituency data will appear after projects and wards are added to the registry.')) ?></p><?php endif; ?>
+<?php if ($constituencies): ?>
+<?php foreach ($constituencies as $item): ?>
+          <article class="con-card" data-id="<?= Security::e($item['id']) ?>" tabindex="0" aria-label="Explore <?= Security::e($item['name']) ?>">
+            <div class="con-card-header">
+              <div class="con-card-name-wrap">
+                <h3 class="con-card-name"><?= Security::e($item['name']) ?></h3>
+                <span class="con-card-pop"><?= Security::e($item['population']) ?> residents</span>
+              </div>
+              <span class="con-card-status con-card-status--<?= Security::e($item['status']) ?>"><?= Security::e($item['status'] === 'active' ? 'Active' : 'Planning') ?></span>
+            </div>
+            <div class="con-card-stats">
+              <div class="con-card-stat"><span class="con-card-stat-val"><?= Security::e((string)$item['projectCount']) ?></span><span class="con-card-stat-lbl">Projects</span></div>
+              <div class="con-card-stat"><span class="con-card-stat-val"><?= Security::e(format_number((int)$item['totalUnits'])) ?></span><span class="con-card-stat-lbl">Outputs</span></div>
+              <div class="con-card-stat"><span class="con-card-stat-val"><?= Security::e((string)count($item['wards'])) ?></span><span class="con-card-stat-lbl">Wards</span></div>
+            </div>
+            <div class="con-card-progress-wrap">
+              <div class="con-card-progress-meta">
+                <span class="con-card-progress-label">Avg. Completion</span>
+                <span class="con-card-progress-pct"><?= Security::e((string)$item['avgCompletion']) ?>%</span>
+              </div>
+              <div class="con-card-progress-bar" role="progressbar" aria-valuenow="<?= (int)$item['avgCompletion'] ?>" aria-valuemin="0" aria-valuemax="100">
+                <div class="con-card-progress-fill" data-target="<?= (int)$item['avgCompletion'] ?>" style="width:<?= (int)$item['avgCompletion'] ?>%"></div>
+              </div>
+            </div>
+            <div class="con-card-footer">
+                            <div class="con-card-wards" aria-label="Wards">
+<?php foreach ($item['wards'] as $ward): ?>
+                <span class="con-card-ward-chip"><?= Security::e($ward) ?></span>
+<?php endforeach; ?>
+              </div>
+              <a href="<?= Security::e($item['link']) ?>" class="con-card-cta" aria-label="Explore <?= Security::e($item['name']) ?>">
+                Explore <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </article>
+<?php endforeach; ?>
+<?php else: ?>
+          <p class="con-map-hint"><?= Security::e(CmsLoader::text($mapCopy, 'empty_text', 'Constituency data will appear after projects and wards are added to the registry.')) ?></p>
+<?php endif; ?>
         </div>
       </div>
     </section>
@@ -282,7 +264,19 @@ include __DIR__ . '/app/partials/head.php';
               <i class="fa-solid fa-building-columns" aria-hidden="true"></i> <?= Security::e(CmsLoader::text($progressCopy, 'button_label', 'Browse All Projects')) ?>
             </a>
           </div>
-          <div class="county-total-right" id="countyTotalsChart" aria-label="Constituency progress comparison"></div>
+          <div class="county-total-right" id="countyTotalsChart" aria-label="Constituency progress comparison">
+            <div class="county-bar-row">
+<?php foreach ($constituencies as $item): ?>
+              <div class="county-bar-item">
+                <span class="county-bar-name"><?= Security::e($item['name']) ?></span>
+                <div class="county-bar-track">
+                  <div class="county-bar-fill" data-target="<?= (int)$item['avgCompletion'] ?>" style="width:<?= (int)$item['avgCompletion'] ?>%"></div>
+                </div>
+                <span class="county-bar-pct"><?= Security::e((string)$item['avgCompletion']) ?>%</span>
+              </div>
+<?php endforeach; ?>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -302,7 +296,36 @@ include __DIR__ . '/app/partials/head.php';
             <button class="con-sort-btn" data-sort="alpha"><?= Security::e(CmsLoader::text($gridCopy, 'alpha_label', 'A - Z')) ?></button>
           </div>
         </div>
-        <div class="con-grid" id="conBrowseGrid"></div>
+        <div class="con-grid" id="conBrowseGrid">
+<?php foreach ($constituencies as $item): ?>
+          <article class="con-browse-card">
+            <div class="con-browse-card-top">
+              <div>
+                <h3 class="con-browse-card-name"><?= Security::e($item['name']) ?></h3>
+                <div class="con-browse-card-pop"><?= Security::e($item['population']) ?> residents</div>
+              </div>
+              <span class="con-browse-status con-browse-status--<?= Security::e($item['status']) ?>"><?= Security::e($item['status'] === 'active' ? 'Active' : 'Planning') ?></span>
+            </div>
+            <div class="con-browse-stats">
+              <div class="con-browse-stat"><span class="con-browse-stat-val"><?= Security::e((string)$item['projectCount']) ?></span><span class="con-browse-stat-lbl">Projects</span></div>
+              <div class="con-browse-stat"><span class="con-browse-stat-val"><?= Security::e(format_number((int)$item['totalUnits'])) ?></span><span class="con-browse-stat-lbl">Outputs</span></div>
+              <div class="con-browse-stat"><span class="con-browse-stat-val"><?= Security::e((string)count($item['wards'])) ?></span><span class="con-browse-stat-lbl">Wards</span></div>
+            </div>
+            <div class="con-browse-progress">
+              <div class="con-browse-progress-meta"><span>Avg. Completion</span><span><?= Security::e((string)$item['avgCompletion']) ?>%</span></div>
+              <div class="con-browse-bar-track"><div class="con-browse-bar-fill" data-target="<?= (int)$item['avgCompletion'] ?>" style="width:<?= (int)$item['avgCompletion'] ?>%"></div></div>
+            </div>
+            <div class="con-browse-wards">
+<?php foreach ($item['wards'] as $ward): ?>
+              <span class="con-browse-wards-chip"><?= Security::e($ward) ?></span>
+<?php endforeach; ?>
+            </div>
+            <a href="<?= Security::e($item['link']) ?>" class="con-browse-cta">
+              Explore <?= Security::e($item['name']) ?> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            </a>
+          </article>
+<?php endforeach; ?>
+        </div>
       </div>
     </section>
 
@@ -327,21 +350,7 @@ include __DIR__ . '/app/partials/head.php';
       </div>
     </div>
   </div>
-  <script>
-    window.AHP_DATA = {
-      constituencies: <?= json_encode($constituencies, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
-      projects: [],
-      getConstituency: function (id) {
-        return this.constituencies.find(function (item) { return item.id === id; }) || null;
-      },
-      getProject: function () {
-        return null;
-      },
-      getProjectsByConstituency: function () {
-        return [];
-      }
-    };
-  </script>
+  <?= public_json_script('ahp-page-data', $pagePayload) ?>
 <?php include __DIR__ . '/app/partials/footer.php'; ?>
 <?php include __DIR__ . '/app/partials/back-to-top.php'; ?>
 <?php include __DIR__ . '/app/partials/mobile-menu.php'; ?>

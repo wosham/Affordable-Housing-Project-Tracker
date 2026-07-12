@@ -210,13 +210,15 @@
     allCards.forEach(function (card) {
       var cat = card.getAttribute('data-category');
       var imgDiv = card.querySelector('.news-card-img');
-      if (imgDiv && cat && catIcons[cat]) {
+      if (imgDiv && cat && catIcons[cat] && !imgDiv.querySelector('.news-card-img-placeholder')) {
         var placeholder = document.createElement('div');
+        var icon = document.createElement('i');
+        var label = document.createElement('span');
         placeholder.className = 'news-card-img-placeholder';
         placeholder.setAttribute('aria-hidden', 'true');
-        placeholder.innerHTML =
-          '<i class="fa-solid ' + catIcons[cat].icon + '"></i>' +
-          '<span>' + catIcons[cat].label + '</span>';
+        icon.className = 'fa-solid ' + catIcons[cat].icon;
+        label.textContent = catIcons[cat].label;
+        placeholder.append(icon, label);
         imgDiv.insertBefore(placeholder, imgDiv.firstChild);
       }
     });
@@ -239,7 +241,11 @@
 
       var endpoint = form.getAttribute('action') || 'api/public/subscribe.php';
       var data = new FormData(form);
-      if (button) button.disabled = true;
+      var defaultButtonHtml = button ? button.innerHTML : '';
+      if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Subscribing';
+      }
 
       fetch(endpoint, {
         method: 'POST',
@@ -259,7 +265,10 @@
         form.classList.add('is-error');
         if (message) message.textContent = 'Unable to subscribe right now.';
       }).finally(function () {
-        if (button) button.disabled = false;
+        if (button) {
+          button.disabled = false;
+          button.innerHTML = defaultButtonHtml;
+        }
       });
     });
   }

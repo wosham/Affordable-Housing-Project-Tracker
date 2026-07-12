@@ -1,5 +1,5 @@
 <?php
-// Clerk of Works — Daily Site Diary
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
-// TODO: Phase 5 — Structured diary: weather, labour, plant, work done, issues, next day
+Guard::exactRole('clerk');
+$recordType = 'diary';
+include __DIR__ . '/../../app/partials/admin/clerk-daily-record-page.php';

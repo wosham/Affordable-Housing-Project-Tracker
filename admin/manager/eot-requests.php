@@ -1,7 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+require_once __DIR__ . '/../../app/partials/admin/manager-contract-helpers.php';
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -26,7 +27,7 @@ $records = array_map([ManagerContractControl::class, 'eotPayload'], ManagerContr
 $summary = ManagerContractControl::eotSummary($userId, $role, $filters);
 
 $pageTitle = 'EOT Requests';
-$pageDescription = 'Review extension-of-time requests, record recommendations and forward decisions for final action.';
+$pageDescription = 'Review extension-of-time requests and record recommendations for your assigned projects only.';
 $adminRole = 'manager';
 $csrfForm = 'manager_contract_controls';
 $contentClass = 'manager-contract-controls-page';
@@ -42,7 +43,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 ?>
 
 <section class="mcc-hero card">
-  <div><span class="sa-panel-label"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Contract controls</span><h2>EOT Requests</h2><p>Review extension-of-time requests, record recommendations and forward decisions for final action.</p></div>
+  <div><span class="sa-panel-label"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Contract controls</span><h2>EOT Requests</h2><p>Review extension-of-time requests and record recommendations for your assigned projects only.</p></div>
   <div class="mcc-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/liquidated-damages.php')) ?>"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> LD Tracker</a>
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/subcontractors.php')) ?>"><i class="fa-solid fa-people-carry-box" aria-hidden="true"></i> Subcontractors</a>
@@ -77,10 +78,27 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php if ($records === []): ?>
     <tr><td colspan="7"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span><strong class="empty-state__title">No EOT requests found</strong><span class="empty-state__text">Adjust your filters or wait for contractor submissions.</span></div></td></tr>
 <?php else: foreach ($records as $record): ?>
-    <tr><td><strong>EOT #<?= Security::e($record['eot_number']) ?></strong><small><?= Security::e($record['created_label']) ?> by <?= Security::e($record['submitted_by_name']) ?></small></td><td><strong><?= Security::e($record['project_name']) ?></strong><small>Delivery: <?= Security::e(format_date($record['est_delivery'] ?? null) ?: '-') ?></small></td><td><strong><?= Security::e(format_number($record['days_requested'])) ?> requested</strong><small><?= Security::e(format_number($record['manager_recommended_days'] ?? 0)) ?> recommended</small></td><td><?= Security::e(safe_truncate($record['reason'], 100)) ?></td><td><span class="mcc-pill mcc-pill--<?= Security::e($record['manager_recommendation']) ?>"><?= Security::e($record['recommendation_label']) ?></span><small><?= Security::e(safe_truncate($record['manager_review_note'] ?? 'No review note', 70)) ?></small></td><td><span class="mcc-pill mcc-pill--<?= Security::e($record['status']) ?>"><?= Security::e($record['status_label']) ?></span></td><td><button class="btn btn--icon btn--primary" type="button" data-mcc-open="eot" data-record="<?= Security::e(json_encode($record, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP)) ?>" title="Review EOT"><i class="fa-solid fa-pen" aria-hidden="true"></i></button></td></tr>
+    <tr>
+      <td><strong>EOT #<?= Security::e($record['eot_number']) ?></strong><small><?= Security::e($record['created_label']) ?> by <?= Security::e($record['submitted_by_name']) ?></small></td>
+      <td><strong><?= Security::e($record['project_name']) ?></strong><small>Delivery: <?= Security::e(format_date($record['est_delivery'] ?? null) ?: '-') ?></small></td>
+      <td><strong><?= Security::e(format_number($record['days_requested'])) ?> requested</strong><small><?= Security::e(format_number($record['manager_recommended_days'] ?? 0)) ?> recommended</small></td>
+      <td><?= Security::e(safe_truncate($record['reason'], 100)) ?></td>
+      <td><span class="mcc-pill mcc-pill--<?= Security::e($record['manager_recommendation']) ?>"><?= Security::e($record['recommendation_label']) ?></span><small><?= Security::e(safe_truncate($record['manager_review_note'] ?? 'No review note', 70)) ?></small></td>
+      <td><span class="mcc-pill mcc-pill--<?= Security::e($record['status']) ?>"><?= Security::e($record['status_label']) ?></span></td>
+      <td class="mcc-actions manager-table-actions">
+        <button class="btn btn--icon btn--primary" type="button" data-mcc-open="eot"<?= mcc_data_attrs([
+            'id' => $record['id'],
+            'manager_recommendation' => $record['manager_recommendation'] ?? 'pending',
+            'manager_recommended_days' => $record['manager_recommended_days'] ?? 0,
+            'delay_category' => $record['delay_category'] ?? '',
+            'manager_review_note' => $record['manager_review_note'] ?? '',
+            'impact_summary' => $record['impact_summary'] ?? '',
+        ]) ?> title="Review EOT" aria-label="Review EOT"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+      </td>
+    </tr>
 <?php endforeach; endif; ?>
   </tbody></table></div>
-  <?php mcc_pagination($total, $offset, count($records), $page, $totalPages, $filters, 'admin/manager/eot-requests.php'); ?>
+  <?php mcc_pagination($total, $offset, count($records), $page, $totalPages, $filters, 'admin/manager/eot-requests.php', $perPage); ?>
 </section>
 
 <div class="mcc-modal" data-mcc-modal="eot" hidden>
@@ -98,9 +116,3 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </div>
 
 <?php include __DIR__ . '/../../app/partials/admin/shell-end.php'; ?>
-
-<?php
-function mcc_default_project(array $projects, string $countKey): int { foreach ($projects as $project) { if ((int)($project[$countKey] ?? 0) > 0) return (int)$project['id']; } return $projects ? (int)$projects[0]['id'] : 0; }
-function mcc_stat(string $icon, mixed $value, string $label, string $trend): void { ?><article class="stat-widget"><span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(is_numeric($value) ? format_number((float)$value) : (string)$value) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span></article><?php }
-function mcc_project_strip(array $projects, array $filters, string $countKey, string $label, string $path): void { ?><section class="mcc-projects"><?php if ($projects === []): ?><article class="card mcc-project is-empty"><strong>No assigned projects</strong><span>Contract controls appear once projects are allocated.</span></article><?php else: foreach ($projects as $project): $query = array_filter(array_merge($filters, ['project_id' => (int)$project['id'], 'page' => 1]), static fn($v) => $v !== '' && $v !== null && $v !== 0); ?><a class="card mcc-project<?= (int)($filters['project_id'] ?? 0) === (int)$project['id'] ? ' is-active' : '' ?>" href="<?= Security::e(Url::to($path . '?' . http_build_query($query))) ?>"><span><strong><?= Security::e($project['name']) ?></strong><small><?= Security::e($project['constituency_name'] ?: status_label($project['status'] ?? 'active')) ?></small></span><em><?= Security::e(format_number($project[$countKey] ?? 0)) ?> <?= Security::e($label) ?></em></a><?php endforeach; endif; ?></section><?php }
-function mcc_pagination(int $total, int $offset, int $count, int $page, int $totalPages, array $filters, string $path): void { if ($totalPages <= 1) return; $from = $total > 0 ? $offset + 1 : 0; $to = min($offset + $count, $total); $prev = array_filter(array_merge($filters, ['page' => max(1, $page - 1)]), static fn($v) => $v !== '' && $v !== null && $v !== 0); $next = array_filter(array_merge($filters, ['page' => min($totalPages, $page + 1)]), static fn($v) => $v !== '' && $v !== null && $v !== 0); ?><nav class="pagination"><p class="pagination__info">Showing <?= Security::e(format_number($from)) ?>-<?= Security::e(format_number($to)) ?> of <?= Security::e(format_number($total)) ?> records</p><div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(Url::to($path . '?' . http_build_query($prev))) ?>"><i class="fa-solid fa-chevron-left"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(Url::to($path . '?' . http_build_query($next))) ?>"><i class="fa-solid fa-chevron-right"></i></a></div></nav><?php }

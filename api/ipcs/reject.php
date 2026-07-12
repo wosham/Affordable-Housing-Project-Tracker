@@ -109,8 +109,7 @@ function ipc_reject_allowed(array $ipc, string $role, int $userId): bool
 
 function ipc_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach ([
+    return ApiCsrf::checkAny([
         'superadmin_approvals',
         'superadmin_ipcs',
         'manager_ipcs',
@@ -118,16 +117,11 @@ function ipc_csrf_ok(): bool
         'consultant_ipcs',
         'consultant_ipc',
         'consultant_ipc_inbox',
+        'consultant_ipc_certify',
         'clerk_ipcs',
         'clerk_ipc_verify',
         'default',
-    ] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
-    }
-
-    return false;
+    ]);
 }
 
 function approval_audit(string $action, string $module, int $targetId, array $details = []): void

@@ -5,6 +5,36 @@
   'use strict';
 
   const SITE_DATA = window.GALLERY_SITE_DATA || {};
+  const focusableSelector = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+  function setText(el, value) {
+    if (el) el.textContent = value || '';
+  }
+
+  function formatCount(value) {
+    const number = Number(value || 0);
+    return Number.isFinite(number) ? number.toLocaleString() : '0';
+  }
+
+  function createMiniItem(item) {
+    const data = typeof item === 'string' ? { src: item, title: 'Site photo', alt: 'Site photo' } : item || {};
+    const src = data.src || '';
+    if (!src) return null;
+
+    const button = document.createElement('button');
+    button.className = 'gl-site-mini-item';
+    button.type = 'button';
+    button.dataset.src = src;
+    button.setAttribute('aria-label', 'View site photo: ' + (data.title || 'Site photo'));
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = data.alt || data.title || 'Site photo';
+    img.loading = 'lazy';
+    button.appendChild(img);
+
+    return button;
+  }
 
   function initFadeUp() {
     const els = document.querySelectorAll('.fade-up');
@@ -52,6 +82,7 @@
 
     const slides = track.querySelectorAll('.gl-hl-slide');
     const total = slides.length;
+    if (!total) return;
     let current = 0;
     let autoTimer = null;
 
@@ -145,7 +176,13 @@
         }
       });
 
-      if (countEl) countEl.innerHTML = 'Showing <strong>' + visible + '</strong> photos';
+      if (countEl) {
+        countEl.replaceChildren(
+          document.createTextNode('Showing '),
+          Object.assign(document.createElement('strong'), { textContent: String(visible) }),
+          document.createTextNode(' photos')
+        );
+      }
       if (noResults) noResults.hidden = visible > 0;
     }
 
@@ -190,6 +227,7 @@
 
     let visibleItems = [];
     let currentIndex = 0;
+    let lastTrigger = null;
 
     function getVisible() {
       return Array.from(grid.querySelectorAll('.gl-photo-item:not(.is-hidden)'));
@@ -201,23 +239,29 @@
       const img = item.querySelector('img');
       const badge = item.querySelector('.gl-photo-badge');
       const date = item.querySelector('.gl-photo-date');
+      const title = item.dataset.title || (img ? img.alt : '');
+      const caption = item.dataset.caption || title;
+      const src = item.dataset.fullSrc || (img ? img.src : '');
 
       lbImg.classList.add('is-loading');
-      lbImg.src = item.dataset.fullSrc || (img ? img.src : '');
-      lbImg.alt = img ? img.alt : '';
+      lbImg.src = src;
+      lbImg.alt = img ? img.alt : title;
       lbImg.onload = () => lbImg.classList.remove('is-loading');
-      lbBadge.textContent = badge ? badge.textContent : '';
+      lbImg.onerror = () => lbImg.classList.remove('is-loading');
+      setText(lbBadge, badge ? badge.textContent : '');
       lbBadge.className = 'gl-lb-badge';
       if (badge) lbBadge.className += ' ' + badge.className.replace('gl-photo-badge', '').trim();
-      lbCap.textContent = img ? img.alt : '';
-      lbDate.textContent = date ? date.textContent : '';
-      lbCount.textContent = (index + 1) + ' / ' + visibleItems.length;
+      setText(lbCap, caption);
+      setText(lbDate, date ? date.textContent : '');
+      setText(lbCount, (index + 1) + ' / ' + visibleItems.length);
       prevBtn.disabled = index === 0;
       nextBtn.disabled = index === visibleItems.length - 1;
     }
 
-    function openAt(index) {
+    function openAt(index, trigger) {
       visibleItems = getVisible();
+      if (!visibleItems.length) return;
+      lastTrigger = trigger || document.activeElement;
       currentIndex = index;
       lb.classList.add('is-open');
       lb.setAttribute('aria-hidden', 'false');
@@ -230,6 +274,10 @@
       lb.classList.remove('is-open');
       lb.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      lbImg.removeAttribute('src');
+      if (lastTrigger && typeof lastTrigger.focus === 'function') {
+        setTimeout(() => lastTrigger.focus(), 0);
+      }
     }
 
     function prev() { if (currentIndex > 0) { currentIndex--; loadSlide(currentIndex); } }
@@ -240,7 +288,7 @@
       if (!item) return;
       visibleItems = getVisible();
       const index = visibleItems.indexOf(item);
-      if (index >= 0) openAt(index);
+      if (index >= 0) openAt(index, item);
     });
 
     document.addEventListener('click', (event) => {
@@ -252,7 +300,7 @@
       setTimeout(() => {
         visibleItems = getVisible();
         const index = visibleItems.findIndex((item) => item.dataset.fullSrc === src);
-        if (index >= 0) openAt(index);
+        if (index >= 0) openAt(index, mini);
       }, 50);
     });
 
@@ -265,6 +313,20 @@
       if (event.key === 'Escape') close();
       if (event.key === 'ArrowLeft') prev();
       if (event.key === 'ArrowRight') next();
+      if (event.key === 'Tab') {
+        const focusable = Array.from(lb.querySelectorAll(focusableSelector))
+          .filter((el) => el.offsetParent !== null && !el.disabled);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     });
   }
 
@@ -285,16 +347,17 @@
         tab.classList.toggle('is-active', tab.dataset.site === siteKey);
         tab.setAttribute('aria-selected', tab.dataset.site === siteKey ? 'true' : 'false');
       });
-      if (stat1) stat1.textContent = data.units || 0;
+      if (stat1) stat1.textContent = formatCount(data.units || 0);
       if (stat2) stat2.textContent = (data.pct || 0) + '%';
-      if (stat3) stat3.textContent = data.photos || 0;
+      if (stat3) stat3.textContent = formatCount(data.photos || 0);
       if (fill) fill.style.width = (data.pct || 0) + '%';
       if (link && data.link) link.href = data.link;
-      miniGrid.innerHTML = (data.images || []).map((src) => (
-        '<button class="gl-site-mini-item" type="button" data-src="' + src + '" aria-label="View site photo">' +
-          '<img src="' + src + '" alt="Site photo" loading="lazy">' +
-        '</button>'
-      )).join('');
+      miniGrid.textContent = '';
+      (data.images || []).forEach((item) => {
+        const mini = createMiniItem(item);
+        if (mini) miniGrid.appendChild(mini);
+      });
+      miniGrid.classList.toggle('is-empty', miniGrid.children.length === 0);
     }
 
     tabs.forEach((tab) => tab.addEventListener('click', () => activateSite(tab.dataset.site)));

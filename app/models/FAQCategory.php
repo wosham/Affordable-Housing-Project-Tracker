@@ -6,7 +6,7 @@ class FAQCategory extends Model
 
     public static function ordered(bool $publishedOnly = false): array
     {
-        $where = $publishedOnly ? "WHERE status = 'published'" : '';
+        $where = $publishedOnly ? "WHERE fc.status = 'published'" : '';
         return Database::fetchAll(
             "SELECT fc.*,
                     COUNT(fi.id) AS item_count,
@@ -17,6 +17,14 @@ class FAQCategory extends Model
              GROUP BY fc.id, fc.name, fc.slug, fc.icon, fc.description, fc.sort_order, fc.status, fc.created_at, fc.updated_at
              ORDER BY fc.sort_order ASC, fc.name ASC"
         );
+    }
+
+    public static function publicWithItems(): array
+    {
+        return array_values(array_filter(
+            self::ordered(true),
+            static fn (array $category): bool => (int)($category['published_count'] ?? 0) > 0
+        ));
     }
 
     public static function findBySlug(string $slug): ?array

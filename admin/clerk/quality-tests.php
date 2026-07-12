@@ -1,5 +1,5 @@
 <?php
-// Clerk of Works — Quality Tests
-require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
-// TODO: Phase 5 — Log quality tests: concrete cube, slump, compaction, results
+require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
+Guard::exactRole('clerk');
+$qualityType = 'quality';
+include dirname(__DIR__, 2) . '/app/partials/admin/clerk-quality-evidence-page.php';

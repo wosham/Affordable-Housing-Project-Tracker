@@ -52,11 +52,30 @@ class ConsultantQuality
         return (int)($row['total'] ?? 0);
     }
 
+    /** Priority / pending / flagged records for side panel (portfolio-wide). */
+    public static function priorityItems(string $type, int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $priorityFilters = $filters;
+        // Prefer pending/flagged unless a review filter already set.
+        if (empty($priorityFilters['review_status'])) {
+            // Pull pending+flagged by ordering; filter in SQL.
+        }
+        $items = self::items($type, $userId, $role, $priorityFilters, max(30, $limit * 3), 0);
+        $priority = array_values(array_filter(
+            $items,
+            static function (array $item): bool {
+                $review = (string)($item['consultant_review_status'] ?? 'pending');
+                return in_array($review, ['pending', 'flagged', 'returned'], true);
+            }
+        ));
+        return array_slice($priority, 0, max(1, min(20, $limit)));
+    }
+
     public static function applyAction(string $type, int $id, string $action, array $payload, int $userId, string $role): array
     {
         $record = self::findScoped($type, $id, $userId, $role);
         if (!$record) {
-            throw new RuntimeException('Quality record could not be found.');
+            throw new RuntimeException('Quality record could not be found or is outside your project scope.');
         }
 
         $reviewStatus = self::actionReviewStatus($action);

@@ -60,11 +60,14 @@
     try {
       const data = await request('api/projects/update-milestone.php', {
         method: 'POST',
-        body: payload
+        body: payload,
+        headers: {
+          'X-CSRF-Form': (window.AHPTC && window.AHPTC.csrfForm && window.AHPTC.csrfForm()) || 'manager_milestones'
+        }
       });
       if (!data.success) throw new Error(data.message || 'Milestone could not be saved.');
       setStatus(data.message || 'Milestone saved.', 'success');
-      window.setTimeout(() => window.location.reload(), 450);
+      window.setTimeout(function () { window.location.reload(); }, 450);
     } catch (error) {
       setStatus(error.message || 'Milestone could not be saved.', 'error');
       buttonLoading(button, false);

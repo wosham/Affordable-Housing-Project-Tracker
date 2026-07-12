@@ -119,7 +119,36 @@ class Subscriber extends Model
         return array_merge($row, [
             'id' => (int)$row['id'],
             'has_source' => trim((string)($row['source_url'] ?? '')) !== '',
+            'unsubscribe_url' => self::unsubscribeUrl($row),
         ]);
+    }
+
+    public static function unsubscribeUrl(array $row): string
+    {
+        $id = (int)($row['id'] ?? 0);
+        $email = strtolower(trim((string)($row['email'] ?? '')));
+        if ($id <= 0 || $email === '') {
+            return '';
+        }
+
+        return Url::canonical('api/public/unsubscribe.php?id=' . $id . '&token=' . rawurlencode(self::unsubscribeToken($id, $email)));
+    }
+
+    public static function unsubscribeToken(int $id, string $email): string
+    {
+        $secret = (string)(getenv('APP_KEY') ?: getenv('RESEND_API_KEY') ?: Url::canonicalBase());
+        return hash_hmac('sha256', $id . '|' . strtolower(trim($email)), $secret);
+    }
+
+    public static function findByUnsubscribeToken(int $id, string $token): ?array
+    {
+        $row = self::findDetailed($id);
+        if (!$row) {
+            return null;
+        }
+
+        $expected = self::unsubscribeToken($id, (string)($row['email'] ?? ''));
+        return hash_equals($expected, $token) ? $row : null;
     }
 
     private static function selectSql(): string

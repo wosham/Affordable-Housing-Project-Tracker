@@ -65,6 +65,21 @@ class ConsultantContractDecision
         return (int)($row['total'] ?? 0);
     }
 
+    /** Pending EOT reviews across portfolio (not page-bound). */
+    public static function eotPendingItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $queueFilters = $filters;
+        $queueFilters['review_status'] = 'pending';
+        [$where, $bindings] = self::eotFilterSql($userId, $role, $queueFilters);
+
+        return Database::fetchAll(
+            self::eotSelect() . $where . "
+             ORDER BY e.created_at DESC, e.id DESC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
+    }
+
     public static function variationSummary(int $userId, string $role, array $filters = []): array
     {
         [$where, $bindings] = self::variationFilterSql($userId, $role, $filters, false);
@@ -104,6 +119,21 @@ class ConsultantContractDecision
         [$where, $bindings] = self::variationFilterSql($userId, $role, $filters);
         $row = Database::fetch("SELECT COUNT(*) AS total FROM variations v JOIN projects p ON p.id = v.project_id JOIN users submitter ON submitter.id = v.submitted_by {$where}", $bindings);
         return (int)($row['total'] ?? 0);
+    }
+
+    /** Pending variation reviews across portfolio (not page-bound). */
+    public static function variationPendingItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $queueFilters = $filters;
+        $queueFilters['review_status'] = 'pending';
+        [$where, $bindings] = self::variationFilterSql($userId, $role, $queueFilters);
+
+        return Database::fetchAll(
+            self::variationSelect() . $where . "
+             ORDER BY v.created_at DESC, v.id DESC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
     }
 
     public static function applyAction(string $type, int $id, string $action, array $payload, int $userId, string $role): array

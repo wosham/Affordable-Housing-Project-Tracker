@@ -69,6 +69,28 @@ class ConsultantDocumentCentre
         return (int)($row['total'] ?? 0);
     }
 
+    /** Portfolio attention queue (not limited to the current page). */
+    public static function documentAttentionItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $attentionFilters = $filters;
+        unset($attentionFilters['status']);
+        [$where, $bindings] = self::documentFilterSql($userId, $role, $attentionFilters);
+        $signal = "COALESCE(d.consultant_review_status, 'pending') IN ('pending', 'flagged', 'returned')";
+        $where = $where === '' ? " WHERE {$signal}" : $where . " AND {$signal}";
+
+        return Database::fetchAll(
+            "SELECT d.id, d.original_name, d.category, d.consultant_review_status, d.created_at,
+                    p.id AS project_id, p.name AS project_name
+             FROM documents d
+             JOIN projects p ON p.id = d.project_id
+             {$where}
+             ORDER BY FIELD(COALESCE(d.consultant_review_status, 'pending'), 'flagged', 'returned', 'pending', 'reviewed', 'closed'),
+                      d.created_at DESC, d.id DESC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
+    }
+
     public static function siteReportSummary(int $userId, string $role, array $filters = []): array
     {
         [$where, $bindings] = self::siteReportFilterSql($userId, $role, $filters, false);
@@ -115,6 +137,28 @@ class ConsultantDocumentCentre
         [$where, $bindings] = self::siteReportFilterSql($userId, $role, $filters);
         $row = Database::fetch("SELECT COUNT(*) AS total FROM site_diaries s JOIN projects p ON p.id = s.project_id {$where}", $bindings);
         return (int)($row['total'] ?? 0);
+    }
+
+    /** Open site reports across the portfolio (not page-bound). */
+    public static function siteReportAttentionItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $attentionFilters = $filters;
+        unset($attentionFilters['status']);
+        [$where, $bindings] = self::siteReportFilterSql($userId, $role, $attentionFilters);
+        $signal = "COALESCE(s.consultant_review_status, 'pending') IN ('pending', 'flagged', 'returned')";
+        $where = $where === '' ? " WHERE {$signal}" : $where . " AND {$signal}";
+
+        return Database::fetchAll(
+            "SELECT s.id, s.report_title, s.diary_date, s.consultant_review_status,
+                    p.id AS project_id, p.name AS project_name
+             FROM site_diaries s
+             JOIN projects p ON p.id = s.project_id
+             {$where}
+             ORDER BY FIELD(COALESCE(s.consultant_review_status, 'pending'), 'flagged', 'returned', 'pending', 'reviewed', 'closed'),
+                      s.diary_date DESC, s.id DESC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
     }
 
     public static function applyAction(string $type, int $id, string $action, string $note, int $userId, string $role): array

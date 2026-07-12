@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $projects = BOQItem::projectOptions();
 $defaultProjectId = 0;
@@ -24,7 +24,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== 0);
 
-$perPage = 20;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalItems = BOQItem::countItems($filters);
 $totalPages = max(1, (int)ceil($totalItems / $perPage));
@@ -151,8 +151,9 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td class="is-money"><strong><?= Security::e(format_money($item['amount'])) ?></strong></td>
           <td class="is-number"><strong><?= Security::e(format_number($item['certified_qty'], 3)) ?></strong><small><?= Security::e(format_money($item['certified_value'])) ?></small></td>
           <td class="is-number"><strong><?= Security::e(format_number($item['paid_qty'], 3)) ?></strong><small><?= Security::e(format_money($item['paid_value'])) ?></small></td>
+          <?php $boqProgressTip = $item['item_no'] . ' | Certified: ' . format_percentage($item['certified_percent']) . ' | Certified value: ' . format_money($item['certified_value']) . ' | Paid value: ' . format_money($item['paid_value']); ?>
           <td>
-            <div class="boq-progress"><span style="width: <?= Security::e((string)$item['certified_percent']) ?>%"></span></div>
+            <div class="boq-progress" data-chart-tip="<?= Security::e($boqProgressTip) ?>" title="<?= Security::e($boqProgressTip) ?>"><span style="width: <?= Security::e((string)$item['certified_percent']) ?>%"></span></div>
             <small><?= Security::e(format_percentage($item['certified_percent'])) ?> certified</small>
           </td>
           <td><div class="boq-risk-list"><?php foreach ($riskLabels as $risk): ?><span class="badge <?= Security::e(boq_risk_badge($risk)) ?>"><?= Security::e(status_label($risk)) ?></span><?php endforeach; ?></div></td>
@@ -179,10 +180,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php if ($totalPages > 1): ?>
   <nav class="pagination" aria-label="BOQ pagination">
     <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($totalItems)) ?> items</p>
-    <div class="pagination__links">
-      <a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(boq_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
-      <span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span>
-      <a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(boq_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+    <div class="pagination__list">
+      <a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(boq_page_url($filters, max(1, $page - 1))) ?>" aria-label="Previous page"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
+<?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+      <a class="pagination__link<?= $i === $page ? ' is-active' : '' ?>" href="<?= Security::e(boq_page_url($filters, $i)) ?>"><?= Security::e(format_number($i)) ?></a>
+<?php endfor; ?>
+      <a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(boq_page_url($filters, min($totalPages, $page + 1))) ?>" aria-label="Next page"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
     </div>
   </nav>
 <?php endif; ?>

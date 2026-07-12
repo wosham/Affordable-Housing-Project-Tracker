@@ -1,7 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+require_once __DIR__ . '/../../app/partials/admin/manager-site-record-helpers.php';
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -58,7 +59,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-handshake" aria-hidden="true"></i> Community records</span>
     <h2>Community Liaison</h2>
-    <p>Track community engagements, issues, resolutions and follow-up commitments.</p>
+    <p>Track community engagements, issues and follow-ups for your assigned projects only.</p>
   </div>
   <div class="msr-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/site-meeting-minutes.php')) ?>"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i> Meetings</a>
@@ -118,8 +119,18 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td><strong><?= Security::e(safe_truncate($record['resolution'] ?: 'No resolution added', 80)) ?></strong><small>Follow-up: <?= Security::e($record['follow_up_label'] ?: '-') ?></small></td>
           <td><span class="msr-pill msr-pill--<?= Security::e($record['status']) ?>"><?= Security::e($record['status_label']) ?></span></td>
           <td><strong><?= Security::e($record['recorded_by_name']) ?></strong><small><?= Security::e(format_datetime($record['created_at'] ?? null)) ?></small></td>
-          <td class="msr-actions">
-            <button class="btn btn--icon btn--primary" type="button" data-msr-open="community" data-record="<?= Security::e(json_encode($record, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP)) ?>" title="Edit community record" aria-label="Edit community record"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+          <td class="msr-actions manager-table-actions">
+            <button class="btn btn--icon btn--primary" type="button" data-msr-open="community"<?= msr_data_attrs([
+                'id' => $record['id'],
+                'project_id' => $record['project_id'],
+                'log_date' => $record['log_date'] ?? '',
+                'engagement_type' => $record['engagement_type'] ?? '',
+                'status' => $record['status'] ?? 'open',
+                'follow_up_date' => $record['follow_up_date'] ?? '',
+                'community_rep' => $record['community_rep'] ?? '',
+                'issues_raised' => $record['issues_raised'] ?? '',
+                'resolution' => $record['resolution'] ?? '',
+            ]) ?> title="Edit community record" aria-label="Edit community record"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
             <button class="btn btn--icon btn--outline" type="button" data-msr-status data-endpoint="api/manager/community-liaison-status.php" data-id="<?= (int)$record['id'] ?>" data-status="resolved" title="Mark resolved" aria-label="Mark resolved"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
           </td>
         </tr>
@@ -128,12 +139,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </table>
   </div>
 
-<?php if ($totalPages > 1): ?>
-  <nav class="pagination" aria-label="Community pagination">
-    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> community records</p>
-    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(msr_community_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(msr_community_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
-  </nav>
-<?php endif; ?>
+  <?php msr_pagination($showingFrom, $showingTo, $total, $page, $totalPages, msr_community_url($filters, max(1, $page - 1)), msr_community_url($filters, min($totalPages, $page + 1)), $perPage, 'community records'); ?>
 </section>
 
 <div class="msr-modal" data-msr-modal="community" hidden>
@@ -160,12 +166,6 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function msr_stat(string $icon, mixed $value, string $label, string $trend): void
-{
-?>
-  <article class="stat-widget"><span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(is_numeric($value) ? format_number((float)$value) : (string)$value) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span></article>
-<?php
-}
 
 function msr_community_url(array $filters, int $page): string
 {

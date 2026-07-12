@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_user_action';
 $currentUserId = (int)(Auth::id() ?? 0);
@@ -19,11 +19,17 @@ if (Security::isPost()) {
     if (!$target) {
         Session::flash('error', 'User account could not be found.');
     } elseif (($target['role_slug'] ?? '') === 'superadmin' && in_array($action, ['suspend', 'deactivate'], true)) {
-        Session::flash('error', 'The super administrator account is protected and must remain active.');
+        Session::flash('error', 'The County Director account is protected and must remain active.');
     } elseif ($userId === $currentUserId && in_array($action, ['suspend', 'deactivate'], true)) {
         Session::flash('error', 'You cannot suspend or deactivate your own account.');
+    } elseif ($userId === $currentUserId && $action === 'force_logout') {
+        Session::flash('error', 'You cannot force logout your own active session from this screen.');
     } elseif (($target['role_slug'] ?? '') === 'superadmin' && ($target['status'] ?? '') === 'active' && User::activeSuperadminCount() <= 1 && in_array($action, ['suspend', 'deactivate'], true)) {
-        Session::flash('error', 'At least one active super administrator must remain.');
+        Session::flash('error', 'At least one active County Director account must remain.');
+    } elseif ($action === 'force_logout') {
+        $revoked = UserSession::revokeForUser($userId);
+        Logger::log('force-logout', 'users', $userId, ['email' => $target['email'] ?? '', 'sessions' => $revoked]);
+        Session::flash('status', 'Active sessions for this user were revoked.');
     } else {
         $nextStatus = match ($action) {
             'activate' => 'active',
@@ -34,6 +40,9 @@ if (Security::isPost()) {
 
         if ($nextStatus) {
             User::update($userId, ['status' => $nextStatus]);
+            if (in_array($nextStatus, ['suspended', 'inactive'], true)) {
+                UserSession::revokeForUser($userId);
+            }
             Logger::log($action, 'users', $userId, ['email' => $target['email'] ?? '']);
             Session::flash('status', 'User account updated successfully.');
         }
@@ -46,8 +55,11 @@ $filters = [
     'q' => Security::cleanString((string)($_GET['q'] ?? '')),
     'role' => Security::cleanString((string)($_GET['role'] ?? '')),
     'status' => Security::cleanString((string)($_GET['status'] ?? '')),
+    'project_id' => Security::cleanInt($_GET['project_id'] ?? 0),
+    'constituency_id' => Security::cleanInt($_GET['constituency_id'] ?? 0),
+    'assignment_state' => Security::cleanString((string)($_GET['assignment_state'] ?? '')),
 ];
-$filters = array_filter($filters, static fn ($value): bool => $value !== '');
+$filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== 0);
 
 $perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
@@ -59,7 +71,14 @@ $users = User::withRoles($filters, $perPage, $offset);
 $showingFrom = $totalUsers > 0 ? $offset + 1 : 0;
 $showingTo = min($offset + count($users), $totalUsers);
 
-$roles = Database::fetchAll('SELECT * FROM roles ORDER BY id ASC');
+$roles = Role::allOrdered();
+$projectOptions = Database::fetchAll(
+    'SELECT p.id, p.name, c.name AS constituency_name
+     FROM projects p
+     LEFT JOIN constituencies c ON c.id = p.constituency_id
+     ORDER BY COALESCE(c.name, "Unassigned Constituency") ASC, p.name ASC'
+);
+$constituencies = Database::fetchAll('SELECT id, name FROM constituencies ORDER BY name ASC');
 $stats = User::stats();
 $roleDistribution = User::roleDistribution();
 
@@ -69,7 +88,7 @@ $adminRole = 'superadmin';
 $contentClass = 'sa-users-page';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Users'],
 ];
 
@@ -114,23 +133,36 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     <div class="filter-group"><label class="filter-label" for="q">Search</label><input class="form-input" type="search" id="q" name="q" value="<?= Security::e($filters['q'] ?? '') ?>" placeholder="Name, email, phone, department..."></div>
     <div class="filter-group"><label class="filter-label" for="role">Role</label><select class="form-select" id="role" name="role"><option value="">All roles</option><?php foreach ($roles as $role): ?><option value="<?= Security::e($role['slug']) ?>" <?= (($filters['role'] ?? '') === $role['slug']) ? 'selected' : '' ?>><?= Security::e($role['name']) ?></option><?php endforeach; ?></select></div>
     <div class="filter-group"><label class="filter-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All statuses</option><?php foreach (['active', 'inactive', 'suspended'] as $status): ?><option value="<?= Security::e($status) ?>" <?= (($filters['status'] ?? '') === $status) ? 'selected' : '' ?>><?= Security::e(status_label($status)) ?></option><?php endforeach; ?></select></div>
+    <div class="filter-group"><label class="filter-label" for="constituency_id">Constituency</label><select class="form-select" id="constituency_id" name="constituency_id"><option value="">All constituencies</option><?php foreach ($constituencies as $constituency): ?><option value="<?= (int)$constituency['id'] ?>" <?= (int)($filters['constituency_id'] ?? 0) === (int)$constituency['id'] ? 'selected' : '' ?>><?= Security::e($constituency['name']) ?></option><?php endforeach; ?></select></div>
+    <div class="filter-group"><label class="filter-label" for="project_id">Project Site</label><select class="form-select" id="project_id" name="project_id"><option value="">All project sites</option><?php foreach ($projectOptions as $project): ?><option value="<?= (int)$project['id'] ?>" <?= (int)($filters['project_id'] ?? 0) === (int)$project['id'] ? 'selected' : '' ?>><?= Security::e(trim((string)($project['constituency_name'] ?? '')) !== '' ? $project['constituency_name'] . ' - ' . $project['name'] : $project['name']) ?></option><?php endforeach; ?></select></div>
+    <div class="filter-group"><label class="filter-label" for="assignment_state">Project Access</label><select class="form-select" id="assignment_state" name="assignment_state"><option value="">Any access state</option><option value="assigned" <?= (($filters['assignment_state'] ?? '') === 'assigned') ? 'selected' : '' ?>>Has assigned sites</option><option value="unassigned" <?= (($filters['assignment_state'] ?? '') === 'unassigned') ? 'selected' : '' ?>>No assigned sites</option></select></div>
     <div class="filter-actions"><button class="btn btn--primary" type="submit"><i class="fa-solid fa-filter" aria-hidden="true"></i> Filter</button><a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/users.php')) ?>">Reset</a></div>
   </form>
 
   <div class="table-wrap">
     <table class="data-table sa-users-table">
-      <thead><tr><th class="sa-table-number">#</th><th>User</th><th>Contact</th><th>Role</th><th>Status</th><th>Last Login</th><th>Created</th><th>Actions</th></tr></thead>
+      <thead><tr><th class="sa-table-number">#</th><th>User</th><th>Contact</th><th>Role</th><th>Project Access</th><th>Status</th><th>Last Login</th><th>Created</th><th>Actions</th></tr></thead>
       <tbody>
 <?php if ($users === []): ?>
-        <tr><td colspan="8"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-user-slash" aria-hidden="true"></i></span><strong class="empty-state__title">No users match your filters</strong><span class="empty-state__text">Create a new user or widen the filters.</span></div></td></tr>
+        <tr><td colspan="9"><div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-user-slash" aria-hidden="true"></i></span><strong class="empty-state__title">No users match your filters</strong><span class="empty-state__text">Create a new user or widen the filters.</span></div></td></tr>
 <?php endif; ?>
 <?php foreach ($users as $index => $user): ?>
 <?php $avatar = (string)($user['avatar'] ?? ''); ?>
+<?php $roleSlug = (string)($user['role_slug'] ?? ''); ?>
         <tr>
           <td class="sa-table-number"><?= Security::e(format_number($offset + $index + 1)) ?></td>
           <td><div class="sa-user-cell"><span class="sa-user-avatar"><?php if ($avatar !== ''): ?><img src="<?= Security::e(Url::asset($avatar)) ?>" alt=""><?php else: ?><?= Security::e(user_initials($user)) ?><?php endif; ?></span><span><strong><?= Security::e($user['name']) ?></strong><small><?= Security::e($user['job_title'] ?: ($user['department'] ?: 'No profile title')) ?></small></span></div></td>
           <td><strong><?= Security::e($user['email']) ?></strong><small><?= Security::e($user['phone'] ?: 'No phone') ?></small></td>
-          <td><span class="badge badge--info"><?= Security::e($user['role_name'] ?? 'Role not set') ?></span></td>
+          <td><span class="badge badge--info"><?= Security::e(role_label($roleSlug)) ?></span></td>
+          <td>
+<?php if ($roleSlug === 'superadmin'): ?>
+            <span class="badge badge--lime">All project sites</span>
+<?php elseif ($roleSlug === 'finance'): ?>
+            <span class="badge badge--neutral">Finance portfolio</span>
+<?php else: ?>
+            <span class="badge <?= (int)($user['active_project_count'] ?? 0) > 0 ? 'badge--success' : 'badge--warning' ?>"><?= Security::e(format_number((int)($user['active_project_count'] ?? 0))) ?> sites</span>
+<?php endif; ?>
+          </td>
           <td><span class="badge <?= Security::e(status_badge_class($user['status'])) ?>"><?= Security::e(status_label($user['status'])) ?></span></td>
           <td><time datetime="<?= Security::e($user['last_login'] ?? '') ?>"><?= Security::e(time_ago($user['last_login'] ?? null)) ?></time></td>
           <td><?= Security::e(format_date($user['created_at'] ?? null)) ?></td>
@@ -144,6 +176,9 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
               <form method="post" action="<?= Security::e(Url::to('admin/superadmin/users.php')) ?>" data-confirm="Suspend this user account?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="suspend"><input type="hidden" name="user_id" value="<?= Security::e((string)$user['id']) ?>"><button class="btn btn--icon btn--outline" type="submit" title="Suspend" aria-label="Suspend"><i class="fa-solid fa-user-lock" aria-hidden="true"></i></button></form>
 <?php endif; ?>
               <form method="post" action="<?= Security::e(Url::to('admin/superadmin/users.php')) ?>" data-confirm="Deactivate this user account?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="deactivate"><input type="hidden" name="user_id" value="<?= Security::e((string)$user['id']) ?>"><button class="btn btn--icon btn--danger" type="submit" title="Deactivate" aria-label="Deactivate"><i class="fa-solid fa-ban" aria-hidden="true"></i></button></form>
+<?php if ((int)$user['id'] !== $currentUserId): ?>
+              <form method="post" action="<?= Security::e(Url::to('admin/superadmin/users.php')) ?>" data-confirm="Force logout this user from all active sessions?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="action" value="force_logout"><input type="hidden" name="user_id" value="<?= Security::e((string)$user['id']) ?>"><button class="btn btn--icon btn--outline" type="submit" title="Force logout" aria-label="Force logout"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i></button></form>
+<?php endif; ?>
 <?php else: ?>
               <span class="badge badge--lime">System Owner</span>
 <?php endif; ?>

@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $slug = trim((string)($_GET['slug'] ?? 'home'));
 $page = CmsPage::findBySlug($slug);
@@ -136,7 +136,7 @@ $pageScripts = ['media-picker', 'cms-editor'];
 $csrfForm = 'cms_editor';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'CMS Pages', 'url' => Url::to('admin/superadmin/cms.php')],
     ['label' => cms_editor_page_label((string)$page['slug'])],
 ];
@@ -397,6 +397,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['title', 'Section heading', 'text'],
           ['subtitle', 'Section introduction', 'textarea'],
           ['display_count', 'Number of FAQ items', 'number'],
+          ['empty_text', 'Empty state text', 'textarea'],
           ['link_label', 'Text link label', 'text'],
           ['link_url', 'Text link URL', 'text'],
       ]); ?>
@@ -407,6 +408,9 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['subtitle', 'Section introduction', 'textarea'],
           ['link_label', 'Leadership link label', 'text'],
           ['link_url', 'Leadership link URL', 'text'],
+          ['empty_role', 'Empty role label', 'text'],
+          ['empty_title', 'Empty state title', 'text'],
+          ['empty_text', 'Empty state text', 'textarea'],
           ['contact_title', 'Contact card title', 'text'],
           ['contact_intro', 'Contact card introduction', 'textarea'],
           ['contact_button_label', 'Contact button label', 'text'],
@@ -432,7 +436,8 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <a href="#faq-cta"><i class="fa-solid fa-headset" aria-hidden="true"></i> Support CTA</a>
       </nav>
 
-      <section class="card sa-cms-module-callout">
+      <section class="card sa-cms-module-callout sa-cms-module-callout--faq">
+        <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-list-check" aria-hidden="true"></i></div>
         <div>
           <span class="sa-panel-label"><i class="fa-solid fa-list-check" aria-hidden="true"></i> FAQ Content Manager</span>
           <h3>Questions and categories are managed separately</h3>
@@ -493,10 +498,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <section class="card sa-cms-module-callout">
         <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-people-roof" aria-hidden="true"></i></div>
         <div>
-          <h3>Leadership Registry</h3>
-          <p>Manage officials, contractor cards, leadership quotes and partner organisations from the dedicated registry. This editor keeps the page wording, imagery and section labels clean.</p>
+          <h3>Page Text / SEO only</h3>
+          <p>This editor controls public wording, hero imagery, section headings and SEO. Officials, contractor cards, leadership quotes and partner records are managed from the Leadership Registry.</p>
         </div>
-        <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/leadership.php')) ?>"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open Registry</a>
+        <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/leadership.php')) ?>"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open Leadership Registry</a>
       </section>
 
       <?php cms_editor_home_block('ld-hero', $sectionsByKey['leadership_hero'] ?? null, 'Hero', 'Controls the first screen: background image, headline, supporting copy and programme stat labels.', [
@@ -534,12 +539,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['contact_button_url', 'Contact button URL', 'text'],
       ]); ?>
 
-      <?php cms_editor_home_block('ld-contractors', $sectionsByKey['leadership_contractors'] ?? null, 'Contractor Showcase', 'Controls the contractor section heading, card count and compliance note. Contractor cards come from the Leadership Registry.', [
+      <?php cms_editor_home_block('ld-contractors', $sectionsByKey['leadership_contractors'] ?? null, 'Contractor Showcase', 'Controls the contractor section heading, subtitle and card count. Contractor cards come from the Leadership Registry.', [
           ['eyebrow', 'Section eyebrow', 'text'],
           ['title', 'Section heading', 'text'],
           ['subtitle', 'Section introduction', 'textarea'],
           ['display_count', 'Number of contractor cards', 'number'],
-          ['disclaimer', 'Compliance note', 'textarea'],
           ['empty_text', 'Empty state message', 'textarea'],
       ]); ?>
 
@@ -580,16 +584,15 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <a href="#st-milestones"><i class="fa-solid fa-timeline" aria-hidden="true"></i> Milestones</a>
         <a href="#st-voices"><i class="fa-solid fa-comments" aria-hidden="true"></i> Voices</a>
         <a href="#st-partners"><i class="fa-solid fa-handshake" aria-hidden="true"></i> Formal Partners</a>
-        <a href="#st-engagement"><i class="fa-solid fa-route" aria-hidden="true"></i> Engage</a>
       </nav>
 
       <section class="card sa-cms-module-callout">
         <div class="sa-cms-module-callout__icon"><i class="fa-solid fa-network-wired" aria-hidden="true"></i></div>
         <div>
-          <h3>Stakeholder Registry</h3>
-          <p>Maintain organisations, ecosystem groups, milestones, community voices and participation paths from the registry. This editor controls the page wording, hero imagery and section wrappers.</p>
+          <h3>Page Text / SEO Only</h3>
+          <p>Maintain organisations, ecosystem groups, milestones and community voices from the stakeholder registry. This editor controls public wording, hero imagery and section wrappers.</p>
         </div>
-        <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php')) ?>"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open Registry</a>
+        <a class="btn btn--primary" href="<?= Security::e(Url::to('admin/superadmin/stakeholders.php')) ?>"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open Stakeholder Registry</a>
       </section>
 
       <?php cms_editor_home_block('st-hero', $sectionsByKey['stakeholders_hero'] ?? null, 'Hero', 'Controls the opening screen: background image, badge, headline, introduction and KPI labels.', [
@@ -649,13 +652,6 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['title', 'Section heading', 'textarea'],
           ['subtitle', 'Section introduction', 'textarea'],
           ['display_count', 'Number of partners', 'number'],
-          ['empty_text', 'Empty state message', 'textarea'],
-      ]); ?>
-
-      <?php cms_editor_home_block('st-engagement', $sectionsByKey['stakeholders_engagement'] ?? null, 'How to Engage', 'Controls the participation path section. Cards and steps come from the Stakeholder Registry.', [
-          ['eyebrow', 'Section eyebrow', 'text'],
-          ['title', 'Section heading', 'textarea'],
-          ['subtitle', 'Section introduction', 'textarea'],
           ['empty_text', 'Empty state message', 'textarea'],
       ]); ?>
     </section>
@@ -963,28 +959,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/superadmin/news.php')) ?>"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> News Registry</a>
       </section>
 
-      <?php cms_editor_home_block('news-hero', $sectionsByKey['news_hero'] ?? null, 'Hero', 'Controls the dark grid hero copy, search placeholder and stat labels. Stat numbers come from published posts.', [
-          ['eyebrow', 'Hero badge', 'text'],
+      <?php cms_editor_home_block('news-hero', $sectionsByKey['news_hero'] ?? null, 'Hero', 'Controls the dark grid hero copy shown above the featured article.', [
+          ['background_image', 'Hero background image', 'upload', 'heroes'],
+          ['background_alt', 'Hero image description', 'text'],
+['eyebrow', 'Hero badge', 'text'],
           ['title_plain_1', 'Title first plain text', 'text'],
           ['title_accent', 'Title highlighted text', 'text'],
           ['title_plain_2', 'Title second plain text', 'text'],
           ['subtitle', 'Supporting copy', 'textarea'],
-          ['search_placeholder', 'Search placeholder', 'text'],
-          ['articles_label', 'Articles stat label', 'text'],
-          ['categories_label', 'Categories stat label', 'text'],
-          ['last_updated_label', 'Last updated stat label', 'text'],
-      ]); ?>
-
-      <?php cms_editor_home_block('news-mosaic', $sectionsByKey['news_mosaic'] ?? null, 'Category Mosaic', 'Controls category tile labels and whether the hero mosaic is visible. Category counts come from published posts.', [
-          ['show_mosaic', 'Show mosaic', 'checkbox'],
-          ['programme_label', 'Programme tile label', 'text'],
-          ['groundbreaking_label', 'Groundbreaking tile label', 'text'],
-          ['construction_label', 'Construction tile label', 'text'],
-          ['policy_label', 'Policy tile label', 'text'],
-          ['community_label', 'Community tile label', 'text'],
-          ['official_label', 'Official tile label', 'text'],
-          ['field_reports_label', 'Field reports tile label', 'text'],
-          ['total_label', 'Total articles label', 'textarea'],
       ]); ?>
 
       <?php cms_editor_home_block('news-featured', $sectionsByKey['news_featured'] ?? null, 'Featured Story', 'Controls labels around the featured article. The selected story comes from the news article marked featured.', [
@@ -1013,13 +995,10 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           ['empty_reset_label', 'Clear filters label', 'text'],
       ]); ?>
 
-      <?php cms_editor_home_block('news-cta', $sectionsByKey['news_cta'] ?? null, 'Stay Updated CTA', 'Controls the bottom CTA strip and public social/application links.', [
+      <?php cms_editor_home_block('news-cta', $sectionsByKey['news_cta'] ?? null, 'Stay Updated CTA', 'Controls the bottom CTA strip, newsletter subscription copy and application button.', [
           ['title_prefix', 'CTA title prefix', 'text'],
           ['title_highlight', 'CTA highlighted title text', 'text'],
           ['subtitle', 'CTA supporting copy', 'textarea'],
-          ['x_url', 'X/Twitter URL', 'text'],
-          ['facebook_url', 'Facebook URL', 'text'],
-          ['youtube_url', 'YouTube URL', 'text'],
           ['button_label', 'Button label', 'text'],
           ['button_url', 'Button URL', 'text'],
       ]); ?>
@@ -1416,6 +1395,19 @@ function cms_editor_is_retired_section(string $pageSlug, string $template, array
             return !in_array((string)($section['section_key'] ?? ''), $activeLeadership, true);
         }
 
+        if ($pageSlug === 'stakeholders') {
+            $activeStakeholders = [
+                'stakeholders_hero',
+                'stakeholders_ecosystem',
+                'stakeholders_pillars',
+                'stakeholders_mandates',
+                'stakeholders_milestones',
+                'stakeholders_voices',
+                'stakeholders_formal_partners',
+            ];
+            return !in_array((string)($section['section_key'] ?? ''), $activeStakeholders, true);
+        }
+
         if ($pageSlug === 'contact') {
             $activeContact = [
                 'contact_hero',
@@ -1472,7 +1464,6 @@ function cms_editor_is_retired_section(string $pageSlug, string $template, array
         if ($pageSlug === 'news') {
             $activeNews = [
                 'news_hero',
-                'news_mosaic',
                 'news_featured',
                 'news_filters',
                 'news_listing',
@@ -1639,12 +1630,12 @@ function cms_editor_about_series_fields(string $prefix, int $count, array $label
 function cms_editor_ensure_leadership_sections(int $pageId): void
 {
     $defaults = [
-        ['leadership_hero', 'Leadership Hero', 'leadership_hero', 10, [
-            'background_image' => 'uploads/heroes/hero-main.jpg',
-            'background_alt' => 'Affordable housing team at a Trans-Nzoia construction site',
-            'eyebrow' => 'National Government - State Dept. of Housing & Urban Development',
-            'title' => "The People\nDelivering Trans-Nzoia's\nHousing Future",
-            'subtitle' => 'A nationally-led programme with dedicated field representation in Trans-Nzoia County - from Cabinet level to construction site supervisors, every tier accountable.',
+        ['leadership_hero', 'Hero', 'leadership_hero', 10, [
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Affordable housing team at a Trans-Nzoia construction site',
+            'eyebrow' => 'Programme Leadership',
+            'title' => 'Programme Leadership',
+            'subtitle' => 'A coordinated programme team guiding affordable housing delivery across Trans-Nzoia County.',
             'active_projects_label' => 'Active Projects',
             'units_label' => 'Units Planned',
             'constituencies_label' => 'Constituencies',
@@ -1673,9 +1664,8 @@ function cms_editor_ensure_leadership_sections(int $pageId): void
         ['leadership_contractors', 'Contractor Showcase', 'leadership_contractors', 50, [
             'eyebrow' => 'Contractors on the Ground',
             'title' => "Building Trans-Nzoia's Affordable Homes",
-            'subtitle' => 'NCA registered contractors are delivering project sites across Trans-Nzoia County. Each record tracks assignment, progress and compliance status.',
+            'subtitle' => 'Active delivery partners supporting affordable housing construction across Trans-Nzoia County.',
             'display_count' => '8',
-            'disclaimer' => 'All contractors are NCA-registered and were procured through open competitive tendering under the Public Procurement and Asset Disposal Act, 2015.',
             'empty_text' => 'Contractor records will appear here after they are added to the Leadership Registry.',
         ]],
         ['leadership_quotes', 'Leadership Quotes', 'leadership_quotes', 60, [
@@ -1723,9 +1713,9 @@ function cms_editor_ensure_leadership_sections(int $pageId): void
 function cms_editor_ensure_stakeholders_sections(int $pageId): void
 {
     $defaults = [
-        ['stakeholders_hero', 'Stakeholders Hero', 'stakeholders_hero', 10, [
-            'background_image' => 'uploads/heroes/hero-main.jpg',
-            'background_alt' => 'Affordable housing programme team and construction site in Trans-Nzoia County',
+        ['stakeholders_hero', 'Hero', 'stakeholders_hero', 10, [
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Affordable housing programme team and construction site in Trans-Nzoia County',
             'eyebrow' => 'Programme Ecosystem - Partners, Institutions & Communities',
             'title' => "Everyone Who\nMakes It Happen",
             'subtitle' => 'A transparent map of every institution, partner, contractor, regulator and community driving the Affordable Housing Programme in Trans-Nzoia County - from national policy to ground-level delivery.',
@@ -1776,12 +1766,6 @@ function cms_editor_ensure_stakeholders_sections(int $pageId): void
             'display_count' => '9',
             'empty_text' => 'Formal partner organisations will appear here.',
         ]],
-        ['stakeholders_engagement', 'How to Engage', 'stakeholders_engagement', 80, [
-            'eyebrow' => 'Get Involved',
-            'title' => "How to Engage the\nProgramme",
-            'subtitle' => 'Whether you are a potential beneficiary, a community leader, a journalist or an interested partner - here is how to connect with the Trans-Nzoia AHP.',
-            'empty_text' => 'Engagement paths will appear here after they are published.',
-        ]],
     ];
 
     foreach ($defaults as [$key, $label, $type, $sort, $content]) {
@@ -1804,8 +1788,8 @@ function cms_editor_ensure_faq_sections(int $pageId): void
 {
     $defaults = [
         ['faq_hero', 'FAQ Hero', 'faq_hero', 10, [
-            'background_image' => 'uploads/heroes/hero-main.jpg',
-            'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
             'eyebrow' => 'Frequently Asked Questions',
             'title' => "Your Questions,\nAnswered.",
             'subtitle' => 'Everything you need to know about eligibility, applying, monthly contributions, unit allocation and your rights as an AHP beneficiary in Trans-Nzoia County.',
@@ -1857,8 +1841,8 @@ function cms_editor_ensure_projects_sections(int $pageId): void
 {
     $defaults = [
         ['projects_hero', 'Projects Hero', 'projects_hero', 10, [
-            'background_image' => 'uploads/gallery/maili-tatu-2.jpg',
-            'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
+    'background_image' => 'uploads/gallery/maili-tatu-2.jpg',
+    'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
             'eyebrow' => 'AHP Projects',
             'title_plain' => 'Housing Projects',
             'title_highlight' => 'Directory',
@@ -2003,8 +1987,8 @@ function cms_editor_ensure_constituencies_sections(int $pageId): void
 {
     $defaults = [
         ['constituencies_hero', 'Constituencies Hero', 'constituencies_hero', 10, [
-            'background_image' => 'uploads/gallery/maili-tatu-3.jpg',
-            'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
+    'background_image' => 'uploads/gallery/maili-tatu-3.jpg',
+    'background_alt' => 'Affordable housing construction site in Trans-Nzoia County',
             'eyebrow' => 'Coverage Map',
             'title_prefix' => 'All',
             'title_highlight' => '5 Constituencies',
@@ -2145,26 +2129,13 @@ function cms_editor_ensure_news_sections(int $pageId): void
 {
     $defaults = [
         ['news_hero', 'News Hero', 'news_hero', 10, [
-            'eyebrow' => 'News & Updates',
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Affordable housing programme news and progress updates in Trans-Nzoia County',
+    'eyebrow' => 'News & Updates',
             'title_plain_1' => 'Latest',
             'title_accent' => 'News &',
             'title_plain_2' => 'Announcements',
             'subtitle' => 'Official updates, progress reports, and community news from the Trans-Nzoia County Affordable Housing Programme.',
-            'search_placeholder' => 'Search articles...',
-            'articles_label' => 'Articles',
-            'categories_label' => 'Categories',
-            'last_updated_label' => 'Last Updated',
-        ]],
-        ['news_mosaic', 'Category Mosaic', 'news_mosaic', 20, [
-            'show_mosaic' => '1',
-            'programme_label' => 'Programme',
-            'groundbreaking_label' => 'Groundbreaking',
-            'construction_label' => 'Construction',
-            'policy_label' => 'Policy',
-            'community_label' => 'Community',
-            'official_label' => 'Official',
-            'field_reports_label' => 'Field Reports',
-            'total_label' => "Total\nArticles",
         ]],
         ['news_featured', 'Featured Story', 'news_featured', 30, [
             'section_label' => 'Featured Story',
@@ -2193,9 +2164,6 @@ function cms_editor_ensure_news_sections(int $pageId): void
             'title_prefix' => 'Stay',
             'title_highlight' => 'Up to Date',
             'subtitle' => 'Follow the programme on social media or apply for housing directly through the eCitizen portal to receive official notifications about unit availability and beneficiary selection.',
-            'x_url' => '#',
-            'facebook_url' => '#',
-            'youtube_url' => '#',
             'button_label' => 'Apply via eCitizen',
             'button_url' => 'https://ecitizen.go.ke',
         ]],
@@ -2266,8 +2234,8 @@ function cms_editor_ensure_gallery_sections(int $pageId): void
 {
     $defaults = [
         ['gallery_hero', 'Gallery Hero', 'gallery_hero', 10, [
-            'background_image' => 'uploads/gallery/maili-tatu-2.jpg',
-            'background_alt' => 'Affordable housing construction site photography in Trans-Nzoia County',
+    'background_image' => 'uploads/gallery/maili-tatu-2.jpg',
+    'background_alt' => 'Affordable housing construction site photography in Trans-Nzoia County',
             'breadcrumb_label' => 'Photo Gallery',
             'eyebrow' => 'Visual Documentation - Sites, Events & Progress',
             'title' => 'Programme in Pictures',
@@ -2336,8 +2304,8 @@ function cms_editor_ensure_contact_sections(int $pageId): void
 {
     $defaults = [
         ['contact_hero', 'Contact Hero', 'contact_hero', 10, [
-            'background_image' => 'uploads/heroes/hero-main.jpg',
-            'background_alt' => 'Trans-Nzoia Affordable Housing Programme contact desk',
+    'background_image' => 'uploads/heroes/hero-main.jpg',
+    'background_alt' => 'Trans-Nzoia Affordable Housing Programme contact desk',
             'eyebrow' => 'Get in Touch',
             'title' => "We're Here\nto Help.",
             'subtitle' => 'Reach our county housing team for enquiries about the Affordable Housing Programme - applications, site progress, allocation status, or any other question.',
@@ -2491,3 +2459,4 @@ function cms_editor_asset_control(string $field, string $value, string $folder =
     </div>
     <?php
 }
+

@@ -82,8 +82,18 @@
 }
 
 .msr-filter {
-  grid-template-columns: 1.35fr 1.1fr repeat(5, minmax(130px, 1fr)) auto;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   align-items: end;
+}
+
+.msr-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.msr-card .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .msr-table th,
@@ -92,11 +102,18 @@
 }
 
 .msr-table td {
-  min-width: 130px;
+  min-width: 0;
 }
 
 .msr-table td:first-child {
-  min-width: 260px;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.msr-actions.manager-table-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .35rem;
 }
 
 .msr-table td:nth-child(2) {

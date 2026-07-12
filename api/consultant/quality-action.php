@@ -39,11 +39,5 @@ try {
 
 function consultant_quality_csrf_ok(): bool
 {
-    $token = Csrf::fromRequest();
-    foreach (['consultant_quality', 'consultant_technical', 'default'] as $form) {
-        if (Csrf::verify($token, $form)) {
-            return true;
-        }
-    }
-    return false;
+    return ApiCsrf::checkAny(['consultant_quality', 'consultant_technical', 'consultant_ipcs', 'default']);
 }

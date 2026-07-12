@@ -20,13 +20,20 @@
     return number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function csrfToken() {
-    const meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.getAttribute('content') || '' : '';
+  function toast(message, type) {
+    if (window.AHPTC && typeof window.AHPTC.toast === 'function') {
+      window.AHPTC.toast(message, type || 'success');
+      return;
+    }
+    const node = document.createElement('div');
+    node.className = 'ahptc-toast' + (type === 'error' ? ' is-error' : '');
+    node.textContent = message || '';
+    document.body.appendChild(node);
+    window.setTimeout(function () { node.remove(); }, 3600);
   }
 
   function setStatus(form, message, state) {
-    const status = qs('[data-ipc-status]', form) || qs('[data-form-status]', form);
+    const status = qs('[data-ipc-status]', form);
     if (!status) return;
     status.textContent = message || '';
     status.dataset.state = state || '';
@@ -45,7 +52,8 @@
       qty_this_period: qty,
       remaining: remaining,
       rate: rate,
-      amount: qty * rate
+      amount: qty * rate,
+      exceeds: qty > remaining + 0.0001 && qty > 0
     };
   }
 
@@ -53,6 +61,15 @@
     return qsa('[data-ipc-line]', form).map(linePayload).filter(function (line) {
       return line.boq_item_id && line.qty_this_period > 0;
     });
+  }
+
+  function warningCount(form) {
+    let warnings = 0;
+    qsa('[data-ipc-line]', form).forEach(function (row) {
+      const line = linePayload(row);
+      if (line.exceeds) warnings += 1;
+    });
+    return warnings;
   }
 
   function recalc(form) {
@@ -63,10 +80,15 @@
       const amount = line.qty_this_period * line.rate;
       const amountNode = qs('[data-ipc-line-amount]', row);
       const remainingNode = qs('[data-ipc-remaining]', row);
-      row.classList.toggle('is-warning', line.qty_this_period > line.remaining && line.qty_this_period > 0);
-      if (line.qty_this_period > line.remaining && line.qty_this_period > 0) warnings += 1;
+      row.classList.toggle('is-warning', line.exceeds);
+      if (line.exceeds) warnings += 1;
       if (amountNode) amountNode.textContent = 'KES ' + money(amount);
-      if (remainingNode) remainingNode.textContent = Math.max(0, line.remaining - line.qty_this_period).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      if (remainingNode) {
+        remainingNode.textContent = Math.max(0, line.remaining - line.qty_this_period).toLocaleString(undefined, {
+          minimumFractionDigits: 3,
+          maximumFractionDigits: 3
+        });
+      }
       gross += amount;
     });
 
@@ -76,12 +98,16 @@
     qsa('[data-ipc-retention]', form).forEach(function (node) { node.textContent = money(retention); });
     qsa('[data-ipc-net]', form).forEach(function (node) { node.textContent = money(net); });
 
+    const submit = qs('[type="submit"]', form);
     if (warnings > 0) {
       setStatus(form, warnings + ' line(s) exceed remaining BOQ quantity.', 'error');
+      if (submit) submit.disabled = true;
     } else if (collectLines(form).length > 0) {
       setStatus(form, 'Claim totals are ready for review.', 'success');
+      if (submit && !submit.dataset.forceDisabled) submit.disabled = false;
     } else {
       setStatus(form, '', '');
+      if (submit && !submit.dataset.forceDisabled) submit.disabled = false;
     }
   }
 
@@ -113,33 +139,47 @@
       });
     }
 
-    form.addEventListener('input', function (event) {
-      if (event.target.closest('[data-ipc-line]')) {
-        recalc(form);
-      }
-    });
+    const submit = qs('[type="submit"]', form);
+    if (submit && submit.disabled) {
+      submit.dataset.forceDisabled = '1';
+    }
 
+    form.addEventListener('input', function (event) {
+      if (event.target.closest('[data-ipc-line]')) recalc(form);
+    });
     form.addEventListener('change', function (event) {
-      if (event.target.closest('[data-ipc-line]')) {
-        recalc(form);
-      }
+      if (event.target.closest('[data-ipc-line]')) recalc(form);
     });
 
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
+      if (!window.AHPTC || typeof window.AHPTC.request !== 'function') {
+        toast('Application scripts are not ready. Refresh the page.', 'error');
+        return;
+      }
+
       const button = event.submitter || qs('[type="submit"]', form);
       const oldText = button ? button.innerHTML : '';
       const body = payload(form);
+
       if (!body.period_from || !body.period_to) {
         setStatus(form, 'Choose the IPC claim period.', 'error');
+        toast('Choose the IPC claim period.', 'error');
         return;
       }
       if (body.declaration_accepted !== '1') {
         setStatus(form, 'Accept the contractor declaration before submitting.', 'error');
+        toast('Accept the contractor declaration before submitting.', 'error');
         return;
       }
       if (!body.lines.length) {
         setStatus(form, 'Enter at least one BOQ quantity for this claim.', 'error');
+        toast('Enter at least one BOQ quantity for this claim.', 'error');
+        return;
+      }
+      if (warningCount(form) > 0) {
+        setStatus(form, 'Fix quantities that exceed remaining BOQ before submitting.', 'error');
+        toast('Fix quantities that exceed remaining BOQ before submitting.', 'error');
         return;
       }
 
@@ -149,28 +189,24 @@
           button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Submitting';
         }
         setStatus(form, 'Submitting IPC...', 'loading');
-        const response = await fetch(form.getAttribute('action') || 'api/ipcs/submit.php', {
+        const endpoint = form.getAttribute('action') || 'api/ipcs/submit.php';
+        const result = await window.AHPTC.request(endpoint, {
           method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken()
-          },
-          body: JSON.stringify(body)
+          body: body
         });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.success === false) {
-          throw new Error(result.message || 'IPC could not be submitted.');
-        }
         setStatus(form, result.message || 'IPC submitted.', 'success');
+        toast(result.message || 'IPC submitted successfully.', 'success');
         window.setTimeout(function () {
-          window.location.href = result.redirect || 'ipc-history.php';
+          window.location.href = result.redirect || (window.AHPTC.baseUrl ? window.AHPTC.baseUrl() + '/admin/contractor/ipc-history.php' : 'ipc-history.php');
         }, 800);
       } catch (error) {
         setStatus(form, error.message || 'IPC could not be submitted.', 'error');
+        toast(error.message || 'IPC could not be submitted.', 'error');
       } finally {
-        if (button) {
+        if (button && !button.dataset.forceDisabled) {
           button.disabled = false;
+          button.innerHTML = oldText;
+        } else if (button) {
           button.innerHTML = oldText;
         }
       }

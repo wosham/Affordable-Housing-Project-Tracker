@@ -4,11 +4,11 @@ class CmsSetting extends Model
 {
     protected static string $table = 'cms_settings';
 
-    public static function get(string $key): mixed
+    public static function get(string $key, mixed $fallback = null): mixed
     {
         $row = Database::fetch('SELECT value, type FROM cms_settings WHERE `key` = ? LIMIT 1', [$key]);
         if (!$row) {
-            return null;
+            return $fallback;
         }
 
         return self::castValue((string)($row['value'] ?? ''), (string)($row['type'] ?? 'text'));
@@ -36,6 +36,59 @@ class CmsSetting extends Model
         }
 
         return $groups;
+    }
+
+    public static function text(string $key, string $fallback = ''): string
+    {
+        $value = self::get($key, $fallback);
+        $value = trim((string)$value);
+        return $value !== '' ? $value : $fallback;
+    }
+
+    public static function url(string $key, string $fallback = ''): string
+    {
+        $value = self::text($key, $fallback);
+        if ($value === '') {
+            return $fallback;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_URL) || str_starts_with($value, '/') ? $value : $fallback;
+    }
+
+    public static function number(string $key, float|int $fallback = 0): float|int
+    {
+        $value = self::get($key, $fallback);
+        return is_numeric($value) ? $value + 0 : $fallback;
+    }
+
+    public static function bool(string $key, bool $fallback = false): bool
+    {
+        $value = self::get($key, $fallback);
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if ($value === null || $value === '') {
+            return $fallback;
+        }
+
+        return in_array(strtolower((string)$value), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    public static function json(string $key, array $fallback = []): array
+    {
+        $value = self::get($key, $fallback);
+        return is_array($value) ? $value : $fallback;
+    }
+
+    public static function groupedPublic(array $groups = ['site', 'contact', 'social', 'frontend']): array
+    {
+        $public = [];
+        foreach ($groups as $group) {
+            $public[$group] = self::getGroup((string)$group);
+        }
+
+        return $public;
     }
 
     public static function upsert(string $key, mixed $value, string $type = 'text', string $label = '', string $group = 'global'): void

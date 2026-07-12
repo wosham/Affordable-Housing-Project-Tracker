@@ -162,8 +162,16 @@ class ManagerProject
                 (SELECT COUNT(*) FROM programme_tasks pt WHERE pt.project_id = p.id AND COALESCE(pt.status, '') NOT IN ('done','completed','complete') AND COALESCE(pt.end_date, pt.planned_end) < CURDATE()) AS overdue_tasks,
                 (SELECT COUNT(*) FROM ipcs i WHERE i.project_id = p.id AND i.status IN ('submitted','clerk-endorsed','certified')) AS open_ipcs,
                 (SELECT COUNT(*) FROM attendance_records ar WHERE ar.project_id = p.id AND ar.date = CURDATE() AND ar.status = 'present') AS present_today,
-                (SELECT COUNT(*) FROM project_assignments pa WHERE pa.project_id = p.id AND pa.role = 'clerk' AND pa.status = 'active') AS clerk_count,
-                (SELECT COUNT(*) FROM project_assignments pa WHERE pa.project_id = p.id AND pa.role = 'intern' AND pa.status = 'active') AS intern_count,
+                (SELECT COUNT(*) FROM project_assignments pa
+                    INNER JOIN users pau ON pau.id = pa.user_id
+                    INNER JOIN roles par ON par.id = pau.role_id
+                    WHERE pa.project_id = p.id AND pa.status = 'active'
+                      AND (pa.role = 'clerk' OR par.slug = 'clerk')) AS clerk_count,
+                (SELECT COUNT(*) FROM project_assignments pa
+                    INNER JOIN users pau ON pau.id = pa.user_id
+                    INNER JOIN roles par ON par.id = pau.role_id
+                    WHERE pa.project_id = p.id AND pa.status = 'active'
+                      AND (pa.role = 'intern' OR par.slug = 'intern')) AS intern_count,
                 (SELECT mpn.title FROM manager_project_notes mpn WHERE mpn.project_id = p.id AND mpn.status <> 'closed' ORDER BY FIELD(mpn.severity, 'critical','warning','normal'), mpn.created_at DESC LIMIT 1) AS latest_note
             FROM projects p
             LEFT JOIN constituencies c ON c.id = p.constituency_id
@@ -191,9 +199,21 @@ class ManagerProject
         }
         if (!empty($filters['coverage'])) {
             if ($filters['coverage'] === 'missing-clerk') {
-                $where[] = "NOT EXISTS (SELECT 1 FROM project_assignments pa WHERE pa.project_id = p.id AND pa.role = 'clerk' AND pa.status = 'active')";
+                $where[] = "NOT EXISTS (
+                    SELECT 1 FROM project_assignments pa
+                    INNER JOIN users pau ON pau.id = pa.user_id
+                    INNER JOIN roles par ON par.id = pau.role_id
+                    WHERE pa.project_id = p.id AND pa.status = 'active'
+                      AND (pa.role = 'clerk' OR par.slug = 'clerk')
+                )";
             } elseif ($filters['coverage'] === 'missing-intern') {
-                $where[] = "NOT EXISTS (SELECT 1 FROM project_assignments pa WHERE pa.project_id = p.id AND pa.role = 'intern' AND pa.status = 'active')";
+                $where[] = "NOT EXISTS (
+                    SELECT 1 FROM project_assignments pa
+                    INNER JOIN users pau ON pau.id = pa.user_id
+                    INNER JOIN roles par ON par.id = pau.role_id
+                    WHERE pa.project_id = p.id AND pa.status = 'active'
+                      AND (pa.role = 'intern' OR par.slug = 'intern')
+                )";
             }
         }
         if (!empty($filters['risk'])) {

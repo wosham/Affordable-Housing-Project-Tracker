@@ -13,7 +13,7 @@ if (!$user) {
 }
 
 $errors = [];
-$values = [
+$values = profile_values([], [
     'first_name' => (string)($user['first_name'] ?? ''),
     'last_name' => (string)($user['last_name'] ?? ''),
     'email' => (string)($user['email'] ?? ''),
@@ -22,7 +22,9 @@ $values = [
     'department' => (string)($user['department'] ?? ''),
     'bio' => (string)($user['bio'] ?? ''),
     'avatar' => (string)($user['avatar'] ?? ''),
-];
+]);
+$userRole = strtolower((string)($user['role_slug'] ?? Auth::role() ?? 'staff'));
+$attachedProjects = profile_attached_projects($userId, $userRole);
 
 if (Security::isPost()) {
     if (!Csrf::verify(Csrf::fromRequest(), $csrfForm)) {
@@ -34,7 +36,10 @@ if (Security::isPost()) {
     $errors = profile_validate($values);
 
     if ($values['email'] !== '' && User::emailExists($values['email'], $userId)) {
-        $errors['email'] = 'A different user already uses this email.';
+        $errors['email'] = 'This Gmail address is already used by another account.';
+    }
+    if ($values['phone'] !== '' && User::phoneExists($values['phone'], $userId)) {
+        $errors['phone'] = 'This phone number is already used by another account.';
     }
 
     $password = (string)($_POST['password'] ?? '');
@@ -93,7 +98,7 @@ if (Security::isPost()) {
 $pageTitle = 'My Profile';
 $pageDescription = 'Update your contact details, profile photo and password.';
 $adminRole = Auth::role() ?? 'staff';
-$contentClass = 'sa-user-form-page';
+$contentClass = 'sa-user-form-page profile-shell-page';
 $componentCss = ['user-profile'];
 $pageScripts = ['user-form'];
 $breadcrumbs = [
@@ -109,7 +114,7 @@ include __DIR__ . '/../app/partials/admin/shell-start.php';
 
   <section class="sa-projects-hero sa-user-hero card">
     <div>
-      <span class="sa-panel-label"><i class="fa-solid fa-user" aria-hidden="true"></i> Personal profile</span>
+      <span class="sa-panel-label"><i class="fa-solid fa-user" aria-hidden="true"></i> Personal Profile</span>
       <h2><?= Security::e(trim($values['first_name'] . ' ' . $values['last_name'])) ?></h2>
       <p>Update your own contact details, photo, biography and password. Role and account status are managed by the system administrator.</p>
     </div>
@@ -168,6 +173,16 @@ include __DIR__ . '/../app/partials/admin/shell-start.php';
       <section class="card sa-form-card sa-user-form-card">
         <div class="card__header">
           <div>
+            <h2 class="card__title">Project Sites</h2>
+            <p class="card__subtitle">Project sites attached to your account are shown here for reference.</p>
+          </div>
+        </div>
+        <?php profile_project_sites_panel($attachedProjects, $userRole); ?>
+      </section>
+
+      <section class="card sa-form-card sa-user-form-card">
+        <div class="card__header">
+          <div>
             <h2 class="card__title">Profile Media & Bio</h2>
             <p class="card__subtitle">Upload your profile image and keep your short profile note current.</p>
           </div>
@@ -193,23 +208,13 @@ include __DIR__ . '/../app/partials/admin/shell-start.php';
     </div>
 
     <aside class="sa-editor-aside">
-      <section class="card sa-user-preview">
-        <div class="sa-user-preview__top">
-          <span class="sa-user-preview__avatar" data-profile-avatar><?php if ($values['avatar'] !== ''): ?><img src="<?= Security::e(Url::asset($values['avatar'])) ?>" alt=""><?php else: ?><?= Security::e(user_initials($values)) ?><?php endif; ?></span>
-          <span class="badge <?= Security::e(status_badge_class($user['status'] ?? 'active')) ?>"><?= Security::e(status_label($user['status'] ?? 'active')) ?></span>
-        </div>
-        <div class="sa-user-preview__body">
-          <span class="sa-panel-label"><i class="fa-solid fa-id-card" aria-hidden="true"></i> Live profile preview</span>
-          <h3 data-profile-name><?= Security::e(trim($values['first_name'] . ' ' . $values['last_name'])) ?></h3>
-          <p data-profile-title><?= Security::e($values['job_title']) ?></p>
-          <dl class="sa-preview-list">
-            <div><dt>Role</dt><dd><?= Security::e($user['role_name'] ?? role_label(Auth::role())) ?></dd></div>
-            <div><dt>Email</dt><dd data-profile-email><?= Security::e($values['email']) ?></dd></div>
-            <div><dt>Phone</dt><dd><?= Security::e($values['phone']) ?></dd></div>
-            <div><dt>Department</dt><dd data-profile-department><?= Security::e($values['department']) ?></dd></div>
-          </dl>
-        </div>
-      </section>
+      <?php
+      $previewValues = $values + ['status' => (string)($user['status'] ?? 'active')];
+      $previewUser = $user;
+      $previewProjects = $attachedProjects;
+      $previewMode = 'profile';
+      include __DIR__ . '/../app/partials/admin/user-preview-card.php';
+      ?>
     </aside>
   </div>
 
@@ -225,13 +230,116 @@ include __DIR__ . '/../app/partials/admin/shell-start.php';
 <?php include __DIR__ . '/../app/partials/admin/shell-end.php'; ?>
 
 <?php
+function profile_attached_projects(int $userId, string $role): array
+{
+    $role = strtolower($role);
+
+    if ($role === 'superadmin') {
+        try {
+            return Database::fetchAll(
+                'SELECT p.id AS project_id, p.name AS project_name, p.slug AS project_slug, p.status AS project_status,
+                        c.name AS constituency_name, w.name AS ward_name,
+                        "full-access" AS assignment_type, "all-sites" AS scope, "active" AS status, 1 AS is_primary
+                 FROM projects p
+                 LEFT JOIN constituencies c ON c.id = p.constituency_id
+                 LEFT JOIN wards w ON w.id = p.ward_id
+                 ORDER BY p.name ASC'
+            );
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    if ($role === 'finance') {
+        try {
+            return Database::fetchAll(
+                'SELECT p.id AS project_id, p.name AS project_name, p.slug AS project_slug, p.status AS project_status,
+                        c.name AS constituency_name, w.name AS ward_name,
+                        "finance-visibility" AS assignment_type, "finance-visibility" AS scope, "active" AS status, 0 AS is_primary
+                 FROM projects p
+                 LEFT JOIN constituencies c ON c.id = p.constituency_id
+                 LEFT JOIN wards w ON w.id = p.ward_id
+                 ORDER BY p.name ASC'
+            );
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    try {
+        return Database::fetchAll(
+            'SELECT pa.*, p.id AS project_id, p.name AS project_name, p.slug AS project_slug, p.status AS project_status,
+                    c.name AS constituency_name, w.name AS ward_name
+             FROM project_assignments pa
+             INNER JOIN projects p ON p.id = pa.project_id
+             LEFT JOIN constituencies c ON c.id = p.constituency_id
+             LEFT JOIN wards w ON w.id = p.ward_id
+             WHERE pa.user_id = ? AND pa.status = "active"
+             ORDER BY pa.is_primary DESC, p.name ASC',
+            [$userId]
+        );
+    } catch (Throwable) {
+        return [];
+    }
+}
+
+function profile_project_sites_panel(array $projects, string $role): void
+{
+    $role = strtolower($role);
+    $isAdministrator = $role === 'superadmin';
+    $isFinance = $role === 'finance';
+    $title = $isAdministrator ? 'All project sites' : ($isFinance ? 'Finance project portfolio' : 'Your attached project sites');
+    $hint = $isAdministrator
+        ? 'County Director accounts automatically see every project site.'
+        : ($isFinance
+            ? 'Finance accounts see the project portfolio for payment and budget workflows.'
+            : 'These are the project sites currently attached to your account.');
+?>
+  <div class="sa-assignment-picker sa-assignment-picker--readonly">
+    <div class="sa-assignment-picker__tools">
+      <span><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> <?= Security::e($title) ?></span>
+      <span class="badge badge--neutral"><?= Security::e(format_number(count($projects))) ?> site<?= count($projects) === 1 ? '' : 's' ?></span>
+    </div>
+<?php if ($projects === []): ?>
+    <div class="empty-state empty-state--compact">
+      <span class="empty-state__icon"><i class="fa-solid fa-building-circle-exclamation" aria-hidden="true"></i></span>
+      <strong class="empty-state__title">No project site attached yet</strong>
+      <span class="empty-state__text">Your attached project sites will appear here once configured by the County Director.</span>
+    </div>
+<?php else: ?>
+    <div class="sa-assignment-grid">
+<?php foreach ($projects as $project): ?>
+      <article class="sa-assignment-option sa-assignment-option--readonly">
+        <i class="fa-solid <?= !empty($project['is_primary']) ? 'fa-star' : 'fa-building' ?>" aria-hidden="true"></i>
+        <span>
+          <strong><?= Security::e((string)($project['project_name'] ?? 'Project site')) ?></strong>
+          <small>
+            <?= Security::e(status_label((string)($project['project_status'] ?? 'active'))) ?>
+            <?php if (!empty($project['constituency_name'])): ?>
+              / <?= Security::e((string)$project['constituency_name']) ?>
+            <?php endif; ?>
+            <?php if (!empty($project['ward_name'])): ?>
+              / <?= Security::e((string)$project['ward_name']) ?>
+            <?php endif; ?>
+          </small>
+          <em><?= Security::e(status_label((string)($project['scope'] ?? $project['assignment_type'] ?? 'site'))) ?></em>
+        </span>
+      </article>
+<?php endforeach; ?>
+    </div>
+<?php endif; ?>
+    <p class="form-hint"><?= Security::e($hint) ?></p>
+  </div>
+<?php
+}
+
 function profile_values(array $source, array $defaults): array
 {
     return [
         'first_name' => Security::cleanString((string)($source['first_name'] ?? $defaults['first_name'])),
         'last_name' => Security::cleanString((string)($source['last_name'] ?? $defaults['last_name'])),
-        'email' => Security::cleanEmail((string)($source['email'] ?? $defaults['email'])),
-        'phone' => Security::cleanString((string)($source['phone'] ?? $defaults['phone'])),
+        'email' => User::normaliseEmail(Security::cleanEmail((string)($source['email'] ?? $defaults['email']))),
+        'phone' => User::normalisePhone(Security::cleanString((string)($source['phone'] ?? $defaults['phone']))),
         'job_title' => Security::cleanString((string)($source['job_title'] ?? $defaults['job_title'])),
         'department' => Security::cleanString((string)($source['department'] ?? $defaults['department'])),
         'bio' => trim(strip_tags((string)($source['bio'] ?? $defaults['bio']))),
@@ -247,23 +355,13 @@ function profile_validate(array $values): array
             $errors[$field] = $label . ' is required.';
         }
     }
-    if (!profile_valid_gmail($values['email'])) {
-        $errors['email'] = 'Enter a valid Gmail address.';
+    if (!User::isValidGmail((string)$values['email'])) {
+        $errors['email'] = 'Only Gmail addresses are accepted.';
     }
-    if (!profile_valid_kenyan_phone($values['phone'])) {
-        $errors['phone'] = 'Enter a Kenyan phone number in +2547XXXXXXXX or +2541XXXXXXXX format.';
+    if (!User::isValidKenyanPhone((string)$values['phone'])) {
+        $errors['phone'] = 'Enter a Kenyan phone number, for example +254712345678.';
     }
     return $errors;
-}
-
-function profile_valid_gmail(string $email): bool
-{
-    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false && strtolower(substr($email, -10)) === '@gmail.com';
-}
-
-function profile_valid_kenyan_phone(string $phone): bool
-{
-    return (bool)preg_match('/^\+254[17][0-9]{8}$/', trim($phone));
 }
 
 function profile_store_avatar(?array $file, array &$errors): ?string

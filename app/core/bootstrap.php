@@ -2,6 +2,14 @@
 
 declare(strict_types=1);
 
+if (!headers_sent()) {
+    header_remove('X-Powered-By');
+}
+
+require_once __DIR__ . '/Env.php';
+
+Env::load(dirname(__DIR__, 2) . '/.env');
+
 $app_config = require dirname(__DIR__) . '/config/app.php';
 $db_config = require dirname(__DIR__) . '/config/database.php';
 $paths = require dirname(__DIR__) . '/config/paths.php';
@@ -31,9 +39,11 @@ foreach (glob(dirname(__DIR__) . '/services/*.php') ?: [] as $serviceFile) {
     require_once $serviceFile;
 }
 require_once __DIR__ . '/Csrf.php';
+require_once __DIR__ . '/ApiCsrf.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/Url.php';
 require_once __DIR__ . '/Response.php';
+require_once __DIR__ . '/PublicApi.php';
 require_once __DIR__ . '/Guard.php';
 require_once __DIR__ . '/RoleAccess.php';
 require_once __DIR__ . '/Logger.php';
@@ -45,6 +55,7 @@ require_once __DIR__ . '/CmsLoader.php';
 require_once __DIR__ . '/Controller.php';
 require_once __DIR__ . '/GeoFence.php';
 require_once __DIR__ . '/helpers.php';
+require_once dirname(__DIR__) . '/helpers/contact-enquiries.php';
 
 require_once dirname(__DIR__) . '/middleware/CsrfMiddleware.php';
 require_once dirname(__DIR__) . '/middleware/ApiMiddleware.php';
@@ -52,7 +63,9 @@ require_once dirname(__DIR__) . '/middleware/AuthMiddleware.php';
 require_once dirname(__DIR__) . '/middleware/RoleMiddleware.php';
 
 Security::sendHeaders();
-Session::start($app_config['session'] ?? []);
+if (!defined('APP_SKIP_SESSION') || APP_SKIP_SESSION !== true) {
+    Session::start($app_config['session'] ?? []);
+}
 
 return [
     'app' => $app_config,

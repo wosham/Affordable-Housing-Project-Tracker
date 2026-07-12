@@ -69,6 +69,33 @@ class ConsultantTechnicalReview
         return (int)($row['total'] ?? 0);
     }
 
+    /** Portfolio risk items (not limited to current page). */
+    public static function boqRiskItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $riskFilters = $filters;
+        // Prefer risk-ranked list across portfolio (optional risk filter still applied).
+        if (empty($riskFilters['risk'])) {
+            // No single risk filter — still only elevated risks.
+            [$where, $bindings] = self::boqFilterSql($userId, $role, $riskFilters);
+            $where = $where === ''
+                ? " WHERE COALESCE(bi.risk_status, 'normal') IN ('watch','high','critical')"
+                : $where . " AND COALESCE(bi.risk_status, 'normal') IN ('watch','high','critical')";
+        } else {
+            [$where, $bindings] = self::boqFilterSql($userId, $role, $riskFilters);
+        }
+
+        return Database::fetchAll(
+            "SELECT bi.id, bi.item_no, bi.section, bi.risk_status, bi.review_status, bi.description, p.name AS project_name
+             FROM boq_items bi
+             JOIN projects p ON p.id = bi.project_id
+             {$where}
+             ORDER BY FIELD(COALESCE(bi.risk_status, 'normal'), 'critical', 'high', 'watch', 'normal'),
+                      p.name ASC, bi.item_no ASC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
+    }
+
     public static function programmeSummary(int $userId, string $role, array $filters = []): array
     {
         [$where, $bindings] = self::programmeFilterSql($userId, $role, $filters, false);
@@ -118,6 +145,30 @@ class ConsultantTechnicalReview
         return (int)($row['total'] ?? 0);
     }
 
+    /** Delayed / critical / pending-review signals across the portfolio (not page-bound). */
+    public static function programmeSignalItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        [$where, $bindings] = self::programmeFilterSql($userId, $role, $filters);
+        $signal = "(pt.critical_path = 1
+            OR COALESCE(pt.consultant_review_status, 'pending') IN ('pending', 'flagged', 'needs-revision')
+            OR (pt.status NOT IN ('complete','cancelled') AND COALESCE(pt.planned_end, pt.end_date) IS NOT NULL AND COALESCE(pt.planned_end, pt.end_date) < CURDATE()))";
+        $where = $where === '' ? " WHERE {$signal}" : $where . " AND {$signal}";
+
+        return Database::fetchAll(
+            "SELECT pt.id, pt.task_name, pt.pct_complete, pt.status, pt.critical_path, pt.planned_end, pt.end_date,
+                    pt.consultant_review_status, p.id AS project_id, p.name AS project_name
+             FROM programme_tasks pt
+             JOIN projects p ON p.id = pt.project_id
+             {$where}
+             ORDER BY FIELD(COALESCE(pt.consultant_review_status, 'pending'), 'flagged', 'needs-revision', 'pending', 'approved', 'reviewed'),
+                      (pt.status NOT IN ('complete','cancelled') AND COALESCE(pt.planned_end, pt.end_date) < CURDATE()) DESC,
+                      pt.critical_path DESC,
+                      COALESCE(pt.planned_end, pt.end_date) ASC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
+    }
+
     public static function materialSummary(int $userId, string $role, array $filters = []): array
     {
         [$where, $bindings] = self::materialFilterSql($userId, $role, $filters, false);
@@ -163,6 +214,24 @@ class ConsultantTechnicalReview
         return (int)($row['total'] ?? 0);
     }
 
+    /** Pending materials across portfolio (not page-bound). */
+    public static function materialPendingItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $queueFilters = $filters;
+        $queueFilters['status'] = 'pending';
+        [$where, $bindings] = self::materialFilterSql($userId, $role, $queueFilters);
+
+        return Database::fetchAll(
+            "SELECT ma.id, ma.material, ma.submitted_date, ma.status, p.id AS project_id, p.name AS project_name
+             FROM material_approvals ma
+             JOIN projects p ON p.id = ma.project_id
+             {$where}
+             ORDER BY ma.submitted_date DESC, ma.id DESC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
+    }
+
     public static function drawingSummary(int $userId, string $role, array $filters = []): array
     {
         [$where, $bindings] = self::drawingFilterSql($userId, $role, $filters, false);
@@ -206,6 +275,28 @@ class ConsultantTechnicalReview
         [$where, $bindings] = self::drawingFilterSql($userId, $role, $filters);
         $row = Database::fetch("SELECT COUNT(*) AS total FROM shop_drawings sd JOIN projects p ON p.id = sd.project_id {$where}", $bindings);
         return (int)($row['total'] ?? 0);
+    }
+
+    /** Drawings needing action across portfolio (not page-bound). */
+    public static function drawingQueueItems(int $userId, string $role, array $filters = [], int $limit = 8): array
+    {
+        $queueFilters = $filters;
+        unset($queueFilters['status']);
+        [$where, $bindings] = self::drawingFilterSql($userId, $role, $queueFilters);
+        $signal = "sd.status IN ('under-review', 'resubmit')";
+        $where = $where === '' ? " WHERE {$signal}" : $where . " AND {$signal}";
+
+        return Database::fetchAll(
+            "SELECT sd.id, sd.drawing_no, sd.title, sd.revision, sd.status, sd.submitted_date,
+                    p.id AS project_id, p.name AS project_name
+             FROM shop_drawings sd
+             JOIN projects p ON p.id = sd.project_id
+             {$where}
+             ORDER BY FIELD(sd.status, 'under-review', 'resubmit', 'rejected', 'approved'),
+                      sd.submitted_date DESC, sd.id DESC
+             LIMIT " . max(1, min(20, $limit)),
+            $bindings
+        );
     }
 
     public static function applyAction(string $type, int $id, string $action, string $note, int $userId, string $role): array

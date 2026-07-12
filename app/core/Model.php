@@ -130,7 +130,7 @@ class Model
             $bindings
         );
 
-        return $statement->rowCount() >= 0;
+        return $statement->rowCount() > 0;
     }
 
     public static function delete(int $id): bool

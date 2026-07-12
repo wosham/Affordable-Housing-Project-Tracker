@@ -1,0 +1,233 @@
+[2026-06-10 12:26:41] Public API honeypot triggered {"field":"website","request_id":"b28b0b9dfee8d439"}
+[2026-06-10 12:27:26] Public API honeypot triggered {"field":"website","request_id":"7d6a25bc245a8c08"}
+[2026-06-29 15:00:07] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:11] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:54] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:00:59] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:05] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:09] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:48] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:01:59] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:05] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:09] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:48] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:02:59] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:08] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:12] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:54] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:03:59] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:05] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:09] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:48] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:04:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:00] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:06] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:10] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:55] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:05:59] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:05] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:09] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:37] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:48] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:06:56] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:00] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:02] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:08] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:12] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:44] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:50] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:55] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:07:59] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:08:05] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:08:10] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:08:14] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:08:24] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:08:28] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:08:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:09:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:09:08] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:09:12] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:10:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:10:05] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:10:07] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:11:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:11:07] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:11:12] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:12:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:12:05] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:12:07] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:13:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:13:05] Superadmin dashboard summary failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-06-29 15:13:07] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:00:47] User session schema check failed {"error":"SQLSTATE[HY000]: General error: 2006 MySQL server has gone away"}
+[2026-07-10 14:01:03] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:01:17] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:01:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:01:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:02:06] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:02:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:02:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:02:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:03:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:04:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:05:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:05:47] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:06:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:06:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:06:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:06:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:07:30] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 14:08:49] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:46:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:46:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:46:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:46:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:47:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:47:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:47:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:47:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:48:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:48:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:48:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:48:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:49:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:49:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:49:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:49:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:50:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:50:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:50:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:50:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:51:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:51:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:51:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:51:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:52:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:52:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:52:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:52:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:53:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:53:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:53:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:53:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:54:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:54:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:54:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:54:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:55:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:55:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:55:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:55:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:56:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:56:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:56:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:56:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:57:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:57:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:57:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:57:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:58:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:58:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:58:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:58:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:59:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:59:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:59:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 21:59:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:00:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:00:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:00:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:00:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:01:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:01:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:01:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:01:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:02:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:02:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:02:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:02:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:03:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:03:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:03:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:03:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:04:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:04:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:04:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:04:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:05:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:05:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:05:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:05:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:06:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:06:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:06:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:06:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:07:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:07:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:07:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:07:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:08:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:08:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:08:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:08:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:09:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:09:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:09:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:09:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:10:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:10:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:10:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:10:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:11:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:11:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:11:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:11:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:12:01] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:12:16] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:12:31] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:12:46] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 22:12:52] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-10 23:08:32] User session schema check failed {"error":"SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it"}
+[2026-07-12 10:11:42] Database backup failed {"backup_id":1,"error":"mysqldump failed: mysqldump.exe: Got error: 2004: \"Can't create TCP/IP socket (10106)\" when trying to connect"}
+[2026-07-12 10:35:27] Database backup failed {"backup_id":4,"error":"mysqldump was not found. Set MYSQLDUMP_PATH on the server."}

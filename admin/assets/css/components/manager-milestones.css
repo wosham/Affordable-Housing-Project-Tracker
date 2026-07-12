@@ -22,10 +22,16 @@
 }
 
 .manager-milestone-hero__actions,
-.manager-milestone-actions {
+.manager-milestone-actions,
+.manager-table-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: .5rem;
+  align-items: center;
+  gap: .35rem;
+}
+
+.manager-table-actions {
+  max-width: 200px;
 }
 
 .manager-milestone-hero__actions {

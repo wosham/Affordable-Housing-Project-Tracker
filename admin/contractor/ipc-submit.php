@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('contractor'));
+Guard::exactRole('contractor');
 
 $userId = (int)(Auth::id() ?? 0);
 $role = (string)(Auth::role() ?? '');
@@ -32,11 +32,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i> Contractor claim</span>
     <h2>Submit IPC</h2>
-    <p>Prepare a payment claim from measured BOQ quantities and send it for site verification.</p>
+    <p>Prepare a payment claim from measured BOQ quantities and send it for review.</p>
   </div>
   <div class="contractor-ipc-actions">
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/contractor/ipc-history.php')) ?>"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> IPC History</a>
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/contractor/boq.php')) ?>"><i class="fa-solid fa-list-check" aria-hidden="true"></i> BOQ</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/contractor/ipc-history.php' . ($projectId ? '?project_id=' . $projectId : ''))) ?>"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> IPC History</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/contractor/payment-history.php' . ($projectId ? '?project_id=' . $projectId : ''))) ?>"><i class="fa-solid fa-credit-card" aria-hidden="true"></i> Payments</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/contractor/boq.php' . ($projectId ? '?project_id=' . $projectId : ''))) ?>"><i class="fa-solid fa-list-check" aria-hidden="true"></i> BOQ</a>
   </div>
 </section>
 
@@ -141,24 +142,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     <section class="card contractor-ipc-summary">
       <h2>Claim Summary</h2>
       <dl>
-        <div><dt>Contract sum</dt><dd>KES <?= number_format((float)($project['contract_sum'] ?? 0), 2) ?></dd></div>
-        <div><dt>BOQ value</dt><dd>KES <?= number_format((float)($summary['boq_value'] ?? 0), 2) ?></dd></div>
-        <div><dt>Certified to date</dt><dd>KES <?= number_format((float)($summary['certified_value'] ?? 0), 2) ?></dd></div>
-        <div><dt>Gross claim</dt><dd>KES <span data-ipc-total>0.00</span></dd></div>
-        <div><dt>Retention</dt><dd>KES <span data-ipc-retention>0.00</span></dd></div>
-        <div><dt>Net payable</dt><dd>KES <span data-ipc-net>0.00</span></dd></div>
+        <div><dt>Contract sum</dt><dd title="<?= Security::e(format_money($project['contract_sum'] ?? 0)) ?>"><?= Security::e(format_money($project['contract_sum'] ?? 0)) ?></dd></div>
+        <div><dt>BOQ value</dt><dd title="<?= Security::e(format_money($summary['boq_value'] ?? 0)) ?>"><?= Security::e(format_money($summary['boq_value'] ?? 0)) ?></dd></div>
+        <div><dt>Certified to date</dt><dd title="<?= Security::e(format_money($summary['certified_value'] ?? 0)) ?>"><?= Security::e(format_money($summary['certified_value'] ?? 0)) ?></dd></div>
+        <div><dt>Gross claim</dt><dd><span data-ipc-total-prefix></span><span data-ipc-total>0.00</span></dd></div>
+        <div><dt>Retention (5%)</dt><dd><span data-ipc-retention>0.00</span></dd></div>
+        <div><dt>Net payable</dt><dd><strong data-ipc-net>0.00</strong></dd></div>
       </dl>
-    </section>
-    <section class="card contractor-ipc-summary">
-      <h2>Workflow</h2>
-      <ol class="contractor-ipc-flow">
-        <li>Contractor submits</li>
-        <li>Clerk verifies</li>
-        <li>Consultant certifies</li>
-        <li>Manager endorses</li>
-        <li>Director approves</li>
-        <li>Finance pays</li>
-      </ol>
     </section>
   </aside>
 </form>

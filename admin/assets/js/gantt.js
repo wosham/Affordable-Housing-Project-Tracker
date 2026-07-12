@@ -11,6 +11,13 @@
 
   var modal = qs('[data-programme-modal]');
   var form = qs('[data-programme-form]');
+  if (!modal || !form) return;
+
+  var api = window.AHPTC || null;
+  var request = api && typeof api.request === 'function' ? api.request.bind(api) : null;
+  var csrfHeaders = {
+    'X-CSRF-Form': (api && api.csrfForm && api.csrfForm()) || 'manager_programme'
+  };
 
   function field(name) {
     return qs('[data-programme-field="' + name + '"]', form);
@@ -23,17 +30,7 @@
     node.hidden = !message;
   }
 
-  function closeModal() {
-    if (!modal) return;
-    modal.hidden = true;
-    document.body.classList.remove('modal-open');
-    setAlert('[data-programme-warning]', '');
-    setAlert('[data-programme-error]', '');
-  }
-
   function openModal(button) {
-    if (!modal || !form) return;
-
     field('id').value = button.getAttribute('data-id') || '';
     field('task_name').value = button.getAttribute('data-name') || '';
     field('planned_start').value = button.getAttribute('data-planned-start') || '';
@@ -48,14 +45,25 @@
     field('critical_path').checked = button.getAttribute('data-critical') === '1';
 
     qsa('option', field('depends_on_task_id')).forEach(function (option) {
-      option.disabled = option.value && option.value === field('id').value;
+      option.disabled = !!(option.value && option.value === field('id').value);
     });
 
     setAlert('[data-programme-warning]', '');
     setAlert('[data-programme-error]', '');
+
+    // Global .modal styles require .is-open (display:none otherwise).
     modal.hidden = false;
+    modal.classList.add('is-open');
     document.body.classList.add('modal-open');
     field('task_name').focus();
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+    modal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
+    setAlert('[data-programme-warning]', '');
+    setAlert('[data-programme-error]', '');
   }
 
   function validationWarnings() {
@@ -97,41 +105,60 @@
       return;
     }
 
+    if (!request) {
+      setAlert('[data-programme-error]', 'Page scripts failed to load. Refresh and try again.');
+      return;
+    }
+
     setSaving(true);
-    window.AHPTC.request('api/programme/update-task.php', {
+    request('api/programme/update-task.php', {
       method: 'POST',
-      body: new FormData(form)
-    }).then(function () {
-      window.location.reload();
+      body: new FormData(form),
+      headers: csrfHeaders
+    }).then(function (payload) {
+      if (window.AHPTC && typeof window.AHPTC.toast === 'function') {
+        window.AHPTC.toast((payload && payload.message) || 'Programme task saved.', 'success');
+      }
+      window.setTimeout(function () {
+        window.location.reload();
+      }, 350);
     }).catch(function (error) {
-      setAlert('[data-programme-error]', error && error.message ? error.message : 'Programme task could not be saved.');
-    }).finally(function () {
+      var message = error && error.message ? error.message : 'Programme task could not be saved.';
+      setAlert('[data-programme-error]', message);
+      if (window.AHPTC && typeof window.AHPTC.toast === 'function') {
+        window.AHPTC.toast(message, 'error');
+      }
       setSaving(false);
     });
   }
 
   function init() {
-    qsa('[data-programme-edit]').forEach(function (button) {
-      button.addEventListener('click', function () {
-        openModal(button);
-      });
+    // Event delegation so edit still works after partial re-renders.
+    document.addEventListener('click', function (event) {
+      var edit = event.target.closest('[data-programme-edit]');
+      var close = event.target.closest('[data-programme-close]');
+      if (edit) {
+        openModal(edit);
+        return;
+      }
+      if (close || event.target === modal) {
+        closeModal();
+      }
     });
 
-    qsa('[data-programme-close]').forEach(function (button) {
-      button.addEventListener('click', closeModal);
+    form.addEventListener('submit', submitForm);
+    ['planned_start', 'planned_end', 'start_date', 'end_date', 'pct_complete', 'status'].forEach(function (name) {
+      var input = field(name);
+      if (input) {
+        input.addEventListener('input', updateWarnings);
+        input.addEventListener('change', updateWarnings);
+      }
     });
-
-    if (form) {
-      form.addEventListener('submit', submitForm);
-      ['planned_start', 'planned_end', 'start_date', 'end_date', 'pct_complete', 'status'].forEach(function (name) {
-        var input = field(name);
-        if (input) input.addEventListener('input', updateWarnings);
-        if (input) input.addEventListener('change', updateWarnings);
-      });
-    }
 
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') closeModal();
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+        closeModal();
+      }
     });
   }
 

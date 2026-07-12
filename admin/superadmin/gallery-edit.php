@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_gallery';
 $id = Security::cleanInt($_GET['id'] ?? ($_POST['id'] ?? 0));
@@ -43,7 +43,7 @@ $componentCss = ['media-library', 'gallery-admin'];
 $pageScripts = ['media-picker', 'gallery-admin'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Gallery', 'url' => Url::to('admin/superadmin/gallery.php')],
     ['label' => 'Edit Item'],
 ];

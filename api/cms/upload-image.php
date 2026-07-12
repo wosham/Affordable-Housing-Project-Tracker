@@ -1,7 +1,15 @@
 <?php
-// API — CMS: Upload image to media library
+
 require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
-header('Content-Type: application/json');
-Guard::auth(); Guard::role('superadmin');
-// TODO: Phase 6 — Validate image, store in uploads/, insert into media_library
-echo json_encode(['status' => 'stub']);
+
+Guard::auth();
+Guard::role('superadmin');
+
+if (isset($_FILES['image']) && !isset($_FILES['file'])) {
+    $_FILES['file'] = $_FILES['image'];
+}
+
+$_POST['folder'] = MediaLibrary::normaliseFolder((string)($_POST['folder'] ?? 'cms'));
+$_POST['csrf_form'] = (string)($_POST['csrf_form'] ?? 'cms_editor');
+
+require __DIR__ . '/../media/upload.php';

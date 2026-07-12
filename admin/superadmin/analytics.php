@@ -1,6 +1,6 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $filters = [
     'range' => Security::cleanString((string)($_GET['range'] ?? '30_days')),
@@ -31,7 +31,7 @@ $chartData = [
         'values' => array_map(static fn (array $row): int => (int)$row['units'], $projects['by_constituency'] ?? []),
     ],
     'completion' => [
-        'labels' => array_map(static fn (array $row): string => safe_truncate((string)$row['name'], 26), $projects['completion'] ?? []),
+        'labels' => array_map(static fn (array $row): string => (string)$row['name'], $projects['completion'] ?? []),
         'values' => array_map(static fn (array $row): float => (float)$row['pct_complete'], $projects['completion'] ?? []),
     ],
     'ipcPipeline' => analytics_status_chart($finance['ipc_statuses'] ?? [], 'status'),
@@ -40,7 +40,7 @@ $chartData = [
         'values' => array_map(static fn (array $row): float => (float)$row['total'], $finance['payment_months'] ?? []),
     ],
     'budgetBurn' => [
-        'labels' => array_map(static fn (array $row): string => safe_truncate((string)$row['name'], 24), $finance['budget_burn'] ?? []),
+        'labels' => array_map(static fn (array $row): string => (string)$row['name'], $finance['budget_burn'] ?? []),
         'contract' => array_map(static fn (array $row): float => (float)$row['contract_sum'], $finance['budget_burn'] ?? []),
         'paid' => array_map(static fn (array $row): float => (float)$row['paid'], $finance['budget_burn'] ?? []),
     ],
@@ -50,7 +50,7 @@ $chartData = [
         'geoFail' => array_map(static fn (array $row): int => (int)$row['geo_fail'], $attendance['daily'] ?? []),
     ],
     'attendanceProject' => [
-        'labels' => array_map(static fn (array $row): string => safe_truncate((string)$row['name'], 24), $attendance['by_project'] ?? []),
+        'labels' => array_map(static fn (array $row): string => (string)$row['name'], $attendance['by_project'] ?? []),
         'values' => array_map(static fn (array $row): int => (int)$row['total'], $attendance['by_project'] ?? []),
     ],
     'attendanceRole' => analytics_status_chart($attendance['by_role'] ?? [], 'role'),
@@ -69,11 +69,11 @@ $pageTitle = 'Analytics';
 $pageDescription = 'Programme analytics across projects, finance, attendance and public content.';
 $adminRole = 'superadmin';
 $componentCss = ['cards', 'tables', 'charts'];
-$pageScripts = ['https://cdn.jsdelivr.net/npm/chart.js', 'charts'];
+$pageScripts = ['charts'];
 $contentClass = 'sa-analytics-page';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'Analytics'],
 ];
 
@@ -213,7 +213,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
     <div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span><strong class="empty-state__title">No priority signals</strong><span class="empty-state__text">The current analytics range has no major operational alerts.</span></div>
 <?php else: ?>
     <div class="analytics-signal-list">
-<?php foreach ($risks as $risk): ?>
+<?php foreach (array_slice($risks, 0, 10) as $risk): ?>
       <a class="analytics-signal analytics-signal--<?= Security::e($risk['severity']) ?>" href="<?= Security::e($risk['href']) ?>">
         <span><i class="fa-solid <?= Security::e($risk['icon']) ?>" aria-hidden="true"></i></span>
         <strong><?= Security::e($risk['title']) ?></strong>
@@ -313,6 +313,7 @@ function analytics_table_news(array $rows): void
         echo '<div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-newspaper" aria-hidden="true"></i></span><strong class="empty-state__title">No published views yet</strong><span class="empty-state__text">Published news article views will appear here.</span></div>';
         return;
     }
+    $rows = array_slice($rows, 0, 10);
     ?>
     <div class="table-wrap">
       <table class="data-table">
@@ -329,6 +330,7 @@ function analytics_table_news(array $rows): void
         </tbody>
       </table>
     </div>
+    <p class="report-preview-note">Showing up to 10 rows.</p>
     <?php
 }
 
@@ -338,6 +340,7 @@ function analytics_table_projects(array $rows): void
         echo '<div class="empty-state"><span class="empty-state__icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span><strong class="empty-state__title">No overdue projects</strong><span class="empty-state__text">Delivery dates are clear for non-completed projects.</span></div>';
         return;
     }
+    $rows = array_slice($rows, 0, 10);
     ?>
     <div class="table-wrap">
       <table class="data-table">
@@ -355,5 +358,6 @@ function analytics_table_projects(array $rows): void
         </tbody>
       </table>
     </div>
+    <p class="report-preview-note">Showing up to 10 rows.</p>
     <?php
 }

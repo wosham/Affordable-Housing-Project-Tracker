@@ -1,78 +1,59 @@
-/* TRANS-NZOIA AHP — Maintenance Page Script */
+/* TRANS-NZOIA AHP - Maintenance Page Script */
 (function () {
-
-  /* ──────────────────────────────────────────
-     CONFIGURE: update these two dates as needed
-     All times in EAT (Africa/Nairobi, UTC+3)
-  ────────────────────────────────────────── */
-  var MAINTENANCE_START = new Date('2026-05-31T22:00:00+03:00');
-  var MAINTENANCE_END   = new Date('2026-06-01T06:00:00+03:00');
-  /* ────────────────────────────────────────── */
-
-  /* ── Progress bar ── */
-  var now     = new Date();
-  var total   = MAINTENANCE_END - MAINTENANCE_START;
-  var elapsed = now - MAINTENANCE_START;
-  var pct     = Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)));
-
-  var bar     = document.getElementById('maintProgress');
-  var pctSpan = document.getElementById('maintPct');
-  if (bar)     bar.style.width   = pct + '%';
-  if (pctSpan) pctSpan.textContent = pct + '%';
-
-  /* ── Last updated timestamp ── */
-  var lu = document.getElementById('lastUpdated');
-  if (lu) {
-    try {
-      lu.textContent = now.toLocaleTimeString('en-KE', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Africa/Nairobi'
-      });
-    } catch (e) {
-      lu.textContent = now.toLocaleTimeString();
-    }
-  }
-
-  /* ── Countdown timer ── */
+  var body = document.body;
+  var endValue = body ? body.getAttribute('data-maintenance-end') : '';
+  var endTime = endValue ? new Date(endValue) : null;
+  var countdown = document.getElementById('maintCountdown');
+  var title = document.getElementById('maintEtaTitle');
+  var text = document.getElementById('maintEtaText');
+  var retryBtn = document.getElementById('maintRetryBtn');
   var elH = document.getElementById('countH');
   var elM = document.getElementById('countM');
   var elS = document.getElementById('countS');
-  var statusEl = document.getElementById('maintStatus');
 
-  function pad(n) { return String(n).padStart(2, '0'); }
+  function pad(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  function retry() {
+    window.location.reload();
+  }
+
+  function showOpenEndedMessage() {
+    if (title) title.textContent = 'Service update in progress';
+    if (text) text.textContent = 'Please check again shortly. No project data has been lost.';
+    if (countdown) countdown.hidden = true;
+  }
 
   function updateCountdown() {
-    var diff = MAINTENANCE_END - new Date();
-
-    if (diff <= 0) {
-      if (elH) elH.textContent = '00';
-      if (elM) elM.textContent = '00';
-      if (elS) elS.textContent = '00';
-      if (statusEl) statusEl.textContent = 'Back online shortly — refreshing…';
-      /* Automatically refresh after 5 s */
-      setTimeout(function () { window.location.reload(); }, 5000);
+    if (!endTime || Number.isNaN(endTime.getTime())) {
+      showOpenEndedMessage();
       return;
     }
 
-    var totalSecs = Math.floor(diff / 1000);
-    var h = Math.floor(totalSecs / 3600);
-    var m = Math.floor((totalSecs % 3600) / 60);
-    var s = totalSecs % 60;
+    var remaining = endTime.getTime() - Date.now();
+    if (remaining <= 0) {
+      if (title) title.textContent = 'Maintenance window is ending';
+      if (text) text.textContent = 'The service should be available again shortly. Try refreshing the page.';
+      if (countdown) countdown.hidden = true;
+      return;
+    }
 
-    if (elH) elH.textContent = pad(h);
-    if (elM) elM.textContent = pad(m);
-    if (elS) elS.textContent = pad(s);
+    var totalSeconds = Math.floor(remaining / 1000);
+    var hours = Math.floor(totalSeconds / 3600);
+    var minutes = Math.floor((totalSeconds % 3600) / 60);
+    var seconds = totalSeconds % 60;
 
-    /* Update progress bar every tick */
-    var newPct = Math.max(0, Math.min(100, Math.round(
-      ((new Date() - MAINTENANCE_START) / total) * 100
-    )));
-    if (bar)     bar.style.width         = newPct + '%';
-    if (pctSpan) pctSpan.textContent     = newPct + '%';
+    if (title) title.textContent = 'Estimated time remaining';
+    if (text) text.textContent = 'The public tracker is expected back online after the maintenance window.';
+    if (countdown) countdown.hidden = false;
+    if (elH) elH.textContent = pad(hours);
+    if (elM) elM.textContent = pad(minutes);
+    if (elS) elS.textContent = pad(seconds);
   }
 
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
+  if (retryBtn) retryBtn.addEventListener('click', retry);
 
+  updateCountdown();
+  window.setInterval(updateCountdown, 1000);
 }());

@@ -23,14 +23,7 @@ if ($usage && (string)($_POST['force'] ?? '') !== '1') {
     Response::json(['success' => false, 'message' => 'This file is in use. Review usage before deleting.', 'usage' => $usage], 409);
 }
 
-$root = dirname(__DIR__, 2);
-$path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, (string)$media['path']);
-$absolute = $root . DIRECTORY_SEPARATOR . $path;
-if (is_file($absolute) && str_starts_with(realpath($absolute) ?: '', realpath($root . DIRECTORY_SEPARATOR . 'uploads') ?: '')) {
-    @unlink($absolute);
-}
+Database::query('UPDATE media_library SET deleted_at = NOW() WHERE id = ?', [$id]);
+Logger::log('archive', 'media_library', $id, ['path' => $media['path']]);
 
-Database::query('DELETE FROM media_library WHERE id = ?', [$id]);
-Logger::log('delete', 'media_library', $id, ['path' => $media['path']]);
-
-Response::json(['success' => true, 'message' => 'Media item deleted.']);
+Response::json(['success' => true, 'message' => 'Media item archived.']);

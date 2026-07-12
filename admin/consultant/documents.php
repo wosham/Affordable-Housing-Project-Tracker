@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $userId = (int)(Auth::id() ?? 0);
 $role = (string)(Auth::role() ?? '');
@@ -14,7 +14,7 @@ $filters = [
     'to' => trim((string)($_GET['to'] ?? '')),
 ];
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
-$limit = 15;
+$limit = 10;
 $offset = ($page - 1) * $limit;
 
 $projects = ConsultantDocumentCentre::projects($userId, $role);
@@ -22,6 +22,7 @@ $summary = ConsultantDocumentCentre::documentSummary($userId, $role, $filters);
 $documents = ConsultantDocumentCentre::documents($userId, $role, $filters, $limit, $offset);
 $total = ConsultantDocumentCentre::documentCount($userId, $role, $filters);
 $pages = max(1, (int)ceil($total / $limit));
+$attention = ConsultantDocumentCentre::documentAttentionItems($userId, $role, $filters, 8);
 
 $pageTitle = 'Documents';
 $pageDescription = 'Review project documents, technical records and uploaded contract controls.';
@@ -32,7 +33,7 @@ $pageScripts = ['consultant-documents'];
 $csrfForm = 'consultant_documents';
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Consultant'],
+    ['label' => 'Consultant', 'url' => Url::to('admin/consultant/dashboard.php')],
     ['label' => 'Documents'],
 ];
 
@@ -43,7 +44,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Document review</span>
     <h2>Documents</h2>
-    <p>Browse assigned project files, check current versions and record consultant review actions.</p>
+    <p>Browse assigned project files, check current versions and record consultant review actions on your portfolio only.</p>
   </div>
   <div class="doc-actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/consultant/dashboard.php')) ?>"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard</a>
@@ -52,12 +53,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="doc-stats" aria-label="Document summary">
-  <?php doc_stat('fa-folder-open', $summary['total'], 'Documents', 'Assigned portfolio'); ?>
-  <?php doc_stat('fa-clock', $summary['new_week'], 'This Week', 'Recently uploaded'); ?>
-  <?php doc_stat('fa-drafting-compass', $summary['drawings'], 'Drawings', 'Technical submissions'); ?>
-  <?php doc_stat('fa-file-lines', $summary['reports'], 'Reports', 'Field records'); ?>
-  <?php doc_stat('fa-scale-balanced', $summary['controls'], 'Controls', 'Contracts and specs'); ?>
-  <?php doc_stat('fa-hourglass-half', $summary['pending'], 'Pending Review', 'Needs consultant action'); ?>
+  <?php doc_stat('fa-folder-open', $summary['total'], 'Documents', 'Assigned portfolio', doc_filter_url([])); ?>
+  <?php doc_stat('fa-clock', $summary['new_week'], 'This Week', 'Recently uploaded', doc_filter_url([])); ?>
+  <?php doc_stat('fa-drafting-compass', $summary['drawings'], 'Drawings', 'Technical submissions', doc_filter_url(['category' => 'drawing'])); ?>
+  <?php doc_stat('fa-file-lines', $summary['reports'], 'Reports', 'Field records', doc_filter_url(['category' => 'report'])); ?>
+  <?php doc_stat('fa-scale-balanced', $summary['controls'], 'Controls', 'Contracts and specs', doc_filter_url(['category' => 'contract'])); ?>
+  <?php doc_stat('fa-hourglass-half', $summary['pending'], 'Pending Review', 'Needs consultant action', doc_filter_url(['status' => 'pending'])); ?>
 </section>
 
 <section class="doc-layout">
@@ -70,7 +71,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
       <span class="badge badge--info"><?= format_number($total) ?> records</span>
     </div>
 
-    <form class="doc-filter-grid" method="get">
+    <form class="doc-filter-grid" method="get" action="<?= Security::e(Url::to('admin/consultant/documents.php')) ?>">
       <label>Search <input type="search" name="q" value="<?= Security::e($filters['q']) ?>" placeholder="Document, project or description..."></label>
       <label>Project
         <select name="project_id">
@@ -109,7 +110,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
         </thead>
         <tbody>
           <?php if ($documents === []): ?>
-            <tr><td colspan="6"><div class="doc-empty">No documents found for the current view.</div></td></tr>
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <strong class="empty-state__title">No documents found</strong>
+                  <span class="empty-state__text">Adjust filters or wait for project files on your assigned portfolio.</span>
+                </div>
+              </td>
+            </tr>
           <?php endif; ?>
           <?php foreach ($documents as $document): ?>
             <?php $fileAvailable = ConsultantDocumentCentre::fileAvailable($document); ?>
@@ -160,18 +168,23 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
   <aside class="doc-card card">
     <h2>Review focus</h2>
-    <p>Pending and flagged files appear first for quick attention.</p>
+    <p>Pending, returned and flagged files across your portfolio (not limited to this page).</p>
     <div class="doc-side-list">
-      <?php foreach (array_slice(array_filter($documents, static fn ($doc): bool => in_array((string)($doc['consultant_review_status'] ?? 'pending'), ['pending', 'flagged', 'returned'], true)), 0, 6) as $document): ?>
-        <div class="doc-side-item">
-          <strong><?= Security::e($document['original_name']) ?></strong>
-          <span><?= Security::e($document['project_name']) ?> / <?= Security::e(status_label($document['consultant_review_status'] ?? 'pending')) ?></span>
+      <?php if ($attention === []): ?>
+        <div class="empty-state empty-state--compact">
+          <strong class="empty-state__title">No open document reviews</strong>
+          <span class="empty-state__text">Items needing action will appear here.</span>
         </div>
-      <?php endforeach; ?>
-      <?php if ($summary['pending'] <= 0): ?>
-        <div class="doc-empty">No pending document reviews in the current view.</div>
-      <?php endif; ?>
+      <?php else: foreach ($attention as $document): ?>
+        <a class="doc-side-item doc-side-item--link" href="<?= Security::e(Url::to('admin/consultant/documents.php?project_id=' . (int)$document['project_id'] . '&status=' . rawurlencode((string)($document['consultant_review_status'] ?? 'pending')) . '&q=' . rawurlencode((string)$document['original_name']))) ?>">
+          <strong><?= Security::e($document['original_name']) ?></strong>
+          <span><?= Security::e($document['project_name']) ?> · <?= Security::e(status_label($document['consultant_review_status'] ?? 'pending')) ?></span>
+        </a>
+      <?php endforeach; endif; ?>
     </div>
+    <?php if ((int)$summary['pending'] > 0): ?>
+      <a class="btn btn--outline btn--sm" href="<?= Security::e(doc_filter_url(['status' => 'pending'])) ?>">View pending only</a>
+    <?php endif; ?>
   </aside>
 </section>
 
@@ -180,9 +193,18 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function doc_stat(string $icon, mixed $value, string $label, string $hint): void
+function doc_filter_url(array $extra): string
 {
-    echo '<article class="doc-stat card"><span class="doc-stat__icon"><i class="fa-solid ' . Security::e($icon) . '" aria-hidden="true"></i></span><div><strong>' . Security::e((string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></article>';
+    $query = array_filter(array_merge($_GET, $extra), static fn ($v) => $v !== '' && $v !== null && $v !== 0 && $v !== '0');
+    unset($query['page']);
+    return Url::to('admin/consultant/documents.php' . ($query ? '?' . http_build_query($query) : ''));
+}
+
+function doc_stat(string $icon, mixed $value, string $label, string $hint, string $path = ''): void
+{
+    $tag = $path !== '' ? 'a' : 'article';
+    $href = $path !== '' ? ' href="' . Security::e($path) . '"' : '';
+    echo '<' . $tag . ' class="doc-stat card"' . $href . '><span class="doc-stat__icon"><i class="fa-solid ' . Security::e($icon) . '" aria-hidden="true"></i></span><div><strong>' . Security::e(is_numeric($value) ? format_number($value) : (string)$value) . '</strong><span>' . Security::e($label) . '</span><small>' . Security::e($hint) . '</small></div></' . $tag . '>';
 }
 
 function doc_action(string $type, int $id, string $action, string $label, string $icon, string $item): void
@@ -192,14 +214,20 @@ function doc_action(string $type, int $id, string $action, string $label, string
 
 function doc_pagination(int $page, int $pages, int $total, int $limit): void
 {
-    $from = $total > 0 ? min($total, (($page - 1) * $limit) + 1) : 0;
-    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number(min($total, $page * $limit)) . ' of ' . format_number($total) . '</span><div>';
+    if ($total <= 0) {
+        return;
+    }
+    $from = min($total, (($page - 1) * $limit) + 1);
+    $to = min($total, $page * $limit);
     $query = $_GET;
+    echo '<div class="pagination"><span>Showing ' . format_number($from) . '-' . format_number($to) . ' of ' . format_number($total) . '</span><div>';
     $query['page'] = max(1, $page - 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>';
-    echo '<span class="btn btn--sm btn--primary">' . format_number($page) . '</span>';
+    $prevDis = $page <= 1 ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $prevDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>';
+    echo '<span class="btn btn--sm btn--primary">' . format_number($page) . ' / ' . format_number($pages) . '</span>';
     $query['page'] = min($pages, $page + 1);
-    echo '<a class="btn btn--sm btn--outline" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div></div>';
+    $nextDis = $page >= $pages ? ' is-disabled' : '';
+    echo '<a class="btn btn--sm btn--outline' . $nextDis . '" href="?' . Security::e(http_build_query($query)) . '"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div></div>';
 }
 
 function doc_size(int $bytes): string

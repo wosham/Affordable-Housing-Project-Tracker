@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_ipcs';
 $id = max(0, Security::cleanInt($_GET['id'] ?? 0));
@@ -38,7 +38,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i> IPC Detail</span>
     <h2>IPC #<?= Security::e((string)$ipc['ipc_number']) ?> - <?= Security::e($ipc['project_name']) ?></h2>
-    <p><?= Security::e($ipc['contractor_name']) ?> · <?= Security::e(format_date($ipc['period_from'])) ?> to <?= Security::e(format_date($ipc['period_to'])) ?></p>
+    <p><?= Security::e($ipc['contractor_name']) ?> Â· <?= Security::e(format_date($ipc['period_from'])) ?> to <?= Security::e(format_date($ipc['period_to'])) ?></p>
   </div>
   <div class="ipc-action-bar">
     <span class="badge <?= Security::e(status_badge_class($ipc['status'])) ?>"><?= Security::e(status_label($ipc['status'])) ?></span>
@@ -63,8 +63,11 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div class="card__header"><div><h2 class="card__title">Workflow Status</h2><p class="card__subtitle">Submission through final payment.</p></div></div>
   <div class="ipc-pipeline">
 <?php foreach (IPC::statusFlow() as $status => $step): ?>
-<?php $state = ipc_pipeline_state($workflow['current_step'], (int)$step['step'], (string)$ipc['status']); ?>
-    <div class="ipc-pipeline-step <?= Security::e($state) ?>"><span><?= Security::e((string)$step['step']) ?></span><strong><?= Security::e($step['label']) ?></strong></div>
+<?php
+    $state = ipc_pipeline_state($workflow['current_step'], (int)$step['step'], (string)$ipc['status']);
+    $stepTip = $step['label'] . ' | Step ' . $step['step'] . ' of ' . count(IPC::statusFlow()) . ' | ' . ucfirst(str_replace('is-', '', $state));
+?>
+    <div class="ipc-pipeline-step <?= Security::e($state) ?>" data-chart-tip="<?= Security::e($stepTip) ?>" title="<?= Security::e($stepTip) ?>"><span><?= Security::e((string)$step['step']) ?></span><strong><?= Security::e($step['label']) ?></strong></div>
 <?php endforeach; ?>
   </div>
 </section>
@@ -120,7 +123,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php foreach ($timeline as $item): ?>
     <article class="ipc-timeline-item">
       <span class="badge <?= Security::e(status_badge_class($item['action'])) ?>"><?= Security::e(status_label($item['action'])) ?></span>
-      <div><strong><?= Security::e($item['actor_name']) ?></strong><small><?= Security::e($item['actor_role'] ?: role_label($item['actor_role_slug'])) ?> · <?= Security::e(format_datetime($item['actioned_at'])) ?></small><?php if ($item['comments']): ?><p><?= Security::e($item['comments']) ?></p><?php endif; ?></div>
+      <div><strong><?= Security::e($item['actor_name']) ?></strong><small><?= Security::e($item['actor_role'] ?: role_label($item['actor_role_slug'])) ?> Â· <?= Security::e(format_datetime($item['actioned_at'])) ?></small><?php if ($item['comments']): ?><p><?= Security::e($item['comments']) ?></p><?php endif; ?></div>
     </article>
 <?php endforeach; ?>
   </div>

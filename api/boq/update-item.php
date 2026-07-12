@@ -8,18 +8,7 @@ ApiMiddleware::handle([
     'csrf' => false,
 ]);
 
-$csrf = Csrf::fromRequest();
-$allowedForms = ['superadmin_boq', 'manager_boq', 'consultant_boq', 'clerk_boq', 'finance_boq', 'default'];
-$csrfOk = false;
-foreach ($allowedForms as $form) {
-    if (Csrf::verify($csrf, $form)) {
-        $csrfOk = true;
-        break;
-    }
-}
-if (!$csrfOk) {
-    Response::json(['success' => false, 'message' => 'CSRF token mismatch. Please refresh the page and try again.'], 419);
-}
+ApiCsrf::requireAny(ApiCsrf::forms('manager_boq')); // multi-portal BOQ forms
 
 $input = $_POST;
 if ($input === []) {
@@ -122,6 +111,12 @@ $after = [
     'review_status' => $reviewStatus,
     'risk_status' => $riskStatus,
 ];
+$certifiedActor = abs($certifiedQty - (float)($item['certified_qty'] ?? 0)) > 0.0001
+    ? $userId
+    : ($item['certified_updated_by'] ?? null);
+$paidActor = $paidEditable && abs($paidQty - (float)($item['paid_qty'] ?? 0)) > 0.0001
+    ? $userId
+    : ($item['paid_updated_by'] ?? null);
 
 Database::beginTransaction();
 try {
@@ -135,18 +130,16 @@ try {
     Database::query(
         'UPDATE boq_items
          SET review_status = ?, risk_status = ?, manager_note = ?, last_reviewed_by = ?, last_reviewed_at = NOW(),
-             certified_updated_by = CASE WHEN certified_qty <> ? THEN certified_updated_by ELSE ? END,
-             paid_updated_by = CASE WHEN paid_qty <> ? THEN paid_updated_by ELSE ? END
+             certified_updated_by = ?,
+             paid_updated_by = ?
          WHERE id = ?',
         [
             $reviewStatus,
             $riskStatus,
             $managerNote !== '' ? $managerNote : null,
             $userId,
-            $certifiedQty,
-            $userId,
-            $paidQty,
-            $paidEditable ? $userId : ($item['paid_updated_by'] ?? null),
+            $certifiedActor,
+            $paidActor,
             $id,
         ]
     );

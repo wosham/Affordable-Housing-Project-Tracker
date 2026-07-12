@@ -1,13 +1,23 @@
 <?php
-require_once __DIR__ . '/../app/core/bootstrap.php';
+require_once __DIR__ . "/../app/core/bootstrap.php";
 Guard::guest();
 if (!headers_sent()) {
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Cache-Control: post-check=0, pre-check=0', false);
-    header('Pragma: no-cache');
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    header("Cache-Control: post-check=0, pre-check=0", false);
+    header("Pragma: no-cache");
 }
-$csrfToken = Csrf::token('login');
-$statusMessage = Session::flash('status');
+$csrfToken = Csrf::token("login");
+$statusMessage = Session::flash("status");
+$loginStats = [
+    'constituencies' => 0,
+    'units' => 0,
+];
+try {
+    $loginStats['constituencies'] = (int)(Database::fetch('SELECT COUNT(*) AS total FROM constituencies')['total'] ?? 0);
+    $loginStats['units'] = (int)(Database::fetch('SELECT COALESCE(SUM(units), 0) AS total FROM projects')['total'] ?? 0);
+} catch (Throwable) {
+    $loginStats = ['constituencies' => 0, 'units' => 0];
+}
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,12 +64,12 @@ $statusMessage = Session::flash('status');
           <p class="auth-brand-sub">The Trans-Nzoia Affordable Housing Programme management system — secure, real-time, county-wide oversight.</p>
           <div class="auth-brand-stats" aria-label="Programme at a glance">
             <div class="auth-bs-item">
-              <span class="auth-bs-num">7</span>
+              <span class="auth-bs-num"><?= Security::e(format_number($loginStats['constituencies'])) ?></span>
               <span class="auth-bs-lbl">Constituencies</span>
             </div>
             <div class="auth-bs-div" aria-hidden="true"></div>
             <div class="auth-bs-item">
-              <span class="auth-bs-num">4,000+</span>
+              <span class="auth-bs-num"><?= Security::e(format_number($loginStats['units'])) ?></span>
               <span class="auth-bs-lbl">Units Targeted</span>
             </div>
             <div class="auth-bs-div" aria-hidden="true"></div>
@@ -158,7 +168,7 @@ $statusMessage = Session::flash('status');
             <label class="auth-check-label" for="loginRemember">
               <input type="checkbox" id="loginRemember" name="remember" class="auth-check-input">
               <span class="auth-check-box" aria-hidden="true"></span>
-              <span>Remember me for 30&nbsp;days</span>
+              <span>Remember my email address</span>
             </label>
             <a href="auth/forgot-password.php" class="auth-forgot-link">Forgot password?</a>
           </div>

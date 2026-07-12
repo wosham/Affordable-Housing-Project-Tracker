@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding: 1.2rem;
 }
 
 .contractor-ipc-hero h2 {
@@ -24,6 +25,25 @@
 .contractor-ipc-table small,
 .contractor-ipc-stat small {
   color: var(--admin-text-muted);
+}
+
+.contractor-ipc-panel {
+  padding: 1rem;
+}
+
+.contractor-ipc-panel .card__header {
+  gap: .8rem;
+  align-items: flex-start;
+}
+
+.contractor-ipc-panel .card__title {
+  margin: 0 0 .25rem;
+  font-size: 1.05rem;
+}
+
+.contractor-ipc-panel .card__subtitle {
+  margin: 0;
+  max-width: 72ch;
 }
 
 .contractor-ipc-actions,
@@ -77,6 +97,15 @@
   color: var(--admin-text);
 }
 
+.contractor-ipc-fields label > span,
+.contractor-ipc-filter label > span {
+  font-size: .78rem;
+  line-height: 1.2;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
 .contractor-ipc-fields input,
 .contractor-ipc-fields select,
 .contractor-ipc-filter input,
@@ -122,7 +151,7 @@
   padding: .78rem .85rem;
   border-bottom: 1px solid var(--admin-border);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .contractor-ipc-table th {
@@ -143,10 +172,24 @@
 .contractor-ipc-table strong,
 .contractor-ipc-table small {
   display: block;
+  overflow-wrap: anywhere;
 }
 
 .contractor-ipc-table td:nth-child(2) {
   max-width: 320px;
+}
+
+.contractor-ipc-table--history td:nth-child(1) {
+  min-width: 130px;
+}
+
+.contractor-ipc-table--history td:nth-child(4) {
+  min-width: 155px;
+}
+
+.contractor-ipc-table--history td:nth-child(5),
+.contractor-ipc-table--history td:nth-child(6) {
+  white-space: nowrap;
 }
 
 .contractor-ipc-table tr.is-warning {
@@ -161,6 +204,7 @@
 .contractor-ipc-summary {
   display: grid;
   gap: .8rem;
+  padding: 1rem;
 }
 
 .contractor-ipc-summary h2 {
@@ -225,6 +269,7 @@
 .contractor-ipc-submit-row {
   margin-top: .8rem;
   justify-content: space-between;
+  min-height: 44px;
 }
 
 [data-ipc-status][data-state="error"] {
@@ -237,9 +282,14 @@
   font-weight: 800;
 }
 
+[data-ipc-status][data-state="loading"] {
+  color: var(--admin-text-muted);
+  font-weight: 800;
+}
+
 .contractor-ipc-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: .9rem;
 }
 
@@ -249,6 +299,18 @@
   gap: .75rem;
   min-height: 104px;
   padding: 1rem;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+a.contractor-ipc-stat:hover,
+a.contractor-ipc-stat:focus-visible {
+  border-color: var(--admin-primary);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+  outline: none;
 }
 
 .contractor-ipc-stat > span {
@@ -263,6 +325,10 @@
   color: var(--admin-primary);
 }
 
+.contractor-ipc-stat > div {
+  min-width: 0;
+}
+
 .contractor-ipc-stat strong,
 .contractor-ipc-stat b,
 .contractor-ipc-stat small {
@@ -270,15 +336,27 @@
 }
 
 .contractor-ipc-stat strong {
-  font-size: 1.22rem;
-  line-height: 1.1;
+  font-size: clamp(1rem, 1.25vw, 1.22rem);
+  line-height: 1.14;
+  overflow-wrap: anywhere;
+}
+
+.contractor-ipc-stat b {
+  font-weight: 800;
+}
+
+.contractor-ipc-summary dd {
+  overflow-wrap: anywhere;
+  max-width: 58%;
 }
 
 .contractor-ipc-mini-flow {
   display: grid;
-  grid-template-columns: repeat(6, 24px);
+  grid-template-columns: repeat(6, minmax(14px, 24px));
   gap: .25rem;
   align-items: center;
+  width: min-content;
+  max-width: 100%;
 }
 
 .contractor-ipc-mini-flow span {
@@ -289,6 +367,179 @@
 
 .contractor-ipc-mini-flow span.is-done {
   background: var(--admin-primary);
+}
+
+.contractor-ipc-row-actions {
+  display: flex;
+  gap: .35rem;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.btn.is-disabled,
+.pagination .is-disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+body.contractor-modal-open {
+  overflow: hidden;
+}
+
+.contractor-ipc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, .58);
+}
+
+.contractor-ipc-overlay[hidden] {
+  display: none !important;
+}
+
+.contractor-ipc-modal {
+  width: min(920px, 100%);
+  max-height: min(90vh, 900px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .3);
+}
+
+.contractor-ipc-modal header,
+.contractor-ipc-modal footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--admin-border);
+  background: #fff;
+}
+
+.contractor-ipc-modal footer {
+  border-bottom: 0;
+  border-top: 1px solid var(--admin-border);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.contractor-ipc-modal header h2 {
+  margin: .25rem 0 .15rem;
+  font-size: 1.2rem;
+}
+
+.contractor-ipc-modal header p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: .88rem;
+}
+
+.contractor-ipc-modal__body {
+  overflow: auto;
+  padding: 1rem 1.15rem;
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.contractor-ipc-detail-chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.contractor-ipc-detail-chips article {
+  min-width: 0;
+  padding: .8rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.contractor-ipc-detail-chips small {
+  display: block;
+  color: var(--admin-text-muted);
+  font-size: .72rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.contractor-ipc-detail-chips strong {
+  display: block;
+  margin-top: .28rem;
+  overflow-wrap: anywhere;
+  font-size: .95rem;
+}
+
+.contractor-ipc-detail-block {
+  padding: .95rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.contractor-ipc-detail-block h3 {
+  margin: 0 0 .65rem;
+  font-size: .98rem;
+}
+
+.contractor-ipc-detail-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .65rem;
+}
+
+.contractor-ipc-detail-block__head h3 {
+  margin: 0;
+}
+
+.contractor-ipc-detail-note {
+  margin: .45rem 0 0;
+  color: var(--admin-text-muted);
+  font-size: .9rem;
+}
+
+.contractor-ipc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.contractor-ipc-detail-grid span {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+  padding: .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted, #f8fafc);
+}
+
+.contractor-ipc-detail-grid small {
+  color: var(--admin-text-muted);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.contractor-ipc-detail-grid strong {
+  overflow-wrap: anywhere;
+}
+
+.contractor-ipc-table--detail {
+  min-width: 760px;
+}
+
+.contractor-ipc-filter--payments {
+  grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1fr) minmax(180px, .8fr) auto;
 }
 
 @media (max-width: 1180px) {
@@ -305,6 +556,13 @@
   }
 }
 
+@media (max-width: 900px) {
+  .contractor-ipc-detail-chips,
+  .contractor-ipc-detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 760px) {
   .contractor-ipc-hero,
   .contractor-ipc-submit-row {
@@ -313,13 +571,16 @@
   }
 
   .contractor-ipc-actions,
-  .contractor-ipc-submit-row .btn {
+  .contractor-ipc-submit-row .btn,
+  .contractor-ipc-actions .btn {
     width: 100%;
   }
 
   .contractor-ipc-fields,
   .contractor-ipc-filter,
-  .contractor-ipc-side {
+  .contractor-ipc-side,
+  .contractor-ipc-detail-chips,
+  .contractor-ipc-detail-grid {
     grid-template-columns: 1fr;
   }
 }

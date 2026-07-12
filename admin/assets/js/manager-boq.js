@@ -10,9 +10,17 @@
   const history = document.querySelector('[data-boq-history]');
   const warning = document.querySelector('[data-boq-warning]');
   const statusText = document.querySelector('[data-boq-status]');
-  const request = window.AHPTC && window.AHPTC.request ? window.AHPTC.request : null;
+  const api = window.AHPTC || null;
+  if (!api || typeof api.request !== 'function') {
+    console.error('AHPTC.request is required for BOQ review.');
+    return;
+  }
+  const request = api.request.bind(api);
+  const csrfHeaders = {
+    'X-CSRF-Form': (api.csrfForm && api.csrfForm()) || 'manager_boq'
+  };
 
-  if (!modal || !form || !request) return;
+  if (!modal || !form) return;
 
   function field(name) {
     return form.querySelector('[data-field="' + name + '"]');
@@ -154,7 +162,8 @@
     try {
       const data = await request('api/boq/update-item.php', {
         method: 'POST',
-        body: payload
+        body: payload,
+        headers: csrfHeaders
       });
       if (!data.success) throw new Error(data.message || 'BOQ review could not be saved.');
       setStatus(data.message || 'BOQ review saved.', 'success');

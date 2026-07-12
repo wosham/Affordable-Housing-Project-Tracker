@@ -16,10 +16,24 @@ $filters = [
     'q' => (string)($_GET['q'] ?? ''),
 ];
 
-if ((string)Auth::role() === 'contractor') {
-    $filters['folder'] = 'site-photos';
-    $filters['type'] = 'image';
+$role = (string)Auth::role();
+$contractorFolders = ['site-photos' => 'Site Photos', 'contractor-documents' => 'Contractor Documents'];
+if ($role === 'contractor') {
+    $requestedFolder = MediaLibrary::normaliseFolder((string)($filters['folder'] ?? 'site-photos'));
+    if (!isset($contractorFolders[$requestedFolder])) {
+        $requestedFolder = 'site-photos';
+    }
+    $filters['folder'] = $requestedFolder;
     $filters['uploaded_by'] = (int)Auth::id();
+    // Site evidence stays image-only; contractor documents may be PDFs/office files.
+    if ($requestedFolder === 'site-photos') {
+        $filters['type'] = 'image';
+    } else {
+        $requestedType = strtolower(trim((string)($filters['type'] ?? '')));
+        if ($requestedType === '' || $requestedType === 'document') {
+            unset($filters['type']);
+        }
+    }
 }
 
 $total = MediaLibrary::count($filters);
@@ -29,7 +43,7 @@ Response::json([
     'success' => true,
     'media' => array_map('media_payload', $items),
     'stats' => MediaLibrary::stats(),
-    'folders' => MediaLibrary::folders(),
+    'folders' => $role === 'contractor' ? $contractorFolders : MediaLibrary::folders(),
     'pagination' => [
         'page' => $page,
         'per_page' => $perPage,

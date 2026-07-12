@@ -1,5 +1,5 @@
 <?php
-// Clerk of Works — Defects / Snagging Log
-require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
-// TODO: Phase 5 — Photograph and log defects, assign to contractor, track resolution
+require_once dirname(__DIR__, 2) . '/app/core/bootstrap.php';
+Guard::exactRole('clerk');
+$qualityType = 'defect';
+include dirname(__DIR__, 2) . '/app/partials/admin/clerk-quality-evidence-page.php';

@@ -1,7 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+require_once __DIR__ . '/../../app/partials/admin/manager-site-record-helpers.php';
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -58,7 +59,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i> Site operations</span>
     <h2>Site Meeting Minutes</h2>
-    <p>Record meetings, actions, attendees and follow-up status across assigned sites.</p>
+    <p>Record meetings, actions, attendees and follow-up status for your assigned projects only.</p>
   </div>
   <div class="msr-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Projects</a>
@@ -118,8 +119,20 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td><span class="msr-pill msr-pill--<?= Security::e($record['action_status']) ?>"><?= Security::e($record['action_status_label']) ?></span><small><?= Security::e(format_number($record['action_count'])) ?> action item(s)</small></td>
           <td><span class="msr-pill msr-pill--<?= Security::e($record['status']) ?>"><?= Security::e($record['status_label']) ?></span><?php if ($record['document_path']): ?><small><i class="fa-solid fa-paperclip" aria-hidden="true"></i> Document attached</small><?php endif; ?></td>
           <td><strong><?= Security::e($record['recorded_by_name']) ?></strong><small><?= Security::e(format_datetime($record['created_at'] ?? null)) ?></small></td>
-          <td class="msr-actions">
-            <button class="btn btn--icon btn--primary" type="button" data-msr-open="meeting" data-record="<?= Security::e(json_encode($record, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP)) ?>" title="Edit meeting" aria-label="Edit meeting"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+          <td class="msr-actions manager-table-actions">
+            <button class="btn btn--icon btn--primary" type="button" data-msr-open="meeting"<?= msr_data_attrs([
+                'id' => $record['id'],
+                'project_id' => $record['project_id'],
+                'meeting_date' => $record['meeting_date'] ?? '',
+                'venue' => $record['venue'] ?? '',
+                'status' => $record['status'] ?? 'recorded',
+                'action_status' => $record['action_status'] ?? 'none',
+                'document_path' => $record['document_path'] ?? '',
+                'attendees_text' => $record['attendees_text'] ?? '',
+                'agenda' => $record['agenda'] ?? '',
+                'minutes_text' => $record['minutes_text'] ?? '',
+                'action_items_text' => $record['action_items_text'] ?? '',
+            ]) ?> title="Edit meeting" aria-label="Edit meeting"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
             <button class="btn btn--icon btn--outline" type="button" data-msr-status data-endpoint="api/manager/site-meeting-status.php" data-id="<?= (int)$record['id'] ?>" data-status="reviewed" title="Mark reviewed" aria-label="Mark reviewed"><i class="fa-solid fa-check" aria-hidden="true"></i></button>
           </td>
         </tr>
@@ -128,12 +141,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
     </table>
   </div>
 
-<?php if ($totalPages > 1): ?>
-  <nav class="pagination" aria-label="Meeting pagination">
-    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($total)) ?> meeting records</p>
-    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(msr_meeting_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(msr_meeting_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
-  </nav>
-<?php endif; ?>
+  <?php msr_pagination($showingFrom, $showingTo, $total, $page, $totalPages, msr_meeting_url($filters, max(1, $page - 1)), msr_meeting_url($filters, min($totalPages, $page + 1)), $perPage, 'meeting records'); ?>
 </section>
 
 <div class="msr-modal" data-msr-modal="meeting" hidden>
@@ -161,13 +169,6 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
-
-function msr_stat(string $icon, mixed $value, string $label, string $trend): void
-{
-?>
-  <article class="stat-widget"><span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e(is_numeric($value) ? format_number((float)$value) : (string)$value) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span></article>
-<?php
-}
 
 function msr_meeting_url(array $filters, int $page): string
 {

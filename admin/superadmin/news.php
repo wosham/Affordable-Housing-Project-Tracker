@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_news';
 
@@ -46,7 +46,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '');
 
-$perPage = 12;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalPosts = NewsArticle::adminCount($filters);
 $totalPages = max(1, (int)ceil($totalPosts / $perPage));
@@ -65,7 +65,7 @@ $contentClass = 'sa-news-page';
 $componentCss = ['news-admin'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'News'],
 ];
 
@@ -125,7 +125,7 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td>
             <div class="sa-news-post-cell">
               <span class="sa-news-thumb"><?php if ($image !== ''): ?><img src="<?= Security::e($image) ?>" alt=""><?php else: ?><i class="fa-solid <?= Security::e(NewsArticle::formatIcon($format)) ?>" aria-hidden="true"></i><?php endif; ?></span>
-              <span><strong><?= Security::e($post['title']) ?></strong><small><?= Security::e($post['category_name'] ?: 'No category') ?><?php if ((int)($post['is_featured'] ?? 0) === 1): ?> · Featured<?php endif; ?></small></span>
+              <span><strong><?= Security::e($post['title']) ?></strong><small><?= Security::e($post['category_name'] ?: 'No category') ?><?php if ((int)($post['is_featured'] ?? 0) === 1): ?> Â· Featured<?php endif; ?></small></span>
             </div>
           </td>
           <td><span class="badge badge--info"><i class="fa-solid <?= Security::e(NewsArticle::formatIcon($format)) ?>" aria-hidden="true"></i> <?= Security::e(NewsArticle::formatLabel($format)) ?></span></td>
@@ -135,8 +135,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td>
             <div class="data-table__actions">
               <a class="btn btn--icon btn--primary" href="<?= Security::e(Url::to('admin/superadmin/news-editor.php?id=' . (int)$post['id'])) ?>" title="Edit post" aria-label="Edit post"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></a>
+<?php if ((int)($post['is_visible'] ?? 0) === 1): ?>
               <a class="btn btn--icon btn--outline" href="<?= Security::e(Url::to('news-article.php?id=' . rawurlencode((string)$post['slug']))) ?>" target="_blank" rel="noopener noreferrer" title="Preview public post" aria-label="Preview public post"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>
+<?php endif; ?>
+<?php if ($format !== 'announcement'): ?>
               <form method="post" action="<?= Security::e(Url::to('admin/superadmin/news.php')) ?>" data-confirm="Toggle featured status for this post?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="article_id" value="<?= Security::e((string)$post['id']) ?>"><input type="hidden" name="action" value="feature"><button class="btn btn--icon btn--outline" type="submit" title="Feature" aria-label="Feature"><i class="fa-solid fa-star" aria-hidden="true"></i></button></form>
+<?php endif; ?>
 <?php if ($status !== 'published'): ?>
               <form method="post" action="<?= Security::e(Url::to('admin/superadmin/news.php')) ?>" data-confirm="Publish this post now?"><?= Csrf::field($csrfForm) ?><input type="hidden" name="article_id" value="<?= Security::e((string)$post['id']) ?>"><input type="hidden" name="action" value="publish"><button class="btn btn--icon btn--success" type="submit" title="Publish" aria-label="Publish"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button></form>
 <?php endif; ?>

@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -32,7 +32,7 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
   <div>
     <span class="eyebrow"><i class="fa-solid fa-file-lines" aria-hidden="true"></i> Reports</span>
     <h2>Reports centre</h2>
-    <p>Generate progress, attendance, project register and summary reports for your assigned projects.</p>
+    <p>Generate progress, attendance, project register and summary reports scoped to your assigned projects only.</p>
   </div>
   <div class="reports-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/dashboard.php')) ?>"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard</a>
@@ -85,15 +85,21 @@ include dirname(__DIR__, 2) . '/app/partials/admin/shell-start.php';
           </select>
         </label>
         <label class="form-field">
-          <span class="form-label">Status</span>
+          <span class="form-label">Status filter</span>
           <select class="form-select" name="status">
             <option value="">Any status</option>
-            <option value="planning">Planning</option>
-            <option value="active">Active</option>
-            <option value="stalled">Stalled</option>
-            <option value="completed">Completed</option>
-            <option value="geo-fail">GPS failed</option>
-            <option value="present">Present</option>
+            <optgroup label="Projects">
+              <option value="planning">Planning</option>
+              <option value="active">Active</option>
+              <option value="stalled">Stalled</option>
+              <option value="completed">Completed</option>
+            </optgroup>
+            <optgroup label="Attendance">
+              <option value="present">Present</option>
+              <option value="late">Late</option>
+              <option value="geo-fail">GPS failed</option>
+              <option value="outside-window">Outside window</option>
+            </optgroup>
           </select>
         </label>
         <label class="form-field">

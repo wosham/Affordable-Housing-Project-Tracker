@@ -40,12 +40,14 @@ if (!$article) {
     $pageAuthor = 'Trans-Nzoia County Government';
     $pageRobots = 'noindex, follow';
     $themeColor = '#163300';
-    $canonicalUrl = 'https://housing.transnzoia.go.ke/news.php';
+    $canonicalUrl = Url::canonical('news.php');
     $pageStyles = ['assets/css/global.css', 'assets/css/pages/news.css'];
     $pageScripts = ['assets/js/global.js'];
     include __DIR__ . '/app/partials/head.php';
     ?>
     <body>
+    <?php include __DIR__ . '/app/partials/cursor.php'; ?>
+    <?php include __DIR__ . '/app/partials/skip-link.php'; ?>
     <?php include __DIR__ . '/app/partials/navbar.php'; ?>
     <main id="main-content">
       <section class="news-grid-section">
@@ -60,6 +62,8 @@ if (!$article) {
       </section>
     </main>
     <?php include __DIR__ . '/app/partials/footer.php'; ?>
+    <?php include __DIR__ . '/app/partials/back-to-top.php'; ?>
+    <?php include __DIR__ . '/app/partials/mobile-menu.php'; ?>
     <?php include __DIR__ . '/app/partials/scripts.php'; ?>
     </body></html>
     <?php
@@ -85,6 +89,11 @@ $authorName = trim((string)($article['author_first_name'] ?? '') . ' ' . (string
 $authorName = $authorName !== '' ? $authorName : $copyText($labelsCopy, 'author_fallback', 'Trans-Nzoia County Department of Land, Housing & Physical Planning');
 $categoryName = (string)($article['category_name'] ?? 'News');
 $body = trim((string)($article['body'] ?? ''));
+$body = preg_replace('/<script\b[^>]*>.*?<\/script>/is', '', $body) ?? '';
+$body = preg_replace('/<style\b[^>]*>.*?<\/style>/is', '', $body) ?? '';
+$body = preg_replace('/\son[a-z]+\s*=\s*(["\']).*?\1/is', '', $body) ?? '';
+$body = preg_replace('/\s(href|src)\s*=\s*(["\'])\s*javascript:.*?\2/is', '', $body) ?? '';
+$body = strip_tags($body, '<p><br><strong><b><em><i><u><s><a><ul><ol><li><blockquote><h2><h3><h4><figure><figcaption><img><table><thead><tbody><tr><th><td>');
 $attachmentUrl = $articleAsset($article['attachment_path'] ?? $article['attachment_url'] ?? '');
 $externalUrl = trim((string)($article['external_url'] ?? ''));
 $metadata = json_decode((string)($article['metadata_json'] ?? '{}'), true);
@@ -99,7 +108,7 @@ $pageKeywords = 'Trans-Nzoia housing news, affordable housing, ' . $categoryName
 $pageAuthor = $authorName;
 $pageRobots = 'index, follow';
 $themeColor = '#163300';
-$canonicalUrl = 'https://housing.transnzoia.go.ke/news-article.php?id=' . rawurlencode((string)$article['slug']);
+$canonicalUrl = Url::canonical('news-article.php?id=' . rawurlencode((string)$article['slug']));
 $pageStyles = [
     'assets/css/global.css',
     'assets/css/pages/news.css',
@@ -127,6 +136,7 @@ $headMeta = array_filter($headMeta);
 include __DIR__ . '/app/partials/head.php';
 ?>
 <body>
+<div class="reading-progress" id="readingProgress" aria-hidden="true"></div>
 <?php include __DIR__ . '/app/partials/cursor.php'; ?>
 <?php include __DIR__ . '/app/partials/skip-link.php'; ?>
 <?php include __DIR__ . '/app/partials/navbar.php'; ?>
@@ -146,6 +156,9 @@ include __DIR__ . '/app/partials/head.php';
 
         <div class="article-hero-layout">
           <div class="article-hero-content">
+            <a href="news.php" class="article-back-btn">
+              <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> <?= $e($copyText($labelsCopy, 'view_all_news_label', 'View all news')) ?>
+            </a>
             <span class="news-cat-badge news-cat--<?= $e($article['category_slug'] ?? 'programme-updates') ?>"><?= $e($categoryName) ?></span>
             <h1 class="article-headline"><?= $e($article['title']) ?></h1>
             <p class="article-deck"><?= $e($article['excerpt'] ?? '') ?></p>
@@ -156,13 +169,20 @@ include __DIR__ . '/app/partials/head.php';
               <span class="article-meta-divider" aria-hidden="true"></span>
               <span class="article-meta-item"><i class="fa-regular fa-clock" aria-hidden="true"></i><span id="articleReadTime"><?= $e($article['read_time'] ?: $copyText($labelsCopy, 'default_read_time', '4 min')) ?></span></span>
             </div>
+            <div class="article-share-hero" aria-label="Share this article">
+              <span class="article-share-label">Share</span>
+              <button class="article-share-btn" type="button" data-action="share-x"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</button>
+              <button class="article-share-btn" type="button" data-action="share-fb"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i> Facebook</button>
+              <button class="article-share-btn" type="button" data-action="share-wa"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</button>
+              <button class="article-share-btn" type="button" data-action="copy-link"><i class="fa-solid fa-link" aria-hidden="true"></i> Copy Link</button>
+            </div>
           </div>
 
           <div class="article-hero-media" aria-label="Article featured image">
             <div class="article-hero-img-frame">
               <div class="article-hero-img-ph" aria-hidden="true"><div class="article-hero-img-ph-inner"><i class="fa-solid fa-newspaper"></i><span><?= $e($categoryName) ?></span></div></div>
 <?php if ($image !== ''): ?>
-              <img src="<?= $e($image) ?>" alt="<?= $e($article['featured_image_alt'] ?? $article['title']) ?>" loading="eager" onerror="this.style.display='none'">
+              <img <?= public_image_attrs($image, $article['featured_image_alt'] ?? $article['title'], ['loading' => 'eager', 'fetchpriority' => 'high', 'onerror' => "this.style.display='none'"]) ?>>
 <?php endif; ?>
             </div>
 <?php if (!empty($article['image_caption'])): ?>
@@ -189,6 +209,11 @@ include __DIR__ . '/app/partials/head.php';
 <?php endif; ?>
               </div>
 <?php endif; ?>
+              <div class="article-actions" aria-label="Article actions">
+                <button class="article-action-btn" type="button" data-action="print"><i class="fa-solid fa-print" aria-hidden="true"></i> Print Article</button>
+                <button class="article-action-btn" type="button" data-action="copy-link"><i class="fa-solid fa-link" aria-hidden="true"></i> Copy Link</button>
+                <a class="article-action-btn" href="news.php"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> More News</a>
+              </div>
             </article>
           </div>
 

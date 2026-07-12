@@ -1,338 +1,81 @@
-﻿/* =========================================================
-   TRANS-NZOIA AHP TRACKER â€” Shared Data
-   Single source of truth for all projects & constituencies.
-   ========================================================= */
+(function () {
+  'use strict';
 
-const AHP_DATA = {
+  const root = window;
+  const existing = root.AHP_DATA && typeof root.AHP_DATA === 'object' ? root.AHP_DATA : {};
 
-  constituencies: [
-    {
-      id: 'saboti',
-      name: 'Saboti',
-      wards: ['Matisi', 'Tuwan', 'Kinyoro', 'Bidii', 'Township'],
-      population: '~165,000',
-      mp: 'Hon. [To Be Confirmed]',
-      totalUnits: 1120,
-      avgCompletion: 58,
-      status: 'active',
-      projectCount: 2,
-      description: 'Saboti Constituency is home to the county headquarters, Kitale town, and hosts the flagship Maili Tatu AHP Estate â€” the largest affordable housing project in Trans-Nzoia County with 1,040 mixed-typology units.',
-      link: 'constituency-detail.php?id=saboti',
-      heroImage: 'uploads/gallery/maili-tatu-2.jpg',
-    },
-    {
-      id: 'cherangany',
-      name: 'Cherangany',
-      wards: ['Matunda', 'Sinyerere', 'Kaplamai', 'Motosiet'],
-      population: '~152,000',
-      mp: 'Hon. [To Be Confirmed]',
-      totalUnits: 200,
-      avgCompletion: 35,
-      status: 'active',
-      projectCount: 1,
-      description: 'Cherangany Constituency is the agricultural heartland of Trans-Nzoia. The Matunda AHP Estate serves farming communities along the Matundaâ€“Sinyerere corridor.',
-      link: 'constituency-detail.php?id=cherangany',
-      heroImage: 'uploads/gallery/matunda-ahp-1.jpg',
-    },
-    {
-      id: 'endebess',
-      name: 'Endebess',
-      wards: ['Endebess', 'Chepchoina', 'Kapkoi', 'Metkei'],
-      population: '~104,000',
-      mp: 'Hon. [To Be Confirmed]',
-      totalUnits: 210,
-      avgCompletion: 10,
-      status: 'active',
-      projectCount: 2,
-      description: 'Endebess Constituency borders Uganda at the Suam crossing. Two active projects bring affordable housing to this strategic border region, including the Suam Border Post Estate.',
-      link: 'constituency-detail.php?id=endebess',
-      heroImage: 'uploads/gallery/suam-ahp.jpg',
-    },
-    {
-      id: 'kiminini',
-      name: 'Kiminini',
-      wards: ['Kiminini', 'Waitaluk', 'Sikhendu', 'Hospital'],
-      population: '~138,000',
-      mp: 'Hon. [To Be Confirmed]',
-      totalUnits: 120,
-      avgCompletion: 5,
-      status: 'planning',
-      projectCount: 2,
-      description: 'Kiminini Constituency has two housing projects in the planning and pre-construction stages, targeting delivery by 2028 through the National AHP Fund and County Development Fund.',
-      link: 'constituency-detail.php?id=kiminini',
-      heroImage: null,
-    },
-    {
-      id: 'kwanza',
-      name: 'Kwanza',
-      wards: ['Kwanza', 'Keiyo', 'Bidii', 'Kapomboi'],
-      population: '~112,000',
-      mp: 'Hon. [To Be Confirmed]',
-      totalUnits: 80,
-      avgCompletion: 8,
-      status: 'planning',
-      projectCount: 1,
-      description: 'Kwanza Constituency\'s housing project is in architectural design review, with a Q4 2026 construction start targeted â€” delivering 80 affordable units in Kwanza town.',
-      link: 'constituency-detail.php?id=kwanza',
-      heroImage: null,
-    },
-  ],
+  const parsePageData = () => {
+    const node = document.getElementById('ahp-page-data') || document.getElementById('tna-page-data');
+    if (!node) return {};
 
-  projects: [
-    {
-      id: 'maili-tatu-estate',
-      name: 'Maili Tatu Affordable Housing Estate',
-      constituency: 'saboti',
-      constituencyName: 'Saboti',
-      ward: 'Matisi Ward',
-      units: 1040,
-      pct: 60,
-      status: 'active',
-      contractor: 'Jabavu Developers Ltd',
-      funding: 'National AHP Fund',
-      leadAgency: 'State Dept. of Housing',
-      siteEngineer: 'Eng. S. K. Kariuki',
-      startDate: 'March 2024',
-      estDelivery: 'Q4 2026',
-      milestone: 'Roofing works â€” Block E & F',
-      description: 'The flagship affordable housing project in Trans-Nzoia County, located on the outskirts of Kitale town in Matisi Ward. The estate features 1,040 mixed-typology units across 8 residential blocks â€” studios, one-bedroom and two-bedroom apartments targeting low-to-middle-income earners registered on the Boma Yangu portal.',
-      images: ['uploads/gallery/maili-tatu-1.jpg', 'uploads/gallery/maili-tatu-2.jpg', 'uploads/gallery/maili-tatu-3.jpg'],
-      link: 'project-detail.php?id=maili-tatu-estate',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Jan 2024', done: true },
-        { label: 'Site Selection & Survey', date: 'Feb 2024', done: true },
-        { label: 'EIA Clearance (NEMA)', date: 'Mar 2024', done: true },
-        { label: 'Contractor Procurement', date: 'Mar 2024', done: true },
-        { label: 'Site Mobilisation', date: 'Apr 2024', done: true },
-        { label: 'Foundation Works', date: 'May â€“ Jul 2024', done: true },
-        { label: 'Structural Frame â€” Ground Floor', date: 'Aug â€“ Nov 2024', done: true },
-        { label: 'Structural Frame â€” Floors 1â€“4', date: 'Dec 2024 â€“ Mar 2025', done: true },
-        { label: 'Roofing Works', date: 'Q3 2026 (ongoing)', done: false, current: true },
-        { label: 'Internal Finishing', date: 'Q3 â€“ Q4 2026', done: false },
-        { label: 'External Works & Landscaping', date: 'Q4 2026', done: false },
-        { label: 'Unit Handover', date: 'Q4 2026', done: false },
-      ],
-    },
-    {
-      id: 'kitale-infill-units',
-      name: 'Kitale Town Infill Units',
-      constituency: 'saboti',
-      constituencyName: 'Saboti',
-      ward: 'Kitale Central',
-      units: 80,
-      pct: 55,
-      status: 'active',
-      contractor: 'BuildRight Construction Co.',
-      funding: 'County Development Fund',
-      leadAgency: 'Trans-Nzoia County Housing Dept.',
-      siteEngineer: 'Eng. P. Wafula',
-      startDate: 'June 2024',
-      estDelivery: 'Q1 2027',
-      milestone: 'Internal finishing â€” Blocks A & B',
-      description: 'Urban infill development within Kitale town centre targeting low-income households in proximity to employment centres, schools and healthcare facilities. 80 one- and two-bedroom units spread across 4 blocks.',
-      images: ['uploads/gallery/kitale-ex-prison.jpeg'],
-      link: 'project-detail.php?id=kitale-infill-units',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Apr 2024', done: true },
-        { label: 'Site Clearance', date: 'May 2024', done: true },
-        { label: 'Foundation Works', date: 'Jun â€“ Aug 2024', done: true },
-        { label: 'Structural Frame', date: 'Sep 2024 â€“ Feb 2025', done: true },
-        { label: 'Roofing Completed', date: 'Mar 2025', done: true },
-        { label: 'Internal Finishing', date: 'Q2 2026 (ongoing)', done: false, current: true },
-        { label: 'External Works', date: 'Q3 2026', done: false },
-        { label: 'Unit Handover', date: 'Q1 2027', done: false },
-      ],
-    },
-    {
-      id: 'matunda-ahp-estate',
-      name: 'Matunda AHP Estate',
-      constituency: 'cherangany',
-      constituencyName: 'Cherangany',
-      ward: 'Matunda / Sinyerere',
-      units: 200,
-      pct: 35,
-      status: 'active',
-      contractor: 'Afri-Build Kenya Ltd',
-      funding: 'National AHP Fund',
-      leadAgency: 'State Dept. of Housing',
-      siteEngineer: 'Eng. J. M. Otieno',
-      startDate: 'July 2024',
-      estDelivery: 'Q2 2027',
-      milestone: 'Ground-floor columns cast',
-      description: 'A 200-unit estate serving the agricultural heartland of Cherangany constituency, with proximity to Matunda market and key transport corridors serving farming communities in the Matundaâ€“Sinyerere corridor.',
-      images: ['uploads/gallery/matunda-ahp-1.jpg', 'uploads/gallery/matunda-ahp-2.jpg'],
-      link: 'project-detail.php?id=matunda-ahp-estate',
-      milestones: [
-        { label: 'Programme Announcement', date: 'May 2024', done: true },
-        { label: 'EIA Clearance', date: 'Jun 2024', done: true },
-        { label: 'Contractor Procurement', date: 'Jul 2024', done: true },
-        { label: 'Site Mobilisation', date: 'Aug 2024', done: true },
-        { label: 'Foundation Works', date: 'Sep â€“ Dec 2024', done: true },
-        { label: 'Ground-Floor Columns', date: 'Jan â€“ Apr 2025 (ongoing)', done: false, current: true },
-        { label: 'Structural Frame', date: 'Q3 2025 â€“ Q1 2026', done: false },
-        { label: 'Roofing & Finishing', date: 'Q2 â€“ Q4 2026', done: false },
-        { label: 'Unit Handover', date: 'Q2 2027', done: false },
-      ],
-    },
-    {
-      id: 'suam-border-estate',
-      name: 'Suam Border Post Estate',
-      constituency: 'endebess',
-      constituencyName: 'Endebess',
-      ward: 'Endebess Ward',
-      units: 150,
-      pct: 12,
-      status: 'active',
-      contractor: 'Frontier Housing Ltd',
-      funding: 'National AHP Fund',
-      leadAgency: 'State Dept. of Housing',
-      siteEngineer: 'Eng. A. Chesire',
-      startDate: 'January 2025',
-      estDelivery: 'Q3 2027',
-      milestone: 'Site mobilisation in progress',
-      description: 'Strategic housing development near the Suam border crossing, providing affordable homes to border community workers, traders and residents in Endebess Ward. Received NEMA environmental clearance in April 2025.',
-      images: ['uploads/gallery/suam-ahp.jpg'],
-      link: 'project-detail.php?id=suam-border-estate',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Oct 2024', done: true },
-        { label: 'NEMA Environmental Approval', date: 'Apr 2025', done: true },
-        { label: 'Contractor Procurement', date: 'Dec 2024', done: true },
-        { label: 'Site Mobilisation', date: 'Jan 2025 (ongoing)', done: false, current: true },
-        { label: 'Foundation Works', date: 'Q3 2025', done: false },
-        { label: 'Structural Frame', date: 'Q4 2025 â€“ Q2 2026', done: false },
-        { label: 'Roofing & Finishing', date: 'Q3 2026 â€“ Q1 2027', done: false },
-        { label: 'Unit Handover', date: 'Q3 2027', done: false },
-      ],
-    },
-    {
-      id: 'endebess-township-units',
-      name: 'Endebess Township Units',
-      constituency: 'endebess',
-      constituencyName: 'Endebess',
-      ward: 'Endebess Ward',
-      units: 60,
-      pct: 8,
-      status: 'active',
-      contractor: 'Trans-Nzoia Housing Corp.',
-      funding: 'County Capital Budget',
-      leadAgency: 'Trans-Nzoia County Housing Dept.',
-      siteEngineer: 'Eng. B. K. Rotich',
-      startDate: 'March 2025',
-      estDelivery: 'Q4 2027',
-      milestone: 'Foundation works underway',
-      description: 'Township infill housing units supporting the growing Endebess urban centre. Targeting residents displaced by urban expansion and public servants working in the township.',
-      images: [],
-      link: 'project-detail.php?id=endebess-township-units',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Jan 2025', done: true },
-        { label: 'Site Survey & Clearance', date: 'Feb 2025', done: true },
-        { label: 'Foundation Works', date: 'Mar 2025 (ongoing)', done: false, current: true },
-        { label: 'Structural Frame', date: 'Q3 2025 â€“ Q2 2026', done: false },
-        { label: 'Roofing & Finishing', date: 'Q3 â€“ Q4 2026', done: false },
-        { label: 'Unit Handover', date: 'Q4 2027', done: false },
-      ],
-    },
-    {
-      id: 'kiminini-ahp-phase1',
-      name: 'Kiminini AHP Phase 1',
-      constituency: 'kiminini',
-      constituencyName: 'Kiminini',
-      ward: 'Kiminini Ward',
-      units: 80,
-      pct: 5,
-      status: 'planning',
-      contractor: 'TBD â€” Tender in Preparation',
-      funding: 'National AHP Fund',
-      leadAgency: 'State Dept. of Housing',
-      siteEngineer: 'TBD',
-      startDate: 'Q3 2026 (target)',
-      estDelivery: 'Q2 2028',
-      milestone: 'Environmental Impact Assessment underway',
-      description: 'First phase of the planned Kiminini affordable housing programme, pending completion of environmental assessments and contractor procurement. 80 units targeting Kiminini Ward residents registered on Boma Yangu.',
-      images: [],
-      link: 'project-detail.php?id=kiminini-ahp-phase1',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Feb 2025', done: true },
-        { label: 'Land Identification', date: 'Mar 2025', done: true },
-        { label: 'EIA Underway', date: 'Ongoing', done: false, current: true },
-        { label: 'Contractor Procurement', date: 'Q3 2026', done: false },
-        { label: 'Site Mobilisation', date: 'Q3 2026', done: false },
-        { label: 'Construction', date: 'Q4 2026 â€“ Q1 2028', done: false },
-        { label: 'Unit Handover', date: 'Q2 2028', done: false },
-      ],
-    },
-    {
-      id: 'waitaluk-estate',
-      name: 'Waitaluk Estate',
-      constituency: 'kiminini',
-      constituencyName: 'Kiminini',
-      ward: 'Waitaluk Ward',
-      units: 40,
-      pct: 5,
-      status: 'planning',
-      contractor: 'TBD',
-      funding: 'County Development Fund',
-      leadAgency: 'Trans-Nzoia County Housing Dept.',
-      siteEngineer: 'TBD',
-      startDate: 'TBD',
-      estDelivery: 'TBD',
-      milestone: 'Land acquisition in progress',
-      description: 'Community housing initiative for Waitaluk Ward residents, currently in land acquisition phase with community consultations and household registration ongoing.',
-      images: [],
-      link: 'project-detail.php?id=waitaluk-estate',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Mar 2025', done: true },
-        { label: 'Community Consultations', date: 'Apr 2025', done: true },
-        { label: 'Land Acquisition', date: 'Ongoing', done: false, current: true },
-        { label: 'EIA & Design', date: 'TBD', done: false },
-        { label: 'Contractor Procurement', date: 'TBD', done: false },
-        { label: 'Construction', date: 'TBD', done: false },
-        { label: 'Unit Handover', date: 'TBD', done: false },
-      ],
-    },
-    {
-      id: 'kwanza-township-housing',
-      name: 'Kwanza Township Housing',
-      constituency: 'kwanza',
-      constituencyName: 'Kwanza',
-      ward: 'Kwanza Ward',
-      units: 80,
-      pct: 8,
-      status: 'planning',
-      contractor: 'TBD â€” Procurement Stage',
-      funding: 'National AHP Fund',
-      leadAgency: 'State Dept. of Housing',
-      siteEngineer: 'TBD',
-      startDate: 'Q4 2026 (target)',
-      estDelivery: 'Q1 2028',
-      milestone: 'Architectural design review in progress',
-      description: 'Planned township housing development in Kwanza town centre targeting 80 units for the growing peri-urban population of Kwanza Ward. Currently in architectural design review stage.',
-      images: [],
-      link: 'project-detail.php?id=kwanza-township-housing',
-      milestones: [
-        { label: 'Programme Announcement', date: 'Dec 2024', done: true },
-        { label: 'Feasibility Study', date: 'Feb 2025', done: true },
-        { label: 'Architectural Design Review', date: 'Ongoing', done: false, current: true },
-        { label: 'EIA & Approvals', date: 'Q3 2026', done: false },
-        { label: 'Contractor Procurement', date: 'Q4 2026', done: false },
-        { label: 'Construction', date: 'Q4 2026 â€“ Q4 2027', done: false },
-        { label: 'Unit Handover', date: 'Q1 2028', done: false },
-      ],
-    },
-  ],
+    try {
+      return JSON.parse(node.textContent || '{}');
+    } catch (error) {
+      if (root.console && root.console.warn) {
+        root.console.warn('Could not parse public page data.', error);
+      }
+      return {};
+    }
+  };
 
-  /* Helper: get constituency by id */
-  getConstituency(id) {
-    return this.constituencies.find(c => c.id === id) || null;
-  },
+  const pageData = parsePageData();
+  const modelData = pageData.models && typeof pageData.models === 'object' ? pageData.models : {};
 
-  /* Helper: get project by id */
-  getProject(id) {
-    return this.projects.find(p => p.id === id) || null;
-  },
+  const compatibility = {
+    dataSource: 'database',
+    hasStaticFallbacks: false,
+    pages: pageData,
+    settings: pageData.settings || {},
+    constituencies: modelData.constituencies || [],
+    projects: modelData.projects || [],
+    news: modelData.news || [],
+    announcements: modelData.announcements || [],
+    gallery: modelData.gallery || [],
+    stats: modelData.stats || {},
+    getConstituency(id) {
+      const key = String(id || '').toLowerCase();
+      return this.constituencies.find((item) => {
+        return String(item.id || item.slug || item.name || '').toLowerCase() === key;
+      }) || null;
+    },
+    getProject(id) {
+      const key = String(id || '').toLowerCase();
+      return this.projects.find((item) => {
+        return String(item.id || item.slug || item.title || item.name || '').toLowerCase() === key;
+      }) || null;
+    },
+  };
 
-  /* Helper: get all projects for a constituency */
-  getProjectsByConstituency(id) {
-    return this.projects.filter(p => p.constituency === id);
-  },
-};
+  root.AHP_DATA = Object.assign(compatibility, existing, {
+    dataSource: existing.dataSource || 'database',
+    hasStaticFallbacks: Boolean(existing.hasStaticFallbacks),
+  });
+
+  root.TNAH = root.TNAH || {};
+  root.TNAH.data = Object.assign(root.TNAH.data || {}, {
+    source: 'database',
+    payload: pageData,
+    page() {
+      return pageData;
+    },
+    get(key, fallbackValue = null) {
+      return Object.prototype.hasOwnProperty.call(root.AHP_DATA, key) ? root.AHP_DATA[key] : fallbackValue;
+    },
+    has(key) {
+      return Object.prototype.hasOwnProperty.call(root.AHP_DATA, key);
+    },
+    section(key, fallbackValue = {}) {
+      return pageData.sections && pageData.sections[key] ? pageData.sections[key] : fallbackValue;
+    },
+    model(key, fallbackValue = []) {
+      return modelData[key] || fallbackValue;
+    },
+    hasModel(key) {
+      return Object.prototype.hasOwnProperty.call(modelData, key);
+    },
+  });
+
+  if (root.TNAH?.config?.env !== 'production' && root.console && root.console.info) {
+    root.console.info('Public page data is now sourced from CMS/database contracts.');
+  }
+})();

@@ -87,19 +87,36 @@
 
 .manager-boq-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  gap: 1.25rem;
   align-items: start;
+  width: 100%;
 }
 
 .manager-boq-main,
 .manager-boq-side {
   display: grid;
   gap: 1rem;
+  min-width: 0;
+}
+
+.manager-boq-main {
+  overflow: hidden;
+}
+
+.manager-boq-side {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+}
+
+.manager-boq-card .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .manager-boq-filter {
-  grid-template-columns: 1.4fr 1.2fr repeat(4, minmax(140px, 1fr)) auto;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   align-items: end;
 }
 
@@ -109,7 +126,7 @@
 }
 
 .manager-boq-table td {
-  min-width: 118px;
+  min-width: 0;
 }
 
 .manager-boq-table td:first-child {
@@ -368,17 +385,18 @@
   color: var(--admin-primary);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .manager-boq-layout {
     grid-template-columns: 1fr;
   }
 
   .manager-boq-side {
+    position: static;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .manager-boq-filter {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

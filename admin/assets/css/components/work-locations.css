@@ -1,0 +1,233 @@
+/* Work locations admin page */
+
+.sa-work-locations-page {
+    display: grid;
+    gap: 1.15rem;
+}
+
+.sa-workloc-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1.25rem, 2vw, 2rem);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--admin-lime-soft) 54%, transparent), transparent 48%),
+        var(--admin-surface);
+}
+
+.sa-workloc-hero h2 {
+    margin: .55rem 0 .35rem;
+    color: var(--admin-text);
+    font-size: clamp(1.75rem, 2.3vw, 2.55rem);
+    line-height: 1.08;
+}
+
+.sa-workloc-hero p {
+    max-width: 72rem;
+    margin: 0;
+    color: var(--admin-text-muted);
+    line-height: 1.5;
+}
+
+.sa-workloc-card {
+    display: grid;
+    gap: 1.15rem;
+    padding: clamp(1rem, 1.6vw, 1.5rem);
+}
+
+.sa-workloc-card .section-heading {
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.sa-workloc-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.sa-workloc-section {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid color-mix(in srgb, var(--admin-border) 76%, transparent);
+    border-radius: var(--admin-radius);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--admin-surface-muted) 72%, transparent), transparent 56%),
+        var(--admin-surface);
+}
+
+.sa-workloc-section__head {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: .85rem;
+    align-items: center;
+    padding-bottom: .85rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--admin-border) 72%, transparent);
+}
+
+.sa-workloc-section__head > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--admin-radius);
+    background: var(--admin-lime-soft);
+    color: var(--admin-primary);
+}
+
+.sa-workloc-section__head h4 {
+    margin: 0;
+    color: var(--admin-text);
+    font-size: 1rem;
+    line-height: 1.25;
+}
+
+.sa-workloc-section__head p {
+    margin: .15rem 0 0;
+    color: var(--admin-text-muted);
+    font-size: .88rem;
+    line-height: 1.45;
+}
+
+.sa-workloc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.sa-workloc-grid--geo {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sa-workloc-grid .is-wide {
+    grid-column: 1 / -1;
+}
+
+.sa-workloc-card .form-actions {
+    padding-top: 0;
+}
+
+.sa-workloc-filter {
+    display: grid;
+    grid-template-columns: minmax(220px, .9fr) minmax(320px, 1.4fr) auto auto;
+    align-items: end;
+}
+
+.sa-workloc-filter label {
+    display: grid;
+    gap: .35rem;
+}
+
+.sa-workloc-filter label span {
+    color: var(--admin-text-muted);
+    font-size: .73rem;
+    font-weight: 850;
+    text-transform: uppercase;
+}
+
+.sa-workloc-filter .btn {
+    min-height: 44px;
+}
+
+.sa-workloc-table {
+    table-layout: fixed;
+    min-width: 980px;
+}
+
+.sa-workloc-table th,
+.sa-workloc-table td {
+    padding: .9rem 1rem;
+    vertical-align: middle;
+}
+
+.sa-workloc-table th:first-child,
+.sa-workloc-table td:first-child {
+    width: 56px;
+    text-align: center;
+}
+
+.sa-workloc-table th:nth-child(2),
+.sa-workloc-table td:nth-child(2) {
+    width: 32%;
+}
+
+.sa-workloc-table th:nth-child(3),
+.sa-workloc-table td:nth-child(3),
+.sa-workloc-table th:nth-child(4),
+.sa-workloc-table td:nth-child(4) {
+    width: 15%;
+}
+
+.sa-workloc-table th:nth-child(5),
+.sa-workloc-table td:nth-child(5) {
+    width: 18%;
+}
+
+.sa-workloc-table th:nth-child(6),
+.sa-workloc-table td:nth-child(6) {
+    width: 13%;
+    text-align: right;
+}
+
+.sa-workloc-table td strong,
+.sa-workloc-table td small {
+    display: block;
+}
+
+.sa-workloc-table td small {
+    margin-top: .18rem;
+    color: var(--admin-text-muted);
+    font-size: .78rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.sa-workloc-row-action {
+    display: inline-flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin: 0;
+}
+
+.sa-workloc-assignments .pagination {
+    margin-top: 0;
+}
+
+@media (max-width: 1320px) {
+    .sa-workloc-grid--geo,
+    .sa-workloc-filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .sa-workloc-hero,
+    .sa-workloc-card .section-heading {
+        display: grid;
+        align-items: start;
+    }
+
+    .sa-workloc-grid,
+    .sa-workloc-grid--geo,
+    .sa-workloc-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .sa-workloc-table {
+        table-layout: auto;
+        min-width: 860px;
+    }
+}
+
+@media (max-width: 640px) {
+    .sa-workloc-card,
+    .sa-workloc-section {
+        padding: 1rem;
+    }
+
+    .sa-workloc-section__head {
+        grid-template-columns: 1fr;
+    }
+}

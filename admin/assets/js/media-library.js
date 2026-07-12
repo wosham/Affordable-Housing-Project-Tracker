@@ -101,7 +101,7 @@
       '<div class="sa-media-actions">' +
       '<button class="btn btn--outline btn--sm" type="button" data-copy-path="' + esc(item.path) + '"><i class="fa-solid fa-copy"></i> Copy Path</button>' +
       '<a class="btn btn--outline btn--sm" href="' + esc(item.url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a>' +
-      '<button class="btn btn--danger btn--sm" type="button" data-delete-media="' + item.id + '"><i class="fa-solid fa-trash"></i> Delete</button>' +
+      '<button class="btn btn--danger btn--sm" type="button" data-delete-media="' + item.id + '"><i class="fa-solid fa-box-archive"></i> Archive</button>' +
       '</div>' +
       '<dl>' +
       '<div><dt>Type</dt><dd>' + esc(item.type) + '</dd></div>' +
@@ -215,7 +215,7 @@
       }
 
       var del = event.target.closest && event.target.closest('[data-delete-media]');
-      if (del && window.confirm('Delete this media item?')) {
+      if (del && window.confirm('Archive this media item? It will be hidden from future pickers but the file will remain on disk.')) {
         var body = new FormData();
         body.append('id', del.getAttribute('data-delete-media'));
         body.append('csrf_form', 'media_library');

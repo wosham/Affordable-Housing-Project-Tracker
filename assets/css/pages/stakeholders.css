@@ -376,13 +376,13 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--node-light);
-  color: var(--node-color);
+  background: var(--node-light, #edfbd6);
+  color: var(--node-color, #1e4d00);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
-  border: 2px solid var(--node-color);
+  border: 2px solid var(--node-color, #1e4d00);
   transition: background 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 .sk-map-node-label {
@@ -499,7 +499,8 @@
 
 .sk-cat-card {
   position: relative;
-  height: 380px;
+  min-height: 400px;
+  height: 400px;
   perspective: 1000px;
 }
 .sk-cat-card-front,
@@ -513,6 +514,8 @@
   display: flex;
   flex-direction: column;
   transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1), box-shadow 0.25s;
+  min-height: 400px;
+  overflow: auto;
 }
 .sk-cat-card-front {
   background: #fff;
@@ -535,7 +538,7 @@
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  background: var(--cat-bg, #f0fdf4);
+  background: var(--cat-bg, #edfbd6);
   color: var(--cat-clr, #1e4d00);
   display: flex;
   align-items: center;
@@ -622,6 +625,16 @@
   font-size: 0.83rem;
   color: var(--neutral-700, #374151);
   line-height: 1.4;
+}
+.sk-cat-entities li span {
+  min-width: 0;
+}
+.sk-cat-entities li small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--neutral-500, #6b7280);
+  font-size: 0.72rem;
+  line-height: 1.35;
 }
 .sk-cat-entities li i {
   color: var(--cat-clr, #1e4d00);
@@ -1187,12 +1200,45 @@ a.sk-partner-tile:hover .sk-partner-tile-arrow {
 .sk-engage-card {
   background: var(--eng-bg, #f0fdfa);
   border: 1.5px solid color-mix(in srgb, var(--eng-clr, #0f766e) 20%, transparent);
-  border-radius: 20px;
+  border-radius: 12px;
   padding: var(--space-8, 2rem);
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 1rem);
   transition: box-shadow 0.25s, transform 0.25s;
+}
+
+.sk-empty,
+.sk-card-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  padding: 1.5rem;
+  border: 1px dashed rgba(30, 77, 0, 0.22);
+  border-radius: 12px;
+  background: rgba(246, 250, 242, 0.8);
+  color: var(--neutral-500, #6b7280);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.sk-empty--dark {
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.sk-map-detail-entities li {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.sk-tl-card,
+.sk-voice-card,
+.sk-partner-tile,
+.sk-engage-card {
+  overflow-wrap: anywhere;
 }
 .sk-engage-card:hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);

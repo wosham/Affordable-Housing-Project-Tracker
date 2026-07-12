@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $pageTitle = 'Choose Post Format';
 $pageDescription = 'Choose the type of public news, announcement or report to publish.';
@@ -10,7 +10,7 @@ $contentClass = 'sa-news-page';
 $componentCss = ['news-admin'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Super Administrator', 'url' => Url::to('admin/superadmin/dashboard.php')],
+    ['label' => 'County Director', 'url' => Url::to('admin/superadmin/dashboard.php')],
     ['label' => 'News', 'url' => Url::to('admin/superadmin/news.php')],
     ['label' => 'Post Format'],
 ];

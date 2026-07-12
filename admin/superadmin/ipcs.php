@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role('superadmin');
+Guard::exactRole('superadmin');
 
 $csrfForm = 'superadmin_ipcs';
 $filters = [
@@ -18,7 +18,7 @@ $filters = [
 ];
 $filters = array_filter($filters, static fn ($value): bool => $value !== '' && $value !== 0 && $value !== 0.0);
 
-$perPage = 15;
+$perPage = 10;
 $page = max(1, Security::cleanInt($_GET['page'] ?? 1));
 $totalIpcs = IPC::centreCount($filters);
 $totalPages = max(1, (int)ceil($totalIpcs / $perPage));

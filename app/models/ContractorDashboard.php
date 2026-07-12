@@ -256,18 +256,19 @@ class ContractorDashboard
         [$in, $bindings] = self::inClause($projectIds);
         $items = [];
         $queries = [
-            ["IPC", "CONCAT('IPC #', i.ipc_number)", "i.status", "i.updated_at", "ipcs i", "i.project_id", "i.contractor_id = ?"],
-            ["Material", "ma.material", "ma.status", "ma.submitted_date", "material_approvals ma", "ma.project_id", "ma.submitted_by = ?"],
-            ["Shop Drawing", "sd.title", "sd.status", "sd.submitted_date", "shop_drawings sd", "sd.project_id", "sd.submitted_by = ?"],
-            ["RFI", "r.subject", "r.status", "r.raised_date", "rfis r", "r.project_id", "r.raised_by = ?"],
-            ["EOT", "CONCAT('EOT #', e.eot_number)", "e.status", "e.created_at", "eot_requests e", "e.project_id", "e.submitted_by = ?"],
-            ["Variation", "CONCAT('Variation #', v.vo_number)", "v.status", "v.created_at", "variations v", "v.project_id", "v.submitted_by = ?"],
+            ['IPC', "CONCAT('IPC #', i.ipc_number)", 'i.status', 'i.updated_at', 'ipcs i', 'i.project_id', 'i.contractor_id = ?', 'admin/contractor/ipc-history.php'],
+            ['Material', 'ma.material', 'ma.status', 'ma.submitted_date', 'material_approvals ma', 'ma.project_id', 'ma.submitted_by = ?', 'admin/contractor/material-approval-submit.php'],
+            ['Shop Drawing', 'sd.title', 'sd.status', 'sd.submitted_date', 'shop_drawings sd', 'sd.project_id', 'sd.submitted_by = ?', 'admin/contractor/shop-drawing-submit.php'],
+            ['RFI', 'r.subject', 'r.status', 'r.raised_date', 'rfis r', 'r.project_id', 'r.raised_by = ?', 'admin/contractor/rfis.php'],
+            ['EOT', "CONCAT('EOT #', e.eot_number)", 'e.status', 'e.created_at', 'eot_requests e', 'e.project_id', 'e.submitted_by = ?', 'admin/contractor/eot-request.php'],
+            ['Variation', "CONCAT('Variation #', v.vo_number)", 'v.status', 'v.created_at', 'variations v', 'v.project_id', 'v.submitted_by = ?', 'admin/contractor/variation-request.php'],
         ];
 
-        foreach ($queries as [$type, $title, $status, $date, $table, $projectColumn, $ownerSql]) {
+        foreach ($queries as [$type, $title, $status, $date, $table, $projectColumn, $ownerSql, $link]) {
             try {
                 $rows = Database::fetchAll(
-                    "SELECT '{$type}' AS item_type, {$title} AS title, {$status} AS status, {$date} AS created_at, p.name AS project_name
+                    "SELECT '{$type}' AS item_type, {$title} AS title, {$status} AS status, {$date} AS created_at,
+                            p.id AS project_id, p.name AS project_name, '{$link}' AS link
                      FROM {$table}
                      JOIN projects p ON p.id = {$projectColumn}
                      WHERE {$projectColumn} IN ({$in}) AND {$ownerSql}

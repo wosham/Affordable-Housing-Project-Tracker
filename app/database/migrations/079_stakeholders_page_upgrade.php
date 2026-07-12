@@ -282,12 +282,6 @@ class Migration_079_StakeholdersPageUpgrade
                 'subtitle' => 'Formal implementing partners and oversight institutions with active agreements or collaborative mandates.',
                 'empty_text' => 'Formal partner records will appear here after publication.',
             ]],
-            ['stakeholders_engagement', 'Engage the Programme', 'stakeholders_engagement', 80, [
-                'eyebrow' => 'Get Involved',
-                'title' => 'How to Engage the Programme',
-                'subtitle' => 'Whether you are a potential beneficiary, community leader, journalist or interested partner - here is how to connect with the Trans-Nzoia AHP.',
-                'empty_text' => 'Engagement paths will appear here after they are added.',
-            ]],
         ];
 
         foreach ($sections as [$key, $label, $type, $sort, $content]) {

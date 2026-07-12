@@ -37,6 +37,11 @@ class Database
         return $statement;
     }
 
+    public static function affectedRows(string $sql, array $bindings = []): int
+    {
+        return self::query($sql, $bindings)->rowCount();
+    }
+
     public static function fetch(string $sql, array $bindings = []): ?array
     {
         $row = self::query($sql, $bindings)->fetch();

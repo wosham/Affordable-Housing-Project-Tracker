@@ -99,6 +99,8 @@
     let visibleCount   = getVisibleCount();
     let maxIndex       = Math.max(0, totalCards - visibleCount);
 
+    if (totalCards === 0) return;
+
     function getVisibleCount() {
       if (window.innerWidth >= 1100) return 3;
       if (window.innerWidth >= 768)  return 2;
@@ -140,6 +142,12 @@
     prevBtn && prevBtn.addEventListener('click', () => goTo(current - 1));
     nextBtn && nextBtn.addEventListener('click', () => goTo(current + 1));
 
+    if (totalCards <= visibleCount) {
+      if (prevBtn) prevBtn.hidden = true;
+      if (nextBtn) nextBtn.hidden = true;
+      dotsWrap.hidden = true;
+    }
+
     /* Keyboard navigation */
     [prevBtn, nextBtn].forEach((btn) => {
       btn && btn.addEventListener('keydown', (e) => {
@@ -163,9 +171,18 @@
       resizeTimer = setTimeout(() => {
         visibleCount = getVisibleCount();
         maxIndex     = Math.max(0, totalCards - visibleCount);
-        current      = Math.min(current, maxIndex);
-        buildDots();
-        goTo(current);
+      current      = Math.min(current, maxIndex);
+      buildDots();
+      if (totalCards <= visibleCount) {
+        if (prevBtn) prevBtn.hidden = true;
+        if (nextBtn) nextBtn.hidden = true;
+        dotsWrap.hidden = true;
+      } else {
+        if (prevBtn) prevBtn.hidden = false;
+        if (nextBtn) nextBtn.hidden = false;
+        dotsWrap.hidden = false;
+      }
+      goTo(current);
       }, 150);
     });
 
@@ -191,6 +208,8 @@
     let autoTimer    = null;
     const AUTO_DELAY = 6000;
 
+    if (total === 0) return;
+
     /* Build dots */
     function buildDots() {
       dotsWrap.innerHTML = '';
@@ -210,6 +229,7 @@
     }
 
     function goTo(index) {
+      if (total === 0) return;
       current = ((index % total) + total) % total;
       track.style.transform = `translateX(-${current * 100}%)`;
       updateDots();
@@ -221,6 +241,7 @@
     }
 
     function startAuto() {
+      if (total <= 1) return;
       autoTimer = setInterval(() => goTo(current + 1), AUTO_DELAY);
     }
 
@@ -261,7 +282,13 @@
 
     buildDots();
     goTo(0);
-    startAuto();
+    if (total <= 1) {
+      if (prevBtn) prevBtn.hidden = true;
+      if (nextBtn) nextBtn.hidden = true;
+      dotsWrap.hidden = true;
+    } else {
+      startAuto();
+    }
   }
 
   /* ---------------------------------------------------------

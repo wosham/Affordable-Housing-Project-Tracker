@@ -4,21 +4,8 @@ class ManagerDashboard
 {
     public static function projectIds(int $userId, string $role): array
     {
-        if ($role === 'superadmin') {
-            $rows = Database::fetchAll('SELECT id FROM projects ORDER BY id ASC');
-            return array_map('intval', array_column($rows, 'id'));
-        }
-
-        $rows = Database::fetchAll(
-            "SELECT DISTINCT p.id
-             FROM projects p
-             INNER JOIN project_assignments pa ON pa.project_id = p.id
-             WHERE pa.user_id = ? AND pa.status = 'active'
-             ORDER BY p.id ASC",
-            [$userId]
-        );
-
-        return array_map('intval', array_column($rows, 'id'));
+        // Keep manager scope identical to ProjectAccess so every manager module agrees.
+        return ProjectAccess::visibleProjectIds($userId, $role);
     }
 
     public static function summary(int $userId, string $role): array
@@ -96,7 +83,7 @@ class ManagerDashboard
         ];
     }
 
-    public static function projects(int $userId, string $role, int $limit = 8): array
+    public static function projects(int $userId, string $role, int $limit = 50): array
     {
         $projectIds = self::projectIds($userId, $role);
         if ($projectIds === []) {
@@ -251,6 +238,11 @@ class ManagerDashboard
     private static function inClause(array $ids): array
     {
         $ids = array_values(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0));
+        if ($ids === []) {
+            // Callers should early-return before inClause; keep a safe no-match fallback.
+            return ['NULL', []];
+        }
+
         return [implode(',', array_fill(0, count($ids), '?')), $ids];
     }
 }

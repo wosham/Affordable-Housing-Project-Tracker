@@ -20,7 +20,7 @@ class PasswordReset extends Model
         $id = (int)self::create([
             'user_id' => $userId,
             'email' => $email,
-            'token' => '',
+            'token' => $hash,
             'token_hash' => $hash,
             'expires_at' => $expiresAt,
             'used' => 0,

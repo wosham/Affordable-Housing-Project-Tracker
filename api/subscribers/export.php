@@ -20,18 +20,19 @@ if (!headers_sent()) {
 }
 
 $out = fopen('php://output', 'w');
-fputcsv($out, ['id', 'email', 'name', 'status', 'subscribed_at', 'unsubscribed_at', 'reactivated_at', 'ip', 'source_url']);
+fputcsv($out, ['id', 'email', 'name', 'status', 'subscribed_at', 'unsubscribed_at', 'reactivated_at', 'ip', 'source_url', 'unsubscribe_url']);
 foreach ($rows as $row) {
     fputcsv($out, [
-        $row['id'] ?? '',
-        $row['email'] ?? '',
-        $row['name'] ?? '',
-        $row['status'] ?? '',
-        $row['subscribed_at'] ?? '',
-        $row['unsubscribed_at'] ?? '',
-        $row['reactivated_at'] ?? '',
-        $row['ip'] ?? '',
-        $row['source_url'] ?? '',
+        subscribers_csv_value($row['id'] ?? ''),
+        subscribers_csv_value($row['email'] ?? ''),
+        subscribers_csv_value($row['name'] ?? ''),
+        subscribers_csv_value($row['status'] ?? ''),
+        subscribers_csv_value($row['subscribed_at'] ?? ''),
+        subscribers_csv_value($row['unsubscribed_at'] ?? ''),
+        subscribers_csv_value($row['reactivated_at'] ?? ''),
+        subscribers_csv_value($row['ip'] ?? ''),
+        subscribers_csv_value($row['source_url'] ?? ''),
+        subscribers_csv_value(Subscriber::unsubscribeUrl($row)),
     ]);
 }
 fclose($out);
@@ -44,4 +45,10 @@ function subscribers_export_date(mixed $value): ?string
     }
     $timestamp = strtotime($value);
     return $timestamp === false ? null : date('Y-m-d', $timestamp);
+}
+
+function subscribers_csv_value(mixed $value): string
+{
+    $value = (string)$value;
+    return preg_match('/^[=+\-@]/', $value) === 1 ? "'" . $value : $value;
 }

@@ -1,17 +1,18 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('consultant'));
+Guard::exactRole('consultant');
 
 $pageTitle = 'Inspection Test Plans';
 $pageDescription = 'Review inspections, witness requirements and hold points across assigned projects.';
 $adminRole = 'consultant';
+$csrfForm = 'consultant_quality';
 $contentClass = 'consultant-quality-page';
 $componentCss = ['consultant-quality'];
 $pageScripts = ['consultant-quality'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Consultant'],
+    ['label' => 'Consultant', 'url' => Url::to('admin/consultant/dashboard.php')],
     ['label' => 'Inspection Test Plans'],
 ];
 
@@ -24,7 +25,7 @@ consultant_quality_page([
     'icon' => 'fa-clipboard-check',
     'eyebrow' => 'Inspection review',
     'heading' => 'Inspection Test Plans',
-    'description' => 'Review inspections, hold points, witness requirements and outcomes.',
+    'description' => 'Review inspections, hold points, witness requirements and outcomes on your assigned projects only.',
     'peer_link' => 'admin/consultant/non-conformance.php',
     'peer_icon' => 'fa-triangle-exclamation',
     'peer_label' => 'NCRs',
@@ -33,11 +34,11 @@ consultant_quality_page([
     'side_title' => 'Witness priorities',
     'side_hint' => 'Pending and flagged inspection records.',
     'stats' => [
-        ['icon' => 'fa-clipboard-list', 'key' => 'total', 'label' => 'Inspections', 'hint' => 'Assigned projects'],
-        ['icon' => 'fa-eye', 'key' => 'pending_witness', 'label' => 'Pending Witness', 'hint' => 'Needs attendance'],
-        ['icon' => 'fa-circle-check', 'key' => 'accepted', 'label' => 'Accepted', 'hint' => 'Passed checks'],
-        ['icon' => 'fa-rotate-left', 'key' => 'returned', 'label' => 'Returned', 'hint' => 'Needs correction'],
-        ['icon' => 'fa-calendar-week', 'key' => 'due_week', 'label' => 'Due This Week', 'hint' => 'Upcoming checks'],
+        ['icon' => 'fa-clipboard-list', 'key' => 'total', 'label' => 'Inspections', 'hint' => 'Assigned projects', 'filter' => []],
+        ['icon' => 'fa-eye', 'key' => 'pending_witness', 'label' => 'Pending Witness', 'hint' => 'Needs attendance', 'filter' => ['witness' => '1', 'review_status' => 'pending']],
+        ['icon' => 'fa-circle-check', 'key' => 'accepted', 'label' => 'Accepted', 'hint' => 'Passed checks', 'filter' => ['review_status' => 'reviewed']],
+        ['icon' => 'fa-rotate-left', 'key' => 'returned', 'label' => 'Returned', 'hint' => 'Needs correction', 'filter' => ['review_status' => 'returned']],
+        ['icon' => 'fa-calendar-week', 'key' => 'due_week', 'label' => 'Due This Week', 'hint' => 'Upcoming checks', 'filter' => []],
     ],
 ]);
 

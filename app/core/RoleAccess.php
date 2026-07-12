@@ -17,12 +17,7 @@ final class RoleAccess
     public static function area(string $role): array
     {
         $role = strtolower(trim($role));
-
-        if ($role === 'superadmin') {
-            return ['superadmin'];
-        }
-
-        return ['superadmin', $role];
+        return $role === '' ? [] : [$role];
     }
 
     public static function dashboardFor(?string $role): string
@@ -30,5 +25,11 @@ final class RoleAccess
         $role = strtolower((string) $role);
 
         return self::ROLE_DASHBOARDS[$role] ?? 'admin/login.php';
+    }
+
+    public static function can(string $permission, ?string $role = null): bool
+    {
+        $role = strtolower((string)($role ?? Auth::role() ?? ''));
+        return $role !== '' && Role::hasPermission($role, $permission);
     }
 }

@@ -8,17 +8,7 @@ ApiMiddleware::handle([
     'csrf' => false,
 ]);
 
-$token = Csrf::fromRequest();
-$csrfOk = false;
-foreach (['superadmin_programme', 'manager_programme', 'contractor_programme', 'default'] as $form) {
-    if (Csrf::verify($token, $form)) {
-        $csrfOk = true;
-        break;
-    }
-}
-if (!$csrfOk) {
-    Response::json(['success' => false, 'message' => 'CSRF token mismatch. Please refresh the page and try again.'], 419);
-}
+ApiCsrf::requireAny(ApiCsrf::forms('programme_task'));
 
 $input = $_POST;
 if ($input === []) {

@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('manager'));
+Guard::exactRole('manager');
 
 $userId = (int)Auth::id();
 $role = (string)Auth::role();
@@ -80,12 +80,12 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
   <div>
     <span class="sa-panel-label"><i class="fa-solid fa-chart-gantt" aria-hidden="true"></i> Programme control</span>
     <h2>Programme of Works</h2>
-    <p>Track planned dates, actual dates, completion and delivery delays for assigned projects.</p>
+    <p>Track planned dates, actual dates, completion and delivery delays for your assigned projects only.</p>
   </div>
   <div class="programme-hero__actions">
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/projects.php')) ?>"><i class="fa-solid fa-building" aria-hidden="true"></i> Projects</a>
     <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/milestones.php')) ?>"><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Milestones</a>
-    <a class="btn btn--outline" href="<?= Security::e(Url::to('api/programme/get-gantt.php?project_id=' . (int)($filters['project_id'] ?? 0))) ?>" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-eye" aria-hidden="true"></i> Programme Data</a>
+    <a class="btn btn--outline" href="<?= Security::e(Url::to('admin/manager/boq.php' . (!empty($filters['project_id']) ? '?project_id=' . (int)$filters['project_id'] : ''))) ?>"><i class="fa-solid fa-list-check" aria-hidden="true"></i> BOQ</a>
   </div>
 </section>
 
@@ -115,14 +115,14 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 </section>
 
 <section class="stat-grid stat-grid--4 programme-stats" aria-label="Programme summary">
-  <?php manager_programme_stat('fa-list-check', $summary['total_tasks'] ?? 0, 'Total Tasks', 'Programme activities'); ?>
-  <?php manager_programme_stat('fa-spinner', $summary['in_progress'] ?? 0, 'In Progress', 'Active delivery tasks'); ?>
-  <?php manager_programme_stat('fa-circle-check', $summary['complete'] ?? 0, 'Completed', 'Finished activities'); ?>
-  <?php manager_programme_stat('fa-triangle-exclamation', $summary['delayed_tasks'] ?? 0, 'Delayed', 'Past planned finish'); ?>
+  <?php manager_programme_stat('fa-list-check', $summary['total_tasks'] ?? 0, 'Total Tasks', 'Programme activities', false, manager_programme_page_url(array_diff_key($filters, ['status' => true, 'delay' => true, 'page' => true]), 1)); ?>
+  <?php manager_programme_stat('fa-spinner', $summary['in_progress'] ?? 0, 'In Progress', 'Active delivery tasks', false, manager_programme_page_url(array_merge($filters, ['status' => 'in_progress', 'page' => 1]), 1)); ?>
+  <?php manager_programme_stat('fa-circle-check', $summary['complete'] ?? 0, 'Completed', 'Finished activities', false, manager_programme_page_url(array_merge($filters, ['status' => 'complete', 'page' => 1]), 1)); ?>
+  <?php manager_programme_stat('fa-triangle-exclamation', $summary['delayed_tasks'] ?? 0, 'Delayed', 'Past planned finish', false, manager_programme_page_url(array_merge($filters, ['delay' => 'delayed', 'page' => 1]), 1)); ?>
   <?php manager_programme_stat('fa-route', $summary['critical'] ?? 0, 'Critical Path', 'Priority activities'); ?>
-  <?php manager_programme_stat('fa-clock', $dueSoon, 'Due Soon', 'Next seven days'); ?>
+  <?php manager_programme_stat('fa-clock', $dueSoon, 'Due Soon', 'Next seven days', false, manager_programme_page_url(array_merge($filters, ['delay' => 'due', 'page' => 1]), 1)); ?>
   <?php manager_programme_stat('fa-chart-simple', $avgProgress, 'Average Progress', 'Across listed tasks', true); ?>
-  <?php manager_programme_stat('fa-pause', $summary['on_hold'] ?? 0, 'On Hold', 'Paused activities'); ?>
+  <?php manager_programme_stat('fa-pause', $summary['on_hold'] ?? 0, 'On Hold', 'Paused activities', false, manager_programme_page_url(array_merge($filters, ['status' => 'on_hold', 'page' => 1]), 1)); ?>
 </section>
 
 <section class="card programme-board">
@@ -191,18 +191,16 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
           <td><div class="programme-progress"><span style="width: <?= (int)$task['pct_complete'] ?>%;"></span></div><small><?= Security::e(format_percentage($task['pct_complete'])) ?></small></td>
           <td><span class="badge <?= Security::e(status_badge_class($task['is_delayed'] ? 'overdue' : $task['status'])) ?>"><?= Security::e($task['is_delayed'] ? 'Delayed' : status_label($task['status'])) ?></span></td>
           <td><?= $task['dependency_name'] ? Security::e($task['dependency_name']) : '<span class="text-muted">None</span>' ?></td>
-          <td><button class="btn btn--icon btn--primary" type="button" data-programme-edit data-id="<?= (int)$task['id'] ?>" data-name="<?= Security::e($task['task_name']) ?>" data-planned-start="<?= Security::e($task['planned_start'] ?? '') ?>" data-planned-end="<?= Security::e($task['planned_end'] ?? '') ?>" data-start-date="<?= Security::e($task['start_date'] ?? '') ?>" data-end-date="<?= Security::e($task['end_date'] ?? '') ?>" data-progress="<?= (int)$task['pct_complete'] ?>" data-status="<?= Security::e($task['status']) ?>" data-assigned="<?= Security::e((string)($task['assigned_to'] ?? '')) ?>" data-dependency="<?= Security::e((string)($task['depends_on_task_id'] ?? '')) ?>" data-critical="<?= (int)$task['critical_path'] ?>" data-notes="<?= Security::e($task['notes'] ?? '') ?>" title="Update task" aria-label="Update task"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button></td>
+          <td><div class="manager-table-actions"><button class="btn btn--icon btn--primary" type="button" data-programme-edit data-id="<?= (int)$task['id'] ?>" data-name="<?= Security::e($task['task_name']) ?>" data-planned-start="<?= Security::e($task['planned_start'] ?? '') ?>" data-planned-end="<?= Security::e($task['planned_end'] ?? '') ?>" data-start-date="<?= Security::e($task['start_date'] ?? '') ?>" data-end-date="<?= Security::e($task['end_date'] ?? '') ?>" data-progress="<?= (int)$task['pct_complete'] ?>" data-status="<?= Security::e($task['status']) ?>" data-assigned="<?= Security::e((string)($task['assigned_to'] ?? '')) ?>" data-dependency="<?= Security::e((string)($task['depends_on_task_id'] ?? '')) ?>" data-critical="<?= (int)$task['critical_path'] ?>" data-notes="<?= Security::e($task['notes'] ?? '') ?>" title="Update task" aria-label="Update task"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button></div></td>
         </tr>
 <?php endforeach; endif; ?>
       </tbody>
     </table>
   </div>
-<?php if ($totalPages > 1): ?>
   <nav class="pagination" aria-label="Programme pagination">
-    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($totalTasks)) ?> tasks</p>
-    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_programme_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_programme_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
+    <p class="pagination__info">Showing <?= Security::e(format_number($showingFrom)) ?>-<?= Security::e(format_number($showingTo)) ?> of <?= Security::e(format_number($totalTasks)) ?> tasks (<?= (int)$perPage ?> per page)</p>
+    <div class="pagination__links"><a class="pagination__link<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_programme_page_url($filters, max(1, $page - 1))) ?>"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a><span class="pagination__link is-active"><?= Security::e(format_number($page)) ?> / <?= Security::e(format_number($totalPages)) ?></span><a class="pagination__link<?= $page >= $totalPages ? ' is-disabled' : '' ?>" href="<?= Security::e(manager_programme_page_url($filters, min($totalPages, $page + 1))) ?>"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></div>
   </nav>
-<?php endif; ?>
 </section>
 
 <div class="modal" data-programme-modal hidden>
@@ -236,11 +234,13 @@ include __DIR__ . '/../../app/partials/admin/shell-start.php';
 <?php
 include __DIR__ . '/../../app/partials/admin/shell-end.php';
 
-function manager_programme_stat(string $icon, mixed $value, string $label, string $trend, bool $percent = false): void
+function manager_programme_stat(string $icon, mixed $value, string $label, string $trend, bool $percent = false, ?string $href = null): void
 {
     $display = $percent ? format_percentage($value) : format_number($value);
+    $tag = $href ? 'a' : 'article';
+    $attr = $href ? ' href="' . Security::e($href) . '"' : '';
 ?>
-  <article class="stat-widget"><span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e($display) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span></article>
+  <<?= $tag ?> class="stat-widget<?= $href ? ' stat-widget--link' : '' ?>"<?= $attr ?>><span class="stat-widget__icon"><i class="fa-solid <?= Security::e($icon) ?>" aria-hidden="true"></i></span><span class="stat-widget__body"><strong class="stat-widget__value"><?= Security::e($display) ?></strong><span class="stat-widget__label"><?= Security::e($label) ?></span><small class="stat-widget__trend"><?= Security::e($trend) ?></small></span></<?= $tag ?>>
 <?php
 }
 

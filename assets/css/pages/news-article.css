@@ -58,6 +58,11 @@
   padding-bottom: 0;
 }
 .article-hero-content { display: flex; flex-direction: column; padding-bottom: 3rem; }
+.article-hero-content > .news-cat-badge {
+  position: static;
+  align-self: flex-start;
+  margin-bottom: 1rem;
+}
 
 /* RIGHT: Image media */
 .article-hero-media {
@@ -200,6 +205,14 @@
 [data-action="share-wa"]:hover   { background: rgba(37,211,102,.2) !important; border-color: rgba(37,211,102,.5) !important; }
 [data-action="copy-link"]:hover  { background: rgba(159,232,112,.2) !important; border-color: rgba(159,232,112,.5) !important; }
 .article-share-btn.is-copied { background: rgba(159,232,112,.25); color: #c8f08a; border-color: rgba(159,232,112,.6); }
+.article-headline,
+.article-deck,
+.article-prose,
+.sidebar-card,
+.key-fact-value,
+.article-related-link {
+  overflow-wrap: anywhere;
+}
 
 /* ── Hero Image Caption Bar (image is now the hero background) ── */
 .article-hero-img-outer { margin-top: 0; position: relative; z-index: 1; }
@@ -230,6 +243,7 @@
 .article-prose {
   font-family: var(--font-body, 'Inter', sans-serif);
   font-size: 1.02rem; line-height: 1.84; color: var(--neutral-800, #1c2e12);
+  min-width: 0;
 }
 /* Drop cap on first paragraph */
 .article-prose > p:first-of-type::first-letter {
@@ -436,6 +450,7 @@
   font-family: var(--font-heading, 'Space Grotesk', sans-serif);
   cursor: pointer; border: 1.5px solid var(--neutral-200, #ddeece);
   background: transparent; color: var(--neutral-600, #4a6b36); transition: all .2s;
+  text-decoration: none;
 }
 .article-action-btn:hover { background: var(--neutral-100, #eef7e6); border-color: var(--primary-300, #5db800); color: var(--primary-700, #163300); }
 .article-action-btn.is-copied { background: rgba(159,232,112,.1); color: var(--primary-600, #1e4d00); border-color: rgba(159,232,112,.4); }

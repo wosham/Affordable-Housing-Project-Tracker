@@ -1,10 +1,10 @@
 <?php
 
 require_once __DIR__ . '/../../app/core/bootstrap.php';
-Guard::role(RoleAccess::area('clerk'));
+Guard::exactRole('clerk');
 
 $pageTitle = 'Messages';
-$pageDescription = 'Site record conversations and direct messages.';
+$pageDescription = 'Project-scoped staff messaging for managers, consultants, contractors and site interns.';
 $adminRole = 'clerk';
 $csrfForm = 'messages';
 $contentClass = 'messages-admin-page';
@@ -12,7 +12,7 @@ $componentCss = ['messages'];
 $pageScripts = ['messages'];
 $breadcrumbs = [
     ['label' => 'Portal', 'url' => Url::to('admin/index.php')],
-    ['label' => 'Site Clerk', 'url' => Url::to('admin/clerk/dashboard.php')],
+    ['label' => 'Clerk of Works', 'url' => Url::to('admin/clerk/dashboard.php')],
     ['label' => 'Messages'],
 ];
 
